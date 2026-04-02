@@ -1,0 +1,519 @@
+<html lang="ru" class="scroll-smooth"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asystem - AI-ассистенты для отелей</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .animate-marquee-content {
+            animation: marquee 25s linear infinite;
+        }
+
+        .reveal-letter {
+            display: inline-block;
+            transform: translateY(100%);
+            opacity: 0;
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.8s ease;
+        }
+        .reveal-letter.revealed {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .scroll-reveal {
+            opacity: 0;
+            transform: translateY(1.5rem);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .scroll-reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .manifesto-word {
+            opacity: 0.15;
+            transition: opacity 0.4s ease;
+        }
+        .manifesto-word.highlight {
+            opacity: 1;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .custom-shadow {
+            box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.05), 0 0 1px rgba(0,0,0,0.1);
+        }
+
+        .card-hover-effect {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .card-hover-effect:hover {
+            transform: translateY(-0.25rem);
+            box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.08), 0 0 1px rgba(0,0,0,0.1);
+        }
+
+        .pricing-card {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .pricing-card:hover {
+            transform: translateY(-0.5rem);
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Custom Toggle */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #171717;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #171717;
+        }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-900 antialiased selection:bg-neutral-900 selection:text-white">
+
+    <!-- Navbar -->
+    <nav id="navbar" class="fixed top-0 w-full z-50 transition-transform duration-500 glass-nav border-b border-neutral-200/60 py-3">
+        <div class="max-w-screen-xl mx-auto px-6 flex justify-between items-center">
+            <a href="#" class="flex items-center gap-2 text-lg font-medium tracking-tight text-neutral-900">
+                <div class="w-6 h-6 bg-neutral-900 rounded-sm flex items-center justify-center text-white">
+                    <iconify-icon icon="solar:buildings-2-linear" width="16" stroke-width="1.5"></iconify-icon>
+                </div>
+                Asystem
+            </a>
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-500 tracking-tight">
+                <a href="#features" class="hover:text-neutral-900 transition-colors">Возможности</a>
+                <a href="#platforms" class="hover:text-neutral-900 transition-colors">Платформы</a>
+                <a href="#pricing" class="hover:text-neutral-900 transition-colors">Тарифы</a>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="#" class="hidden sm:block text-sm font-medium text-neutral-600 hover:text-neutral-900 transition-colors tracking-tight">Войти</a>
+                <a href="#" class="bg-neutral-900 text-white px-5 py-2 rounded-full text-sm font-medium tracking-tight hover:bg-neutral-800 transition-colors shadow-sm">
+                    Начать
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-32 pb-20 bg-white">
+        <!-- Abstract grid background -->
+        <div class="absolute inset-0 z-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(#000 1px, transparent 1px); background-size: 32px 32px;"></div>
+
+        <!-- Top gradient glow -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[30vh] bg-gradient-to-b from-neutral-200/50 to-transparent blur-3xl rounded-full opacity-50 pointer-events-none z-0"></div>
+
+        <div class="relative z-10 max-w-screen-xl mx-auto px-6 w-full flex flex-col items-center text-center">
+
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-neutral-200 bg-neutral-50 text-xs font-medium text-neutral-600 tracking-tight mb-8 scroll-reveal">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                DeepSeek Chat уже доступен
+            </div>
+
+            <h1 class="text-5xl sm:text-6xl md:text-7xl tracking-tight font-semibold leading-[1.1] mb-6 flex flex-wrap justify-center gap-x-3 gap-y-2 text-neutral-900" id="hero-title">
+                <!-- Injected via JS -->
+            </h1>
+
+            <p class="text-neutral-500 font-normal text-base md:text-lg max-w-2xl mb-10 scroll-reveal tracking-tight" style="transition-delay: 0.6s;">
+                Автоматизируйте бронирования и общение с гостями 24/7. Поддержка 50+ языков. Интеграция с Exely PMS. От $39/месяц.
+            </p>
+
+            <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto scroll-reveal" style="transition-delay: 0.8s;">
+                <a href="#" class="flex items-center justify-center gap-2 bg-neutral-900 text-white px-6 py-3 rounded-md text-sm font-medium tracking-tight transition-all hover:bg-neutral-800 shadow-sm">
+                    Создать бота бесплатно <iconify-icon icon="solar:arrow-right-linear" width="16" stroke-width="1.5"></iconify-icon>
+                </a>
+                <a href="#" class="flex items-center justify-center px-6 py-3 rounded-md border border-neutral-200 text-neutral-900 bg-white text-sm font-medium tracking-tight hover:bg-neutral-50 transition-all shadow-sm">
+                    Посмотреть демо
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Ticker Section -->
+    <div class="w-full bg-white py-4 overflow-hidden flex border-y border-neutral-100">
+        <div class="flex whitespace-nowrap animate-marquee-content text-neutral-400 font-medium text-xs tracking-widest uppercase">
+            <!-- Set 1 -->
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:moon-stars-linear" width="16" stroke-width="1.5"></iconify-icon> 24/7 Бронирования</span>
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:global-linear" width="16" stroke-width="1.5"></iconify-icon> 50+ языков</span>
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:server-square-cloud-linear" width="16" stroke-width="1.5"></iconify-icon> Exely PMS</span>
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:plain-2-linear" width="16" stroke-width="1.5"></iconify-icon> Telegram</span>
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:chat-round-line-linear" width="16" stroke-width="1.5"></iconify-icon> WhatsApp</span>
+            <!-- Duplicate -->
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:moon-stars-linear" width="16" stroke-width="1.5"></iconify-icon> 24/7 Бронирования</span>
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:global-linear" width="16" stroke-width="1.5"></iconify-icon> 50+ языков</span>
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:server-square-cloud-linear" width="16" stroke-width="1.5"></iconify-icon> Exely PMS</span>
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:plain-2-linear" width="16" stroke-width="1.5"></iconify-icon> Telegram</span>
+            <span class="mx-8 flex items-center gap-2"><iconify-icon icon="solar:chat-round-line-linear" width="16" stroke-width="1.5"></iconify-icon> WhatsApp</span>
+        </div>
+    </div>
+
+    <!-- Scroll Text Manifesto Section -->
+    <section class="py-32 relative bg-white border-b border-neutral-100">
+        <div class="max-w-screen-md mx-auto px-6 text-center">
+            <h2 class="text-3xl md:text-5xl tracking-tight font-medium leading-tight text-neutral-900" id="manifesto-text">
+                Каждую ночь отели теряют 30-40% броней из-за отсутствия персонала. Гости пишут на китайском, арабском, корейском — и остаются без ответа. AI-ассистент Asystem работает круглосуточно на всех языках.
+            </h2>
+        </div>
+    </section>
+
+    <!-- Use Cases (Cards) Section -->
+    <section id="features" class="py-32 relative bg-neutral-50">
+        <div class="max-w-screen-xl mx-auto px-6 mb-16 flex flex-col md:flex-row justify-between items-start md:items-end gap-6 scroll-reveal">
+            <div>
+                <h2 class="text-3xl md:text-4xl tracking-tight font-semibold text-neutral-900 mb-3">
+                    Решения для отелей
+                </h2>
+                <p class="text-neutral-500 text-base tracking-tight">Автоматизируйте то, что раньше требовало персонала 24/7.</p>
+            </div>
+        </div>
+
+        <div class="max-w-screen-xl mx-auto px-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="use-cases-container">
+                <!-- JS Injected Cards -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="py-32 bg-white relative overflow-hidden border-y border-neutral-100">
+        <div class="max-w-screen-xl mx-auto px-6">
+            <div class="text-center mb-16 scroll-reveal">
+                <h2 class="text-3xl md:text-4xl tracking-tight font-semibold text-neutral-900 mb-3">
+                    Прозрачные тарифы
+                </h2>
+                <p class="text-neutral-500 text-base tracking-tight">Выберите план под размер вашего отеля</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto" id="pricing-container">
+                <!-- JS Injected Pricing Cards -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Platforms Section -->
+    <section id="platforms" class="py-32 bg-neutral-50 relative overflow-hidden">
+        <div class="max-w-screen-xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 relative z-10">
+
+            <div class="flex flex-col items-start scroll-reveal border border-neutral-200 rounded-2xl p-8 bg-white">
+                <div class="w-12 h-12 rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 flex items-center justify-center mb-6 shadow-sm">
+                    <iconify-icon icon="solar:plain-2-linear" width="24" stroke-width="1.5"></iconify-icon>
+                </div>
+                <h3 class="text-xl font-medium tracking-tight mb-2 text-neutral-900">Telegram</h3>
+                <p class="text-neutral-500 text-sm font-normal leading-relaxed">
+                    Мгновенные ответы на вопросы о ценах, свободных номерах и услугах. Поддержка инлайн-кнопок для быстрого бронирования.
+                </p>
+            </div>
+
+            <div class="flex flex-col items-start scroll-reveal border border-neutral-200 rounded-2xl p-8 bg-white" style="transition-delay: 0.1s;">
+                <div class="w-12 h-12 rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 flex items-center justify-center mb-6 shadow-sm">
+                    <iconify-icon icon="solar:chat-round-line-linear" width="24" stroke-width="1.5"></iconify-icon>
+                </div>
+                <h3 class="text-xl font-medium tracking-tight mb-2 text-neutral-900">WhatsApp</h3>
+                <p class="text-neutral-500 text-sm font-normal leading-relaxed">
+                    Официальная интеграция WhatsApp Business API. Уведомления о бронировании, напоминания о заезде и круглосуточная поддержка гостей.
+                </p>
+            </div>
+
+            <div class="flex flex-col items-start scroll-reveal border border-neutral-200 rounded-2xl p-8 bg-white" style="transition-delay: 0.2s;">
+                <div class="w-12 h-12 rounded-lg bg-neutral-50 border border-neutral-200 text-neutral-900 flex items-center justify-center mb-6 shadow-sm">
+                    <iconify-icon icon="solar:server-square-cloud-linear" width="24" stroke-width="1.5"></iconify-icon>
+                </div>
+                <h3 class="text-xl font-medium tracking-tight mb-2 text-neutral-900">Exely PMS</h3>
+                <p class="text-neutral-500 text-sm font-normal leading-relaxed">
+                    Прямая интеграция с вашей системой управления отелем. Проверка свободных номеров и актуальных цен в реальном времени.
+                </p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-neutral-200 pt-16 pb-8">
+        <div class="max-w-screen-xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2 text-lg font-medium tracking-tight text-neutral-900">
+                <div class="w-6 h-6 bg-neutral-900 rounded-sm flex items-center justify-center text-white">
+                    <iconify-icon icon="solar:buildings-2-linear" width="16" stroke-width="1.5"></iconify-icon>
+                </div>
+                Asystem
+            </div>
+            <div class="flex gap-6 text-sm font-medium text-neutral-500 tracking-tight">
+                <a href="#" class="hover:text-neutral-900 transition-colors">Политика</a>
+                <a href="#" class="hover:text-neutral-900 transition-colors">Условия</a>
+                <a href="#" class="hover:text-neutral-900 transition-colors">Контакты</a>
+            </div>
+            <div class="text-neutral-400 text-xs font-normal">
+                © 2024 Asystem. Все права защищены.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // 1. Hero Text Reveal Animation
+            const heroTitle = document.getElementById('hero-title');
+            const words = ["СОЗДАЙТЕ", "AI-АССИСТЕНТА", "ДЛЯ", "ВАШЕГО", "ОТЕЛЯ"];
+
+            words.forEach((word, wordIndex) => {
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'inline-flex overflow-hidden';
+
+                const suffix = wordIndex < words.length - 1 ? '\u00A0' : '';
+
+                [...word, suffix].forEach((char, charIndex) => {
+                    const charSpan = document.createElement('span');
+                    if (char === '\u00A0') {
+                        charSpan.innerHTML = '&nbsp;';
+                    } else {
+                        charSpan.textContent = char;
+                    }
+                    charSpan.className = 'reveal-letter';
+                    const delay = (wordIndex * 0.15) + (charIndex * 0.04);
+                    charSpan.style.transitionDelay = `${delay}s`;
+                    wordSpan.appendChild(charSpan);
+                });
+
+                heroTitle.appendChild(wordSpan);
+            });
+
+            setTimeout(() => {
+                document.querySelectorAll('.reveal-letter').forEach(el => {
+                    el.classList.add('revealed');
+                });
+            }, 100);
+
+            // 2. Manifesto Highlight on Scroll
+            const manifestoText = document.getElementById('manifesto-text');
+            const manifestoWords = manifestoText.innerText.split(' ');
+            manifestoText.innerHTML = '';
+
+            manifestoWords.forEach(word => {
+                const span = document.createElement('span');
+                span.textContent = word + ' ';
+                span.className = 'manifesto-word';
+                manifestoText.appendChild(span);
+            });
+
+            const wordElements = document.querySelectorAll('.manifesto-word');
+
+            window.addEventListener('scroll', () => {
+                const rect = manifestoText.getBoundingClientRect();
+                const viewHeight = window.innerHeight;
+
+                if(rect.top < viewHeight && rect.bottom > 0) {
+                    const scrollProgress = 1 - (rect.bottom / (viewHeight + rect.height));
+                    const highlightIndex = Math.floor(scrollProgress * wordElements.length * 1.5);
+
+                    wordElements.forEach((el, index) => {
+                        if(index < highlightIndex) {
+                            el.classList.add('highlight');
+                        } else {
+                            el.classList.remove('highlight');
+                        }
+                    });
+                }
+            });
+
+            // 3. Navbar logic
+            const navbar = document.getElementById('navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 50) {
+                    navbar.classList.add('custom-shadow');
+                } else {
+                    navbar.classList.remove('custom-shadow');
+                }
+            });
+
+            // 4. Intersection Observer for elements
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll('.scroll-reveal').forEach(el => {
+                observer.observe(el);
+            });
+
+            // 5. Populate Cards (Hotel-specific problems)
+            const useCases = [
+                {
+                    title: "Ночные бронирования",
+                    desc: "30-40% всех броней приходят с 22:00 до 08:00, когда администратор спит. AI отвечает за секунды и не теряет ни одного гостя.",
+                    icon: "solar:moon-stars-linear",
+                    action: "Подробнее"
+                },
+                {
+                    title: "50+ языков автоматически",
+                    desc: "Гости пишут на китайском, арабском, корейском, турецком. AI распознает язык и отвечает на родном языке клиента без переводчиков.",
+                    icon: "solar:global-linear",
+                    action: "Попробовать"
+                },
+                {
+                    title: "Интеграция с Exely PMS",
+                    desc: "Бот проверяет свободные номера и актуальные цены напрямую из вашей системы управления отелем. Без ручного обновления данных.",
+                    icon: "solar:server-square-cloud-linear",
+                    action: "Настроить"
+                }
+            ];
+
+            const container = document.getElementById('use-cases-container');
+
+            useCases.forEach((item, index) => {
+                const delay = index * 0.1;
+                const card = document.createElement('div');
+                card.className = `bg-white border border-neutral-200 rounded-2xl p-8 flex flex-col card-hover-effect scroll-reveal`;
+                card.style.transitionDelay = `${delay}s`;
+
+                card.innerHTML = `
+                    <div class="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-900 mb-6">
+                        <iconify-icon icon="${item.icon}" width="20" stroke-width="1.5"></iconify-icon>
+                    </div>
+                    <h3 class="text-xl font-medium tracking-tight text-neutral-900 mb-3">${item.title}</h3>
+                    <p class="text-neutral-500 text-sm font-normal leading-relaxed mb-8 flex-grow">
+                        ${item.desc}
+                    </p>
+                    <div class="mt-auto pt-4 border-t border-neutral-100">
+                        <a href="#" class="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 hover:text-neutral-600 transition-colors tracking-tight">
+                            ${item.action} <iconify-icon icon="solar:arrow-right-linear" width="16" stroke-width="1.5"></iconify-icon>
+                        </a>
+                    </div>
+                `;
+
+                container.appendChild(card);
+                observer.observe(card);
+            });
+
+            // 6. Populate Pricing Cards
+            const pricingPlans = [
+                {
+                    name: "Lite",
+                    price: "$39",
+                    period: "/месяц",
+                    desc: "Для небольших гостевых домов",
+                    features: [
+                        "До 5 номеров",
+                        "1000 сообщений/мес",
+                        "Telegram + WhatsApp",
+                        "Базовая статистика"
+                    ],
+                    cta: "Начать",
+                    highlight: false
+                },
+                {
+                    name: "Standard",
+                    price: "$69",
+                    period: "/месяц",
+                    desc: "Для средних отелей",
+                    features: [
+                        "До 20 номеров",
+                        "5000 сообщений/мес",
+                        "Все каналы",
+                        "Интеграция с Exely PMS",
+                        "Расширенная статистика"
+                    ],
+                    cta: "Начать",
+                    highlight: true
+                },
+                {
+                    name: "Premium",
+                    price: "$119",
+                    period: "/месяц",
+                    desc: "Для крупных отелей",
+                    features: [
+                        "Безлимит номеров",
+                        "Безлимит сообщений",
+                        "Все каналы + API",
+                        "Exely PMS + Custom интеграции",
+                        "Персональный менеджер",
+                        "Кастомизация AI"
+                    ],
+                    cta: "Начать",
+                    highlight: false
+                }
+            ];
+
+            const pricingContainer = document.getElementById('pricing-container');
+
+            pricingPlans.forEach((plan, index) => {
+                const delay = index * 0.1;
+                const card = document.createElement('div');
+                const highlightClass = plan.highlight ? 'border-neutral-900 bg-neutral-50' : 'bg-white border-neutral-200';
+                card.className = `${highlightClass} border-2 rounded-2xl p-8 flex flex-col pricing-card scroll-reveal relative`;
+                card.style.transitionDelay = `${delay}s`;
+
+                const badge = plan.highlight ? '<div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-neutral-900 text-white px-3 py-1 rounded-full text-xs font-medium">Популярный</div>' : '';
+
+                const featuresList = plan.features.map(f => `
+                    <div class="flex items-start gap-2">
+                        <iconify-icon icon="solar:check-circle-linear" width="20" stroke-width="1.5" class="text-neutral-900 flex-shrink-0 mt-0.5"></iconify-icon>
+                        <span class="text-sm text-neutral-600">${f}</span>
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                    ${badge}
+                    <div class="mb-6">
+                        <h3 class="text-xl font-medium tracking-tight text-neutral-900 mb-1">${plan.name}</h3>
+                        <p class="text-neutral-500 text-sm">${plan.desc}</p>
+                    </div>
+                    <div class="mb-6">
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-4xl font-semibold text-neutral-900">${plan.price}</span>
+                            <span class="text-neutral-500 text-sm">${plan.period}</span>
+                        </div>
+                    </div>
+                    <div class="space-y-3 mb-8 flex-grow">
+                        ${featuresList}
+                    </div>
+                    <a href="#" class="w-full text-center py-3 rounded-md border-2 border-neutral-900 ${plan.highlight ? 'bg-neutral-900 text-white' : 'bg-white text-neutral-900'} text-sm font-medium tracking-tight hover:bg-neutral-800 hover:border-neutral-800 hover:text-white transition-all">
+                        ${plan.cta}
+                    </a>
+                `;
+
+                pricingContainer.appendChild(card);
+                observer.observe(card);
+            });
+        });
+    </script>
+
+
+</body></html>

@@ -1,0 +1,115 @@
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+from .database import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    hashed_password = Column(String(255), nullable=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    hotels = relationship("Hotel", back_populates="owner")
+
+
+class Hotel(Base):
+    __tablename__ = "hotels"
+
+    id = Column(Integer, primary_key=True, index=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    # Basic info
+    name = Column(String(255), nullable=False)
+    slug = Column(String(255), unique=True, index=True)
+    address = Column(String(500))
+    phone = Column(String(50))
+    email = Column(String(255))
+    website = Column(String(500))
+    description = Column(Text)
+
+    # Bot configuration
+    telegram_bot_token = Column(String(255), unique=True, index=True)
+    whatsapp_phone = Column(String(50))
+    ai_model = Column(String(100), default="deepseek/deepseek-chat")
+    system_prompt = Column(Text)
+
+    # Hotel data (JSON for flexibility)
+    rooms = Column(JSON)  # [{name, capacity, price, description}]
+    rules = Column(JSON)  # {checkin, checkout, cancellation, etc}
+    amenities = Column(JSON)  # {wifi, parking, breakfast, etc}
+
+    # Settings
+    communication_style = Column(String(50), default="friendly")
+    languages = Column(JSON, default=["ru", "en"])
+    is_active = Column(Boolean, default=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    owner = relationship("User", back_populates="hotels")
+    clients = relationship("Client", back_populates="hotel")
+    conversations = relationship("Conversation", back_populates="hotel")
+
+
+class Client(Base):
+    __tablename__ = "clients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
+
+    # Client info
+    telegram_id = Column(String(100), index=True)
+    telegram_username = Column(String(255))
+    whatsapp_phone = Column(String(50))
+
+    name = Column(String(255))
+    language = Column(String(10))
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    hotel = relationship("Hotel", back_populates="clients")
+    conversations = relationship("Conversation", back_populates="client")
+
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
+    client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
+
+    status = Column(String(50), default="active")  # active, completed, needs_operator
+    channel = Column(String(50))  # telegram, whatsapp
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    # Relationships
+    hotel = relationship("Hotel", back_populates="conversations")
+    client = relationship("Client", back_populates="conversations")
+    messages = relationship("Message", back_populates="conversation", order_by="Message.created_at")
+
+
+class Message(Base):
+    __tablename__ = "messages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
+
+    role = Column(String(20), nullable=False)  # user, assistant, system
+    content = Column(Text, nullable=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    conversation = relationship("Conversation", back_populates="messages")
