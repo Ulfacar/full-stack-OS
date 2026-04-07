@@ -6,6 +6,8 @@ from ...db.database import get_db
 from ...db.models import User, Hotel
 from ..dependencies import get_current_user
 from ..schemas import HotelCreate, HotelUpdate, Hotel as HotelSchema, HotelList
+from ...services.telegram_service import TelegramService
+from ...core.config import settings
 import re
 
 router = APIRouter(prefix="/hotels", tags=["hotels"])
@@ -66,6 +68,33 @@ async def create_hotel(
     db.add(new_hotel)
     await db.commit()
     await db.refresh(new_hotel)
+
+    # Register Telegram webhook if bot token provided
+    if hotel_data.telegram_bot_token:
+        try:
+            # Validate bot token
+            is_valid = await TelegramService.validate_bot_token(hotel_data.telegram_bot_token)
+
+            if not is_valid:
+                # Rollback hotel creation if token is invalid
+                await db.delete(new_hotel)
+                await db.commit()
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid Telegram bot token"
+                )
+
+            # Register webhook
+            telegram = TelegramService(hotel_data.telegram_bot_token)
+            webhook_url = f"{settings.WEBHOOK_BASE_URL}/webhooks/telegram/{slug}"
+            await telegram.set_webhook(webhook_url)
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"Webhook registration error: {e}")
+            # Continue even if webhook registration fails
+            # User can manually register it later
 
     return new_hotel
 

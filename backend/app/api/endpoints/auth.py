@@ -64,3 +64,35 @@ async def login(
     access_token = create_access_token(data={"sub": str(user.id)})
 
     return {"access_token": access_token, "token_type": "bearer"}
+
+
+@router.post("/dev/create-demo-user", response_model=UserSchema)
+async def create_demo_user(
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    DEV ENDPOINT: Create demo user if it doesn't exist
+    Email: demo@asystem.com
+    Password: demo123
+    """
+    # Check if demo user already exists
+    result = await db.execute(select(User).where(User.email == "demo@asystem.com"))
+    existing_user = result.scalar_one_or_none()
+
+    if existing_user:
+        return existing_user
+
+    # Create demo user
+    hashed_password = get_password_hash("demo123")
+    demo_user = User(
+        name="Demo User",
+        email="demo@asystem.com",
+        hashed_password=hashed_password,
+        is_active=True
+    )
+
+    db.add(demo_user)
+    await db.commit()
+    await db.refresh(demo_user)
+
+    return demo_user

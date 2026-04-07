@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: asystem-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: asystem
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - asystem-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: asystem-backend
+    restart: always
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/asystem
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      SECRET_KEY: ${SECRET_KEY}
+      WEBHOOK_BASE_URL: ${WEBHOOK_BASE_URL}
+      BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - asystem-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend-platform
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+    container_name: asystem-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - asystem-network
+    environment:
+      NODE_ENV: production
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: asystem-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - asystem-network
+
+  # Certbot for SSL
+  certbot:
+    image: certbot/certbot
+    container_name: asystem-certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  asystem-network:
+    driver: bridge

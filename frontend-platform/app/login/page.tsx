@@ -32,10 +32,25 @@ export default function LoginPage() {
     }
   }
 
-  const handleDevLogin = () => {
-    // DEV MODE: пропускаем авторизацию
-    localStorage.setItem('token', 'dev-token-12345')
-    router.push('/dashboard')
+  const handleQuickLogin = async () => {
+    // Быстрый вход для разработки с тестовыми креденшалами
+    setEmail('demo@asystem.com')
+    setPassword('demo123')
+    setError('')
+    setLoading(true)
+
+    try {
+      const response = await api.post('/auth/login', {
+        email: 'demo@asystem.com',
+        password: 'demo123'
+      })
+      localStorage.setItem('token', response.data.access_token)
+      router.push('/dashboard')
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Ошибка входа')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -92,14 +107,15 @@ export default function LoginPage() {
                 {loading ? 'Вход...' : 'Войти'}
               </Button>
 
-              {/* DEV MODE BUTTON */}
+              {/* Quick Login for Development */}
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-dashed border-orange-300 text-orange-600 hover:bg-orange-50"
-                onClick={handleDevLogin}
+                className="w-full border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400"
+                onClick={handleQuickLogin}
+                disabled={loading}
               >
-                🚀 DEV: Войти без бэкенда
+                ⚡ Быстрый вход (demo@asystem.com)
               </Button>
 
               <div className="text-center text-sm text-neutral-500">

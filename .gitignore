@@ -63,3 +63,6 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 nul
+
+# BMad
+_bmad-output/
