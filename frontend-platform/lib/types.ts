@@ -47,6 +47,7 @@ export interface HotelAmenities {
   beach?: boolean
   transfer?: boolean
   transferCost?: string
+  excursions?: boolean
   other?: string
 }
 
