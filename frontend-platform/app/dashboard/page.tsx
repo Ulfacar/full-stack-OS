@@ -1,113 +1,81 @@
 'use client'
-
-import { useQuery } from '@tanstack/react-query'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { useEffect, useState } from 'react'
 import api from '@/lib/api'
-import type { Hotel } from '@/lib/types'
+
+interface Application { id: number; status: string; hotel_name: string; contact_name: string | null; contact_phone: string | null; created_at: string }
+interface Hotel { id: number; name: string; slug: string; is_active: boolean; telegram_bot_token: string | null; created_at: string }
+
+const STATUS_LABELS: Record<string, string> = { pending: 'Ожидает', configuring: 'Настройка', active: 'Активен', rejected: 'Отклонён' }
+const STATUS_COLORS: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-700', configuring: 'bg-blue-100 text-blue-700', active: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-700' }
 
 export default function DashboardPage() {
-  const { data: hotels, isLoading } = useQuery({
-    queryKey: ['hotels'],
-    queryFn: async () => {
-      const response = await api.get('/hotels')
-      return response.data as Hotel[]
-    },
-  })
+  const [applications, setApplications] = useState<Application[]>([])
+  const [hotels, setHotels] = useState<Hotel[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [appsRes, hotelsRes] = await Promise.all([
+          api.get('/admin/applications'),
+          api.get('/hotels'),
+        ])
+        setApplications(appsRes.data)
+        setHotels(hotelsRes.data)
+      } catch (err) { console.error(err) }
+      setLoading(false)
+    }
+    load()
+  }, [])
+
+  if (loading) return <div className="p-8 text-neutral-400">Загрузка...</div>
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 pt-14 lg:pt-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 lg:mb-8">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-neutral-900 mb-1">
-            Мои отели
-          </h1>
-          <p className="text-neutral-500 text-sm">
-            Управляйте AI-ассистентами для ваших отелей
-          </p>
-        </div>
-        <Link href="/hotels/new">
-          <Button size="lg" className="w-full sm:w-auto">
-            + Создать новый бот
-          </Button>
-        </Link>
+    <div className="space-y-8">
+      <div><h1 className="text-2xl font-bold mb-1">Dashboard</h1><p className="text-neutral-500 text-sm">Управление ботами отелей</p></div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-2xl font-bold">{applications.filter(a => a.status === 'pending').length}</div><div className="text-sm text-neutral-500">Новых заявок</div></div>
+        <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-2xl font-bold">{hotels.filter(h => h.is_active).length}</div><div className="text-sm text-neutral-500">Активных ботов</div></div>
+        <div className="bg-white rounded-xl p-4 shadow-sm"><div className="text-2xl font-bold">{hotels.length}</div><div className="text-sm text-neutral-500">Всего отелей</div></div>
       </div>
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="text-center py-12 text-neutral-400">
-          Загрузка...
-        </div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && (!hotels || hotels.length === 0) && (
-        <div className="text-center py-20">
-          <div className="text-6xl mb-4">🏨</div>
-          <h2 className="text-2xl font-medium text-neutral-900 mb-2">
-            У вас пока нет ботов
-          </h2>
-          <p className="text-neutral-500 mb-6">
-            Создайте первого AI-ассистента для вашего отеля
-          </p>
-          <Link href="/hotels/new">
-            <Button size="lg">
-              Создать первый бот
-            </Button>
-          </Link>
-        </div>
-      )}
-
-      {/* Hotels List */}
-      {!isLoading && hotels && hotels.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          {hotels.map((hotel) => (
-            <Card key={hotel.id} className="hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="text-lg font-medium tracking-tight">
-                  {hotel.name}
-                </h3>
-                <Badge variant={hotel.is_active ? 'success' : 'default'}>
-                  {hotel.is_active ? 'Активен' : 'Неактивен'}
-                </Badge>
-              </div>
-
-              <div className="space-y-2 mb-6 text-sm text-neutral-600">
-                <div>Модель: {hotel.ai_model}</div>
-                <div className="text-xs text-neutral-400">
-                  Последнее обновление: только что
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Заявки</h2>
+        {applications.length === 0 ? (
+          <div className="bg-white rounded-xl p-6 text-center text-neutral-400 shadow-sm">Пока нет заявок.</div>
+        ) : (
+          <div className="space-y-2">
+            {applications.map(app => (
+              <a key={app.id} href={`/dashboard/applications/${app.id}`} className="block bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="font-medium">{app.hotel_name}</div>
+                    <div className="text-sm text-neutral-500">{app.contact_name} &middot; {app.contact_phone} &middot; {new Date(app.created_at).toLocaleDateString('ru')}</div>
+                  </div>
+                  <span className={`text-xs px-2 py-1 rounded-full ${STATUS_COLORS[app.status] || 'bg-neutral-100'}`}>{STATUS_LABELS[app.status] || app.status}</span>
                 </div>
-              </div>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <Link href={`/hotels/${hotel.id}`}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Статистика
-                  </Button>
-                </Link>
-                <Link href={`/hotels/${hotel.id}/edit`}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Настройки
-                  </Button>
-                </Link>
-                <Link href={`/hotels/${hotel.id}`}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Тест бота
-                  </Button>
-                </Link>
-                <Link href={`/hotels/${hotel.id}/edit`}>
-                  <Button variant="outline" size="sm" className="w-full">
-                    Редактировать
-                  </Button>
-                </Link>
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Активные отели</h2>
+        {hotels.length === 0 ? (
+          <div className="bg-white rounded-xl p-6 text-center text-neutral-400 shadow-sm">Нет активных отелей.</div>
+        ) : (
+          <div className="space-y-2">
+            {hotels.map(hotel => (
+              <div key={hotel.id} className="bg-white rounded-xl p-4 shadow-sm flex justify-between items-center">
+                <div><div className="font-medium">{hotel.name}</div><div className="text-sm text-neutral-500">/{hotel.slug} &middot; {hotel.telegram_bot_token ? 'TG connected' : 'TG not set'}</div></div>
+                <div className={`w-3 h-3 rounded-full ${hotel.is_active ? 'bg-green-500' : 'bg-neutral-300'}`} />
               </div>
-            </Card>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
