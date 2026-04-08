@@ -148,3 +148,23 @@ class Billing(Base):
 
     # Relationships
     hotel = relationship("Hotel")
+
+
+class Application(Base):
+    """Заявка на создание бота от клиента."""
+    __tablename__ = "applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    status = Column(String(20), default="pending")  # pending, configuring, active, rejected
+    hotel_name = Column(String(255), nullable=False)
+    contact_name = Column(String(255), nullable=True)
+    contact_phone = Column(String(50), nullable=True)
+    contact_email = Column(String(255), nullable=True)
+    form_data = Column(JSON, nullable=True)  # Все данные формы (номера, цены, правила, удобства)
+    generated_prompt = Column(Text, nullable=True)  # Сгенерированный промпт
+    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=True)  # Связь после активации
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    hotel = relationship("Hotel")
