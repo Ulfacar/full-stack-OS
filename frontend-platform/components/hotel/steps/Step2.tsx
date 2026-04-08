@@ -17,7 +17,7 @@ export function Step2({ formData, updateFormData }: Step2Props) {
     updateFormData({
       rooms: [
         ...rooms,
-        { name: '', capacity: 2, price: 0, description: '' },
+        { name: '', count: 1, capacity: 2, price: 0, description: '' },
       ],
     })
   }
