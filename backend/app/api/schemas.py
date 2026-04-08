@@ -63,7 +63,7 @@ class HotelAmenities(BaseModel):
 class HotelCreate(BaseModel):
     name: str
     address: Optional[str] = None
-    phone: str
+    phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
     description: Optional[str] = None
@@ -72,11 +72,11 @@ class HotelCreate(BaseModel):
     rules: Optional[HotelRules] = None
     amenities: Optional[HotelAmenities] = None
 
-    telegram_bot_token: str
+    telegram_bot_token: Optional[str] = None
     whatsapp_phone: Optional[str] = None
 
     ai_model: str = "deepseek/deepseek-chat"
-    system_prompt: str
+    system_prompt: Optional[str] = None
     communication_style: str = "friendly"
     languages: List[str] = ["ru", "en"]
 
@@ -109,7 +109,7 @@ class Hotel(BaseModel):
     name: str
     slug: str
     address: Optional[str]
-    phone: str
+    phone: Optional[str] = None
     email: Optional[str]
     website: Optional[str]
     description: Optional[str]
@@ -117,7 +117,7 @@ class Hotel(BaseModel):
     telegram_bot_token: Optional[str]
     whatsapp_phone: Optional[str]
     ai_model: str
-    system_prompt: str
+    system_prompt: Optional[str] = None
 
     rooms: Optional[List[dict]] = []
     rules: Optional[dict] = {}
