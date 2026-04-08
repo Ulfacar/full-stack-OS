@@ -33,6 +33,7 @@ export interface HotelRules {
 }
 
 export interface HotelAmenities {
+  breakfast?: boolean
   wifi?: boolean
   parking?: boolean
   pool?: boolean
