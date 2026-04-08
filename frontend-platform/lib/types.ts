@@ -19,34 +19,34 @@ export interface SeasonPrice {
 }
 
 export interface HotelRules {
-  checkin: string
-  checkout: string
-  cancellation: string
-  prepayment: string
-  paymentCards: boolean
-  paymentQR: boolean
-  paymentCash: boolean
-  paymentTransfer: boolean
-  transferDetails: string
-  pets: string
-  smoking: string
+  checkin?: string
+  checkout?: string
+  cancellation?: string
+  prepayment?: string
+  paymentCards?: boolean
+  paymentQR?: boolean
+  paymentCash?: boolean
+  paymentTransfer?: boolean
+  transferDetails?: string
+  pets?: string
+  smoking?: string
 }
 
 export interface HotelAmenities {
-  wifi: boolean
-  parking: boolean
-  pool: boolean
-  restaurant: boolean
-  restaurantCapacity: string
-  conference: boolean
-  conferenceCapacity: string
-  conferencePrice: string
-  sauna: boolean
-  playground: boolean
-  beach: boolean
-  transfer: boolean
-  transferCost: string
-  other: string
+  wifi?: boolean
+  parking?: boolean
+  pool?: boolean
+  restaurant?: boolean
+  restaurantCapacity?: string
+  conference?: boolean
+  conferenceCapacity?: string
+  conferencePrice?: string
+  sauna?: boolean
+  playground?: boolean
+  beach?: boolean
+  transfer?: boolean
+  transferCost?: string
+  other?: string
 }
 
 export interface HotelFormData {
