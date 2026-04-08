@@ -3,6 +3,8 @@ export interface RoomCategory {
   count: number
   capacity: number
   description?: string
+  price?: number
+  maxGuests?: number
 }
 
 export interface Season {
@@ -95,6 +97,8 @@ export interface Hotel {
   email?: string
   website?: string
   description?: string
+  price?: number
+  maxGuests?: number
   rooms?: RoomCategory[]
   rules?: HotelRules
   amenities?: HotelAmenities
