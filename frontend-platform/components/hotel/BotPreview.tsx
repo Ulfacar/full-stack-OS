@@ -34,7 +34,7 @@ export function BotPreview({ formData }: BotPreviewProps) {
     if (lowerQ.includes('цен') || lowerQ.includes('стоим') || lowerQ.includes('price')) {
       if (formData.rooms && formData.rooms.length > 0) {
         const roomsList = formData.rooms
-          .map((r) => `${r.name} (${r.capacity} чел) - ${r.price} сом/сутки`)
+          .map((r) => `${r.name} (до ${r.capacity} гостей)`)
           .join(', ')
         return `Наши номера: ${roomsList}`
       }
