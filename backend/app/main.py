@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
 from .api.endpoints import auth, hotels, webhooks, admin
+from .api.endpoints.preview_chat import router as preview_router
+from .api.endpoints.webhooks_whatsapp import router as whatsapp_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -22,6 +24,8 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(hotels.router)
 app.include_router(webhooks.router)
+app.include_router(whatsapp_router)
+app.include_router(preview_router)
 app.include_router(admin.router)
 
 
