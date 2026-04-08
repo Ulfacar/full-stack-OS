@@ -18,11 +18,11 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 lg:p-8 pt-14 lg:pt-8">
       {/* Header */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6 lg:mb-8">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-neutral-900 mb-1">
+          <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-neutral-900 mb-1">
             Мои отели
           </h1>
           <p className="text-neutral-500 text-sm">
@@ -30,7 +30,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <Link href="/hotels/new">
-          <Button size="lg">
+          <Button size="lg" className="w-full sm:w-auto">
             + Создать новый бот
           </Button>
         </Link>
@@ -63,18 +63,15 @@ export default function DashboardPage() {
 
       {/* Hotels List */}
       {!isLoading && hotels && hotels.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
           {hotels.map((hotel) => (
             <Card key={hotel.id} className="hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🏨</span>
-                  <h3 className="text-lg font-medium tracking-tight">
-                    {hotel.name}
-                  </h3>
-                </div>
+                <h3 className="text-lg font-medium tracking-tight">
+                  {hotel.name}
+                </h3>
                 <Badge variant={hotel.is_active ? 'success' : 'default'}>
-                  {hotel.is_active ? '✅ Активен' : 'Неактивен'}
+                  {hotel.is_active ? 'Активен' : 'Неактивен'}
                 </Badge>
               </div>
 
@@ -96,7 +93,7 @@ export default function DashboardPage() {
                     Настройки
                   </Button>
                 </Link>
-                <Link href={`/hotels/${hotel.id}/test`}>
+                <Link href={`/hotels/${hotel.id}`}>
                   <Button variant="outline" size="sm" className="w-full">
                     Тест бота
                   </Button>

@@ -145,3 +145,62 @@ class HotelList(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# Admin schemas
+class HotelWithStats(BaseModel):
+    id: int
+    name: str
+    slug: str
+    ai_model: str
+    communication_style: str
+    languages: List[str]
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime]
+    conversations_month: int = 0
+    active_conversations: int = 0
+    ai_cost_month: float = 0.0
+    last_activity: Optional[str] = None
+    requests_handled: int = 0
+
+    class Config:
+        from_attributes = True
+
+
+class AdminStats(BaseModel):
+    total_hotels: int
+    active_hotels: int
+    total_conversations_month: int
+    total_ai_cost_month: float
+    openrouter_balance: float
+
+
+class AIUsageDaily(BaseModel):
+    date: str
+    conversations: int
+    prompt_tokens: int
+    completion_tokens: int
+    cost: float
+
+
+class BillingRecord(BaseModel):
+    id: int
+    hotel_id: int
+    hotel_name: str
+    month: str
+    amount: int
+    status: str
+    paid_at: Optional[datetime]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class HotelStatsResponse(BaseModel):
+    messages_total: int
+    conversations_total: int
+    conversations_month: int
+    requests_handled: int
+    automation_rate: int

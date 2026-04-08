@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-from .api.endpoints import auth, hotels, webhooks
+from .api.endpoints import auth, hotels, webhooks, admin
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -22,6 +22,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(hotels.router)
 app.include_router(webhooks.router)
+app.include_router(admin.router)
 
 
 @app.get("/")

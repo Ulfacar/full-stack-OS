@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func, and_
 from typing import List
+from datetime import datetime
 from ...db.database import get_db
-from ...db.models import User, Hotel
+from ...db.models import User, Hotel, Conversation, Message, AIUsage
 from ..dependencies import get_current_user
-from ..schemas import HotelCreate, HotelUpdate, Hotel as HotelSchema, HotelList
+from ..schemas import HotelCreate, HotelUpdate, Hotel as HotelSchema, HotelList, HotelStatsResponse
 from ...services.telegram_service import TelegramService
 from ...core.config import settings
 import re
@@ -177,6 +178,87 @@ async def update_hotel(
     await db.refresh(hotel)
 
     return hotel
+
+
+@router.get("/{hotel_id}/stats", response_model=HotelStatsResponse)
+async def get_hotel_stats(
+    hotel_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """Get hotel statistics for the hotel manager (no $ amounts)."""
+    result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
+    hotel = result.scalar_one_or_none()
+
+    if not hotel:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hotel not found")
+    if hotel.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+
+    now = datetime.utcnow()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+    # Total messages
+    msg_result = await db.execute(
+        select(func.count(Message.id))
+        .join(Conversation, Message.conversation_id == Conversation.id)
+        .where(Conversation.hotel_id == hotel_id)
+    )
+    messages_total = msg_result.scalar() or 0
+
+    # Total conversations
+    conv_total_result = await db.execute(
+        select(func.count(Conversation.id)).where(Conversation.hotel_id == hotel_id)
+    )
+    conversations_total = conv_total_result.scalar() or 0
+
+    # Conversations this month
+    conv_month_result = await db.execute(
+        select(func.count(Conversation.id)).where(
+            and_(Conversation.hotel_id == hotel_id, Conversation.created_at >= month_start)
+        )
+    )
+    conversations_month = conv_month_result.scalar() or 0
+
+    # Requests handled by bot this month (assistant messages)
+    handled_result = await db.execute(
+        select(func.count(Message.id))
+        .join(Conversation, Message.conversation_id == Conversation.id)
+        .where(
+            and_(
+                Conversation.hotel_id == hotel_id,
+                Message.role == "assistant",
+                Message.created_at >= month_start,
+            )
+        )
+    )
+    requests_handled = handled_result.scalar() or 0
+
+    # Automation rate: conversations completed without operator / total completed
+    completed_result = await db.execute(
+        select(func.count(Conversation.id)).where(
+            and_(Conversation.hotel_id == hotel_id, Conversation.status == "completed")
+        )
+    )
+    completed = completed_result.scalar() or 0
+
+    needs_operator_result = await db.execute(
+        select(func.count(Conversation.id)).where(
+            and_(Conversation.hotel_id == hotel_id, Conversation.status == "needs_operator")
+        )
+    )
+    needs_operator = needs_operator_result.scalar() or 0
+
+    total_resolved = completed + needs_operator
+    automation_rate = int((completed / total_resolved * 100)) if total_resolved > 0 else 0
+
+    return HotelStatsResponse(
+        messages_total=messages_total,
+        conversations_total=conversations_total,
+        conversations_month=conversations_month,
+        requests_handled=requests_handled,
+        automation_rate=automation_rate,
+    )
 
 
 @router.delete("/{hotel_id}", status_code=status.HTTP_204_NO_CONTENT)

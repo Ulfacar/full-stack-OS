@@ -113,3 +113,38 @@ class Message(Base):
 
     # Relationships
     conversation = relationship("Conversation", back_populates="messages")
+
+
+class AIUsage(Base):
+    __tablename__ = "ai_usage"
+
+    id = Column(Integer, primary_key=True, index=True)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=True)
+
+    prompt_tokens = Column(Integer, default=0)
+    completion_tokens = Column(Integer, default=0)
+    model = Column(String(100))
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    hotel = relationship("Hotel")
+    conversation = relationship("Conversation")
+
+
+class Billing(Base):
+    __tablename__ = "billing"
+
+    id = Column(Integer, primary_key=True, index=True)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
+
+    month = Column(String(7), nullable=False)  # "2026-04"
+    amount = Column(Integer, default=20)
+    status = Column(String(20), default="pending")  # paid, pending, overdue
+    paid_at = Column(DateTime(timezone=True), nullable=True)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    hotel = relationship("Hotel")
