@@ -2,13 +2,18 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 security = HTTPBearer()
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from ...core.security import verify_password, get_password_hash, create_access_token
 from ...db.database import get_db
 from ...db.models import User
 from ..schemas import UserCreate, UserLogin, Token, User as UserSchema
+from ...core.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# Max allowed users — prevents open registration abuse.
+# First user becomes admin, subsequent registrations require invite code.
+INVITE_CODE = "EXMACHINA2026"
 
 
 @router.post("/register", response_model=UserSchema)
@@ -25,6 +30,20 @@ async def register(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
+
+    # Check if this is the first user (auto-approve) or require invite code
+    count_result = await db.execute(select(func.count(User.id)))
+    user_count = count_result.scalar() or 0
+
+    if user_count > 0:
+        # Not the first user — require invite code in the name field
+        # Format: "Name|INVITE_CODE"
+        if "|" not in user_data.name or user_data.name.split("|")[-1] != INVITE_CODE:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Registration is invite-only. Contact admin."
+            )
+        user_data.name = user_data.name.split("|")[0].strip()
 
     # Create user
     hashed_password = get_password_hash(user_data.password)
@@ -46,7 +65,6 @@ async def login(
     credentials: UserLogin,
     db: AsyncSession = Depends(get_db)
 ):
-    # Find user
     result = await db.execute(select(User).where(User.email == credentials.email))
     user = result.scalar_one_or_none()
 
@@ -62,42 +80,8 @@ async def login(
             detail="Inactive user"
         )
 
-    # Create token
     access_token = create_access_token(data={"sub": str(user.id)})
-
     return {"access_token": access_token, "token_type": "bearer"}
-
-
-@router.post("/dev/create-demo-user", response_model=UserSchema)
-async def create_demo_user(
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    DEV ENDPOINT: Create demo user if it doesn't exist
-    Email: demo@asystem.com
-    Password: demo123
-    """
-    # Check if demo user already exists
-    result = await db.execute(select(User).where(User.email == "demo@asystem.com"))
-    existing_user = result.scalar_one_or_none()
-
-    if existing_user:
-        return existing_user
-
-    # Create demo user
-    hashed_password = get_password_hash("demo123")
-    demo_user = User(
-        name="Demo User",
-        email="demo@asystem.com",
-        hashed_password=hashed_password,
-        is_active=True
-    )
-
-    db.add(demo_user)
-    await db.commit()
-    await db.refresh(demo_user)
-
-    return demo_user
 
 
 @router.get("/me", response_model=UserSchema)
