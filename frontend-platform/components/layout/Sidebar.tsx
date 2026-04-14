@@ -1,22 +1,39 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import api from '@/lib/api'
 
-const menuItems = [
+const adminMenu = [
   { icon: '📊', label: 'Дашборд', href: '/dashboard' },
-  { icon: '🏨', label: 'Активные отели', href: '/dashboard/hotels' },
+  { icon: '🏨', label: 'Отели', href: '/dashboard/hotels' },
   { icon: '📈', label: 'Статистика', href: '/dashboard/stats' },
   { icon: '💰', label: 'Биллинг', href: '/dashboard/billing' },
-  { icon: '⚙️', label: 'Настройки', href: '/settings' },
+  { icon: '👥', label: 'Пользователи', href: '/dashboard/users' },
+]
+
+const salesMenu = [
+  { icon: '➕', label: 'Создать бота', href: '/hotels/new' },
+  { icon: '🏨', label: 'Мои отели', href: '/dashboard/hotels' },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [userRole, setUserRole] = useState<string>('admin')
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      try {
+        const res = await api.get('/auth/me')
+        setUserRole(res.data.role || 'admin')
+      } catch {}
+    }
+    fetchRole()
+  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -24,6 +41,8 @@ export function Sidebar() {
   }
 
   const isActive = (href: string) => pathname === href
+
+  const menuItems = userRole === 'sales' ? salesMenu : adminMenu
 
   const sidebarContent = (
     <>
@@ -35,6 +54,9 @@ export function Sidebar() {
           </div>
           Ex-Machina
         </Link>
+        {userRole === 'sales' && (
+          <div className="text-xs text-neutral-400 mt-1">Sales</div>
+        )}
       </div>
 
       {/* Menu */}

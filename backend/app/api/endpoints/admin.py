@@ -1,14 +1,14 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from typing import List, Optional
 from datetime import datetime, timedelta
 from ...db.database import get_db
-from ...db.database import get_db
 from ...db.models import User, Hotel, Conversation, Message, AIUsage, Billing
 from ..dependencies import get_current_user
-from ..schemas import HotelWithStats, AdminStats, AIUsageDaily, BillingRecord, HotelStatsResponse
+from ..schemas import HotelWithStats, AdminStats, AIUsageDaily, BillingRecord, HotelStatsResponse, User as UserSchema
 from ...services.budget_service import budget_service
+from ...core.security import get_password_hash
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -270,6 +270,51 @@ async def get_billing(
         ))
 
     return records
+
+
+@router.get("/users/", response_model=List[UserSchema])
+async def get_users(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all users (admin only)."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    result = await db.execute(select(User).order_by(User.created_at.desc()))
+    return result.scalars().all()
+
+
+@router.post("/users/create-sales", response_model=UserSchema)
+async def create_sales_user(
+    data: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a sales user (admin only)."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+
+    email = data.get("email")
+    name = data.get("name")
+    password = data.get("password")
+
+    if not email or not name or not password:
+        raise HTTPException(status_code=400, detail="email, name, password required")
+
+    existing = await db.execute(select(User).where(User.email == email))
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already exists")
+
+    user = User(
+        name=name,
+        email=email,
+        hashed_password=get_password_hash(password),
+        role="sales",
+    )
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
 
 
 @router.get("/hotels/{hotel_id}/budget")

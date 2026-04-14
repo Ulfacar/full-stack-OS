@@ -24,6 +24,7 @@ class User(BaseModel):
     id: int
     name: str
     email: str
+    role: str = "admin"
     is_active: bool
 
     class Config:
