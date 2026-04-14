@@ -14,6 +14,7 @@ from ...services.ai_service import ai_service
 from ...services.budget_service import budget_service
 from ...services.response_processor import process_response
 from ...services.notification_service import NotificationService
+from ...services.followup_service import schedule_followup, cancel_followup
 
 router = APIRouter(prefix="/webhooks/telegram", tags=["webhooks"])
 
@@ -115,6 +116,9 @@ async def telegram_webhook(
             # TODO: forward to manager's Telegram
             return {"ok": True}
 
+        # Cancel pending followup — client responded
+        cancel_followup(conversation.id)
+
         # Save user message
         user_msg = Message(
             conversation_id=conversation.id,
@@ -203,6 +207,16 @@ async def telegram_webhook(
 
         # Send response to Telegram
         await telegram.send_message(chat_id=chat_id, text=ai_response)
+
+        # Schedule followup if bot responded (not manager transfer)
+        if not needs_manager:
+            await schedule_followup(
+                conversation_id=conversation.id,
+                hotel_id=hotel.id,
+                client_channel="telegram",
+                client_channel_id=str(chat_id),
+                language=client.language or "ru",
+            )
 
         return {"ok": True}
 
