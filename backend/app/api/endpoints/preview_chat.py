@@ -1,8 +1,10 @@
 """Preview Chat — мини-чат для тестирования бота при создании отеля."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from ...db.models import User
+from ..dependencies import get_current_user
 from ...services.ai_service import ai_service
 
 router = APIRouter(prefix="/preview-chat", tags=["preview"])
@@ -15,8 +17,11 @@ class PreviewRequest(BaseModel):
 
 
 @router.post("")
-async def preview_chat(data: PreviewRequest):
-    """Генерировать ответ бота для превью (без сохранения в БД, без проверки бюджета)."""
+async def preview_chat(
+    data: PreviewRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Генерировать ответ бота для превью. Требует авторизации."""
     system_prompt = await ai_service.generate_system_prompt(data.hotel_data)
 
     messages = [{"role": "system", "content": system_prompt}]
