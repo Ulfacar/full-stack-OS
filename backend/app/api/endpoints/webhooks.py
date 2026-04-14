@@ -137,6 +137,28 @@ async def telegram_webhook(
         )
         history_messages = list(reversed(history_result.scalars().all()))
 
+        # Cross-dialog memory: 10 messages from up to 3 previous conversations
+        prev_convs_result = await db.execute(
+            select(Conversation.id)
+            .where(
+                Conversation.hotel_id == hotel.id,
+                Conversation.client_id == client.id,
+                Conversation.id != conversation.id,
+            )
+            .order_by(Conversation.created_at.desc())
+            .limit(3)
+        )
+        prev_conv_ids = [row[0] for row in prev_convs_result.all()]
+        cross_dialog_messages = []
+        if prev_conv_ids:
+            prev_msgs_result = await db.execute(
+                select(Message)
+                .where(Message.conversation_id.in_(prev_conv_ids))
+                .order_by(Message.created_at.desc())
+                .limit(10)
+            )
+            cross_dialog_messages = list(reversed(prev_msgs_result.scalars().all()))
+
         # Generate system prompt if not exists
         if not hotel.system_prompt:
             hotel_data = {
@@ -157,6 +179,16 @@ async def telegram_webhook(
 
         # Build messages for AI
         ai_messages = [{"role": "system", "content": hotel.system_prompt}]
+
+        # Add cross-dialog memory (previous conversations with this client)
+        if cross_dialog_messages:
+            memory_text = "=== ПАМЯТЬ (предыдущие диалоги с этим гостем) ===\n"
+            for msg in cross_dialog_messages:
+                role_label = "Гость" if msg.role == "user" else "Бот"
+                memory_text += f"{role_label}: {msg.content}\n"
+            memory_text += "=== КОНЕЦ ПАМЯТИ ==="
+            ai_messages.append({"role": "system", "content": memory_text})
+
         for msg in history_messages[:-1]:
             ai_messages.append({"role": msg.role, "content": msg.content})
         ai_messages.append({"role": "user", "content": user_message})
