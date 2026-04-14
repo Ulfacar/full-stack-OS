@@ -66,6 +66,11 @@ async def whatsapp_webhook(
     if not sender:
         return {"ok": True}
 
+    # Check wappi credentials
+    if not hotel.wappi_api_key or not hotel.wappi_profile_id:
+        logger.warning(f"Hotel {hotel.slug}: wappi credentials not configured")
+        return {"ok": True}
+
     # Budget check BEFORE processing
     has_budget, remaining = await budget_service.check_budget(hotel.id, db)
     if not has_budget:
@@ -77,13 +82,12 @@ async def whatsapp_webhook(
             fallback += f": {hotel.phone}"
         else:
             fallback += "."
-        if hotel.whatsapp_phone:
-            await _send_whatsapp(
-                api_key=hotel.whatsapp_phone,
-                profile_id="",
-                recipient=sender,
-                text=fallback,
-            )
+        await _send_whatsapp(
+            api_key=hotel.wappi_api_key,
+            profile_id=hotel.wappi_profile_id,
+            recipient=sender,
+            text=fallback,
+        )
         return {"ok": True}
 
     try:
@@ -177,13 +181,12 @@ async def whatsapp_webhook(
         await db.commit()
 
         # Отправляем через wappi
-        if hotel.whatsapp_phone:
-            await _send_whatsapp(
-                api_key=hotel.whatsapp_phone,
-                profile_id="",
-                recipient=sender,
-                text=ai_response,
-            )
+        await _send_whatsapp(
+            api_key=hotel.wappi_api_key,
+            profile_id=hotel.wappi_profile_id,
+            recipient=sender,
+            text=ai_response,
+        )
 
         return {"ok": True}
 

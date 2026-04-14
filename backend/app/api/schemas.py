@@ -74,6 +74,8 @@ class HotelCreate(BaseModel):
 
     telegram_bot_token: Optional[str] = None
     whatsapp_phone: Optional[str] = None
+    wappi_api_key: Optional[str] = None
+    wappi_profile_id: Optional[str] = None
 
     ai_model: str = "anthropic/claude-3.5-haiku"
     system_prompt: Optional[str] = None
@@ -103,6 +105,8 @@ class HotelUpdate(BaseModel):
     languages: Optional[List[str]] = None
     is_active: Optional[bool] = None
     monthly_budget: Optional[float] = None
+    wappi_api_key: Optional[str] = None
+    wappi_profile_id: Optional[str] = None
 
 
 class Hotel(BaseModel):

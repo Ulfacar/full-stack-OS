@@ -201,6 +201,8 @@ async def configure_channels(
 
     telegram_token = channel_data.get("telegram_bot_token")
     whatsapp_phone = channel_data.get("whatsapp_phone")
+    wappi_api_key = channel_data.get("wappi_api_key")
+    wappi_profile_id = channel_data.get("wappi_profile_id")
 
     # Configure Telegram
     if telegram_token:
@@ -218,12 +220,16 @@ async def configure_channels(
             webhook_url = f"{settings.WEBHOOK_BASE_URL}/webhooks/telegram/{hotel.slug}"
             await telegram.set_webhook(webhook_url)
 
-    # Configure WhatsApp
+    # Configure WhatsApp (wappi.pro)
     if whatsapp_phone:
         hotel.whatsapp_phone = whatsapp_phone
+    if wappi_api_key:
+        hotel.wappi_api_key = wappi_api_key
+    if wappi_profile_id:
+        hotel.wappi_profile_id = wappi_profile_id
 
     # Activate hotel if at least one channel configured
-    if hotel.telegram_bot_token or hotel.whatsapp_phone:
+    if hotel.telegram_bot_token or (hotel.wappi_api_key and hotel.wappi_profile_id):
         hotel.status = "active"
 
     await db.commit()

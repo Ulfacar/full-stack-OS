@@ -30,6 +30,8 @@ export default function AdminHotelPage() {
   // Channel config form
   const [telegramToken, setTelegramToken] = useState('')
   const [whatsappPhone, setWhatsappPhone] = useState('')
+  const [wappiApiKey, setWappiApiKey] = useState('')
+  const [wappiProfileId, setWappiProfileId] = useState('')
   const [budgetInput, setBudgetInput] = useState('')
 
   useEffect(() => {
@@ -43,6 +45,8 @@ export default function AdminHotelPage() {
         setBudget(budgetRes.data)
         setTelegramToken(hotelRes.data.telegram_bot_token || '')
         setWhatsappPhone(hotelRes.data.whatsapp_phone || '')
+        setWappiApiKey(hotelRes.data.wappi_api_key || '')
+        setWappiProfileId(hotelRes.data.wappi_profile_id || '')
         setBudgetInput(String(budgetRes.data.monthly_budget))
       } catch {
         router.push('/dashboard/hotels')
@@ -60,6 +64,8 @@ export default function AdminHotelPage() {
       const res = await api.post(`/hotels/${params.id}/configure-channels`, {
         telegram_bot_token: telegramToken || undefined,
         whatsapp_phone: whatsappPhone || undefined,
+        wappi_api_key: wappiApiKey || undefined,
+        wappi_profile_id: wappiProfileId || undefined,
       })
       setHotel(res.data)
       setMessage('Каналы настроены!')
@@ -208,11 +214,27 @@ export default function AdminHotelPage() {
               </p>
             </div>
             <div>
-              <Label>WhatsApp (wappi.pro API key)</Label>
+              <Label>WhatsApp номер</Label>
               <Input
                 value={whatsappPhone}
                 onChange={(e) => setWhatsappPhone(e.target.value)}
+                placeholder="+996700123456"
+              />
+            </div>
+            <div>
+              <Label>Wappi.pro API Key</Label>
+              <Input
+                value={wappiApiKey}
+                onChange={(e) => setWappiApiKey(e.target.value)}
                 placeholder="API key от wappi.pro"
+              />
+            </div>
+            <div>
+              <Label>Wappi.pro Profile ID</Label>
+              <Input
+                value={wappiProfileId}
+                onChange={(e) => setWappiProfileId(e.target.value)}
+                placeholder="Profile ID из wappi.pro"
               />
             </div>
             <Button onClick={handleConfigureChannels} disabled={saving}>
