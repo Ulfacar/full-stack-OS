@@ -237,10 +237,41 @@ export function Step3({ formData, updateFormData }: Step3Props) {
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Чего нет в отеле</h3>
         <p className="text-sm text-neutral-500">
-          Укажите чего нет, чтобы бот не выдумывал. Например: кондиционеры, лифт, сейфы, халаты, спа.
+          Отметьте чего нет — бот не будет это выдумывать.
         </p>
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { key: 'noAC', label: 'Нет кондиционера' },
+            { key: 'noElevator', label: 'Нет лифта' },
+            { key: 'noSafe', label: 'Нет сейфов' },
+            { key: 'noSpa', label: 'Нет спа' },
+            { key: 'noGym', label: 'Нет спортзала' },
+            { key: 'noPool', label: 'Нет бассейна' },
+            { key: 'noRobes', label: 'Нет халатов' },
+            { key: 'noRoomService', label: 'Нет room service' },
+          ].map(({ key, label }) => {
+            const current = formData.notAvailable || ''
+            const isChecked = current.toLowerCase().includes(label.toLowerCase().replace('нет ', ''))
+            return (
+              <Checkbox
+                key={key}
+                label={label}
+                checked={isChecked}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  const item = label.replace('Нет ', '')
+                  if (e.target.checked) {
+                    updateFormData({ notAvailable: current ? `${current}, ${item}` : item })
+                  } else {
+                    const updated = current.split(',').map(s => s.trim()).filter(s => s.toLowerCase() !== item.toLowerCase()).join(', ')
+                    updateFormData({ notAvailable: updated })
+                  }
+                }}
+              />
+            )
+          })}
+        </div>
         <Textarea
-          placeholder="Нет кондиционеров, лифта, сейфов в номерах, халатов..."
+          placeholder="Другое: нет банкомата рядом, нет детского меню..."
           rows={2}
           value={formData.notAvailable || ''}
           onChange={(e) => updateFormData({ notAvailable: e.target.value })}
