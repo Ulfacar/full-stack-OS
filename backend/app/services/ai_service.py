@@ -100,89 +100,146 @@ class AIService:
         return "Извините, произошла ошибка. Попробуйте позже или свяжитесь с администрацией отеля.", total_usage
 
     async def generate_system_prompt(self, hotel_data: dict) -> str:
-        """Generate system prompt based on hotel data."""
-        prompt_parts = []
+        """
+        Generate system prompt based on hotel data.
+        Mirrors frontend promptGenerator.ts logic.
+        Based on Ton Azure lessons: 70% prohibitions, clear booking flow.
+        """
+        parts = []
+        name = hotel_data.get('name', 'отель')
 
-        prompt_parts.append(
-            f"Вы - AI-ассистент отеля '{hotel_data.get('name', 'наш отель')}'. "
-            f"Ваша задача - помогать гостям с информацией об отеле, бронированием и любыми вопросами."
+        # Role + main rule
+        parts.append(
+            f"Ты — AI-ассистент отеля «{name}». "
+            "Отвечай КОРОТКО и ПО ДЕЛУ, как живой менеджер в мессенджере. "
+            "Максимум 1-3 предложения на ответ."
         )
 
+        # Hotel info
+        parts.append("\n\n## ОТЕЛЬ")
         if hotel_data.get('description'):
-            prompt_parts.append(f"\n\nОписание отеля:\n{hotel_data['description']}")
-
+            parts.append(f"\n{hotel_data['description']}")
         if hotel_data.get('address'):
-            prompt_parts.append(f"\n\nАдрес: {hotel_data['address']}")
+            parts.append(f"\nАдрес: {hotel_data['address']}")
 
         contacts = []
         if hotel_data.get('phone'):
-            contacts.append(f"телефон {hotel_data['phone']}")
+            contacts.append(f"тел: {hotel_data['phone']}")
         if hotel_data.get('email'):
-            contacts.append(f"email {hotel_data['email']}")
+            contacts.append(f"email: {hotel_data['email']}")
         if hotel_data.get('website'):
-            contacts.append(f"сайт {hotel_data['website']}")
+            contacts.append(f"сайт: {hotel_data['website']}")
         if contacts:
-            prompt_parts.append(f"\n\nКонтакты: {', '.join(contacts)}")
+            parts.append(f"\nКонтакты: {', '.join(contacts)}")
 
+        # Rooms
         if hotel_data.get('rooms'):
-            rooms_info = "\n\nДоступные номера:"
+            parts.append("\n\n## НОМЕРА")
             for room in hotel_data['rooms']:
-                rooms_info += f"\n- {room.get('name')}: вместимость {room.get('capacity')} чел., "
-                rooms_info += f"цена {room.get('price')} руб/ночь. {room.get('description', '')}"
-            prompt_parts.append(rooms_info)
+                cap = room.get('capacity', '?')
+                price = room.get('price', '')
+                price_str = f" {price} сом/сутки." if price else ""
+                desc = room.get('description', '')
+                parts.append(f"\n- {room.get('name')}: до {cap} гостей.{price_str} {desc}".rstrip())
 
+        # Rules
         if hotel_data.get('rules'):
             rules = hotel_data['rules']
-            rules_info = "\n\nПравила отеля:"
+            parts.append("\n\n## ПРАВИЛА")
             if rules.get('checkin'):
-                rules_info += f"\n- Заезд: {rules['checkin']}"
+                parts.append(f"\n- Заезд: {rules['checkin']}")
             if rules.get('checkout'):
-                rules_info += f"\n- Выезд: {rules['checkout']}"
-            if rules.get('cancellation'):
-                rules_info += f"\n- Отмена бронирования: {rules['cancellation']}"
-            if rules.get('pets'):
-                rules_info += f"\n- Размещение с животными: {rules['pets']}"
-            if rules.get('smoking'):
-                rules_info += f"\n- Курение: {rules['smoking']}"
-            prompt_parts.append(rules_info)
+                parts.append(f"\n- Выезд: {rules['checkout']}")
 
+            payments = []
+            if rules.get('paymentCards'):
+                payments.append('карты')
+            if rules.get('paymentQR'):
+                payments.append('QR')
+            if rules.get('paymentCash'):
+                payments.append('наличные')
+            if payments:
+                parts.append(f"\n- Оплата: {', '.join(payments)}")
+
+            if rules.get('cancellation'):
+                parts.append(f"\n- Отмена: {rules['cancellation']}")
+            if rules.get('pets'):
+                parts.append(f"\n- Животные: {rules['pets']}")
+            if rules.get('smoking'):
+                parts.append(f"\n- Курение: {rules['smoking']}")
+
+        # Amenities
         if hotel_data.get('amenities'):
             amenities = hotel_data['amenities']
-            amenities_list = []
-            if amenities.get('wifi'):
-                amenities_list.append("Wi-Fi")
-            if amenities.get('parking'):
-                amenities_list.append("парковка")
-            if amenities.get('breakfast'):
-                amenities_list.append("завтрак")
-            if amenities.get('restaurant'):
-                amenities_list.append("ресторан")
-            if amenities.get('gym'):
-                amenities_list.append("спортзал")
-            if amenities.get('pool'):
-                amenities_list.append("бассейн")
-            if amenities.get('spa'):
-                amenities_list.append("спа")
-            if amenities_list:
-                prompt_parts.append(f"\n\nУдобства: {', '.join(amenities_list)}")
+            have = []
+            for key, label in [
+                ('wifi', 'Wi-Fi'), ('parking', 'парковка'), ('breakfast', 'завтрак'),
+                ('restaurant', 'ресторан'), ('pool', 'бассейн'), ('transfer', 'трансфер'),
+                ('conference', 'конференц-зал'), ('excursions', 'экскурсии'),
+            ]:
+                if amenities.get(key):
+                    have.append(label)
+            if amenities.get('other'):
+                have.append(amenities['other'])
+            if have:
+                parts.append(f"\n\n## УДОБСТВА: {', '.join(have)}")
 
+        # Booking flow
+        parts.append("""
+
+## БРОНИРОВАНИЕ
+Только когда гость САМ просит забронировать:
+1. Узнай даты заезда/выезда и кол-во гостей
+2. Предложи подходящий номер с ценой
+3. Когда гость выбрал → спроси ФИО и телефон
+4. Когда ВСЕ данные собраны → напиши "Передаю менеджеру для подтверждения!" + [НУЖЕН_МЕНЕДЖЕР]
+
+Чеклист: даты + кол-во гостей + ФИО + телефон. Без любого — спроси!""")
+
+        # Prohibitions
+        parts.append("""
+
+## ЗАПРЕТЫ (КРИТИЧНО!)
+1. НЕ выдумывай информацию — "Уточню у менеджера"
+2. НЕ навязывай бронирование, трансфер, экскурсии
+3. НЕ подтверждай бронь сам — только менеджер подтверждает
+4. НЕ заканчивай навязчивыми вопросами ("Хотите забронировать?")
+5. НЕ переспрашивай данные которые гость уже назвал
+6. "ок/спасибо" — это НЕ запрос на бронирование
+7. НЕ пиши внутренние фразы ("прошу оформить", "связаться с гостем")
+8. НЕ выдумывай услуги которых нет
+9. Корпоративы/банкеты — передавай менеджеру
+10. Сомневаешься → "Уточню у менеджера" """)
+
+        # Style
         style = hotel_data.get('communication_style', 'friendly')
-        style_instructions = {
-            'friendly': '\n\nОбщайтесь дружелюбно и неформально, как с хорошими знакомыми.',
-            'formal': '\n\nОбщайтесь формально и профессионально, соблюдая деловой этикет.',
-            'casual': '\n\nОбщайтесь просто и непринужденно, без лишних формальностей.'
+        styles = {
+            'friendly': (
+                '\n\n## СТИЛЬ\nДружелюбный, как заботливый консьерж. 1-2 эмодзи max.\n'
+                'ХОРОШО: "Twin с доп. кроватью — 12 000 сом/сутки 😊"\n'
+                'ПЛОХО: "Для вас подойдет Twin с дополнительной кроватью. Стоимость составит 12 000 сом."'
+            ),
+            'formal': (
+                '\n\n## СТИЛЬ\nФормальный, деловой. Без эмодзи.\n'
+                'ХОРОШО: "Рекомендуем Twin с доп. местом — 12 000 сом/сутки."\n'
+                'ПЛОХО: "Привет! Есть классный вариант 😊"'
+            ),
+            'casual': (
+                '\n\n## СТИЛЬ\nНейтральный, информативный.\n'
+                'ХОРОШО: "Twin с доп. местом — 12 000 сом/сутки, до 3 гостей."\n'
+                'ПЛОХО: "Ой, отличный выбор! 🎉"'
+            ),
         }
-        prompt_parts.append(style_instructions.get(style, style_instructions['friendly']))
+        parts.append(styles.get(style, styles['friendly']))
 
-        prompt_parts.append(
-            "\n\nВажно:\n"
-            "- Отвечайте кратко и по делу\n"
-            "- Если не знаете точного ответа - так и скажите\n"
-            "- Для бронирования попросите контактные данные (имя, телефон) и даты заезда/выезда\n"
-            "- При сложных вопросах предложите связаться с администрацией напрямую"
+        # Language + tags
+        parts.append(
+            "\n\nЯзык: отвечай на языке последнего сообщения гостя."
+            "\nПриветствие только в первом сообщении."
+            "\n\n## ТЕГИ\n- [НУЖЕН_МЕНЕДЖЕР] — когда нужен человек\n- [ЗАВЕРШЕНО] — диалог окончен"
         )
 
-        return "".join(prompt_parts)
+        return "".join(parts)
 
 
 # Global instance
