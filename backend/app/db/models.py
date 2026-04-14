@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON, Float
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -37,13 +37,17 @@ class Hotel(Base):
     # Bot configuration
     telegram_bot_token = Column(String(255), unique=True, index=True)
     whatsapp_phone = Column(String(50))
-    ai_model = Column(String(100), default="deepseek/deepseek-chat")
+    ai_model = Column(String(100), default="anthropic/claude-3.5-haiku")
     system_prompt = Column(Text)
 
     # Hotel data (JSON for flexibility)
     rooms = Column(JSON)  # [{name, capacity, price, description}]
     rules = Column(JSON)  # {checkin, checkout, cancellation, etc}
     amenities = Column(JSON)  # {wifi, parking, breakfast, etc}
+
+    # Budget
+    monthly_budget = Column(Float, default=5.0)  # Monthly limit in USD
+    status = Column(String(20), default="demo")  # demo, active, suspended
 
     # Settings
     communication_style = Column(String(50), default="friendly")
@@ -125,6 +129,7 @@ class AIUsage(Base):
     prompt_tokens = Column(Integer, default=0)
     completion_tokens = Column(Integer, default=0)
     model = Column(String(100))
+    cost_usd = Column(Float, default=0.0)  # Pre-calculated cost in USD
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

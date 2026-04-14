@@ -4,9 +4,11 @@ from sqlalchemy import select, func, and_
 from typing import List, Optional
 from datetime import datetime, timedelta
 from ...db.database import get_db
+from ...db.database import get_db
 from ...db.models import User, Hotel, Conversation, Message, AIUsage, Billing
 from ..dependencies import get_current_user
 from ..schemas import HotelWithStats, AdminStats, AIUsageDaily, BillingRecord, HotelStatsResponse
+from ...services.budget_service import budget_service
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -47,19 +49,15 @@ async def get_admin_hotels(
         )
         active_conversations = active_result.scalar() or 0
 
-        # AI cost this month
-        usage_result = await db.execute(
-            select(
-                func.coalesce(func.sum(AIUsage.prompt_tokens), 0),
-                func.coalesce(func.sum(AIUsage.completion_tokens), 0),
-            ).where(
+        # AI cost this month (use pre-calculated cost_usd)
+        cost_result = await db.execute(
+            select(func.coalesce(func.sum(AIUsage.cost_usd), 0.0)).where(
                 and_(AIUsage.hotel_id == hotel.id, AIUsage.created_at >= month_start)
             )
         )
-        usage_row = usage_result.one()
-        prompt_tokens = usage_row[0]
-        completion_tokens = usage_row[1]
-        ai_cost = prompt_tokens * COST_PER_PROMPT_TOKEN + completion_tokens * COST_PER_COMPLETION_TOKEN
+        ai_cost = float(cost_result.scalar())
+        budget_used = ai_cost
+        budget_remaining = max(0, (hotel.monthly_budget or 5.0) - budget_used)
 
         # Last activity
         last_msg = await db.execute(
@@ -94,11 +92,15 @@ async def get_admin_hotels(
             communication_style=hotel.communication_style or "friendly",
             languages=hotel.languages or ["ru", "en"],
             is_active=hotel.is_active,
+            status=hotel.status or "demo",
+            monthly_budget=hotel.monthly_budget or 5.0,
+            budget_used=round(budget_used, 4),
+            budget_remaining=round(budget_remaining, 4),
             created_at=hotel.created_at,
             updated_at=hotel.updated_at,
             conversations_month=conversations_month,
             active_conversations=active_conversations,
-            ai_cost_month=round(ai_cost, 2),
+            ai_cost_month=round(ai_cost, 4),
             last_activity=last_activity,
             requests_handled=requests_handled,
         ))
@@ -268,6 +270,61 @@ async def get_billing(
         ))
 
     return records
+
+
+@router.get("/hotels/{hotel_id}/budget")
+async def get_hotel_budget(
+    hotel_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get hotel budget details."""
+    result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
+    hotel = result.scalar_one_or_none()
+    if not hotel or hotel.owner_id != current_user.id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Hotel not found")
+
+    spent = await budget_service.get_monthly_spend(hotel_id, db)
+    return {
+        "hotel_id": hotel_id,
+        "monthly_budget": hotel.monthly_budget or 5.0,
+        "budget_used": round(spent, 4),
+        "budget_remaining": round(max(0, (hotel.monthly_budget or 5.0) - spent), 4),
+        "status": hotel.status,
+    }
+
+
+@router.put("/hotels/{hotel_id}/budget")
+async def update_hotel_budget(
+    hotel_id: int,
+    data: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update hotel monthly budget."""
+    result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
+    hotel = result.scalar_one_or_none()
+    if not hotel or hotel.owner_id != current_user.id:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Hotel not found")
+
+    if "monthly_budget" in data:
+        hotel.monthly_budget = float(data["monthly_budget"])
+    if "status" in data and data["status"] in ("demo", "active", "suspended"):
+        hotel.status = data["status"]
+
+    await db.commit()
+    await db.refresh(hotel)
+
+    spent = await budget_service.get_monthly_spend(hotel_id, db)
+    return {
+        "hotel_id": hotel_id,
+        "monthly_budget": hotel.monthly_budget,
+        "budget_used": round(spent, 4),
+        "budget_remaining": round(max(0, hotel.monthly_budget - spent), 4),
+        "status": hotel.status,
+    }
 
 
 def format_time_ago(dt: datetime) -> str:

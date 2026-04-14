@@ -30,10 +30,10 @@ export function Sidebar() {
       {/* Logo */}
       <div className="p-6 border-b border-neutral-200">
         <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold">
-          <div className="w-8 h-8 bg-neutral-900 rounded-sm flex items-center justify-center text-white text-sm">
-            A
+          <div className="w-8 h-8 bg-neutral-900 rounded-sm flex items-center justify-center text-white text-xs font-bold">
+            EM
           </div>
-          Asystem
+          Ex-Machina
         </Link>
       </div>
 

@@ -108,6 +108,8 @@ export interface Hotel {
   communication_style: string
   languages: string[]
   is_active: boolean
+  monthly_budget: number
+  status: 'demo' | 'active' | 'suspended'
   created_at: string
   updated_at: string
 }
@@ -159,6 +161,8 @@ export interface BillingRecord {
 
 // Hotel with extended stats for admin dashboard
 export interface HotelWithStats extends Hotel {
+  budget_used: number
+  budget_remaining: number
   conversations_month: number
   active_conversations: number
   ai_cost_month: number

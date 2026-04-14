@@ -4,18 +4,18 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: asystem-postgres
+    container_name: exmachina-postgres
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: asystem
+      POSTGRES_DB: exmachina
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
-      - asystem-network
+      - exmachina-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -27,21 +27,23 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: asystem-backend
+    container_name: exmachina-backend
     restart: always
     environment:
-      DATABASE_URL: postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/asystem
+      DATABASE_URL: postgresql+asyncpg://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/exmachina
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       SECRET_KEY: ${SECRET_KEY}
       WEBHOOK_BASE_URL: ${WEBHOOK_BASE_URL}
       BACKEND_CORS_ORIGINS: ${BACKEND_CORS_ORIGINS:-http://localhost:3000}
+      DEFAULT_AI_MODEL: ${DEFAULT_AI_MODEL:-anthropic/claude-3.5-haiku}
+      DEFAULT_MONTHLY_BUDGET: ${DEFAULT_MONTHLY_BUDGET:-5.0}
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - asystem-network
+      - exmachina-network
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   # Next.js Frontend
@@ -51,21 +53,21 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
-    container_name: asystem-frontend
+    container_name: exmachina-frontend
     restart: always
     ports:
       - "3000:3000"
     depends_on:
       - backend
     networks:
-      - asystem-network
+      - exmachina-network
     environment:
       NODE_ENV: production
 
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
-    container_name: asystem-nginx
+    container_name: exmachina-nginx
     restart: always
     ports:
       - "80:80"
@@ -79,12 +81,12 @@ services:
       - backend
       - frontend
     networks:
-      - asystem-network
+      - exmachina-network
 
   # Certbot for SSL
   certbot:
     image: certbot/certbot
-    container_name: asystem-certbot
+    container_name: exmachina-certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
@@ -95,5 +97,5 @@ volumes:
     driver: local
 
 networks:
-  asystem-network:
+  exmachina-network:
     driver: bridge

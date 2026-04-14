@@ -1,10 +1,20 @@
 """
 AI Service for OpenRouter integration
-Handles communication with AI models (DeepSeek, GPT-4, Claude, etc.)
+Handles communication with AI models (Haiku, GPT-4, Claude, etc.)
 """
 from openai import AsyncOpenAI
-from typing import List, Dict
+from typing import List, Dict, Tuple, Optional
 from ..core.config import settings
+
+
+# Pricing per 1M tokens (input, output) in USD
+MODEL_PRICING = {
+    "anthropic/claude-3.5-haiku": (1.0, 5.0),
+    "anthropic/claude-3-haiku": (0.25, 1.25),
+    "deepseek/deepseek-chat": (0.14, 0.28),
+    "openai/gpt-4o": (2.5, 10.0),
+    "openai/gpt-4o-mini": (0.15, 0.6),
+}
 
 
 class AIService:
@@ -16,25 +26,31 @@ class AIService:
             base_url=settings.OPENROUTER_BASE_URL
         )
 
+    @staticmethod
+    def calculate_cost(model: str, prompt_tokens: int, completion_tokens: int) -> float:
+        """Calculate cost in USD for given token counts."""
+        input_price, output_price = MODEL_PRICING.get(model, (1.0, 5.0))
+        cost = (prompt_tokens * input_price + completion_tokens * output_price) / 1_000_000
+        return round(cost, 6)
+
     async def generate_response(
         self,
         messages: List[Dict[str, str]],
-        model: str = "deepseek/deepseek-chat",
+        model: str = None,
         temperature: float = 0.7,
         max_tokens: int = 1000
-    ) -> str:
+    ) -> Tuple[str, Optional[Dict]]:
         """
-        Generate AI response using OpenRouter
-
-        Args:
-            messages: List of message dicts [{"role": "user/assistant/system", "content": "..."}]
-            model: Model identifier (e.g., "deepseek/deepseek-chat", "openai/gpt-4o")
-            temperature: Response creativity (0.0-1.0)
-            max_tokens: Maximum response length
+        Generate AI response using OpenRouter.
 
         Returns:
-            AI-generated response text
+            Tuple of (response_text, usage_dict) where usage_dict contains
+            prompt_tokens, completion_tokens, model, cost_usd.
+            Returns (error_text, None) on failure.
         """
+        if model is None:
+            model = settings.DEFAULT_AI_MODEL
+
         try:
             response = await self.client.chat.completions.create(
                 model=model,
@@ -43,39 +59,41 @@ class AIService:
                 max_tokens=max_tokens,
             )
 
-            return response.choices[0].message.content
+            text = response.choices[0].message.content
+            usage = None
+
+            if response.usage:
+                prompt_tokens = response.usage.prompt_tokens or 0
+                completion_tokens = response.usage.completion_tokens or 0
+                cost = self.calculate_cost(model, prompt_tokens, completion_tokens)
+                usage = {
+                    "prompt_tokens": prompt_tokens,
+                    "completion_tokens": completion_tokens,
+                    "model": model,
+                    "cost_usd": cost,
+                }
+
+            return text, usage
 
         except Exception as e:
             print(f"AI Service Error: {e}")
-            return "Извините, произошла ошибка. Попробуйте позже или свяжитесь с администрацией отеля."
+            return "Извините, произошла ошибка. Попробуйте позже или свяжитесь с администрацией отеля.", None
 
     async def generate_system_prompt(self, hotel_data: dict) -> str:
-        """
-        Generate system prompt based on hotel data
-
-        Args:
-            hotel_data: Dict with hotel info (name, description, rooms, rules, amenities, etc.)
-
-        Returns:
-            System prompt text
-        """
+        """Generate system prompt based on hotel data."""
         prompt_parts = []
 
-        # Base instruction
         prompt_parts.append(
             f"Вы - AI-ассистент отеля '{hotel_data.get('name', 'наш отель')}'. "
             f"Ваша задача - помогать гостям с информацией об отеле, бронированием и любыми вопросами."
         )
 
-        # Description
         if hotel_data.get('description'):
             prompt_parts.append(f"\n\nОписание отеля:\n{hotel_data['description']}")
 
-        # Location
         if hotel_data.get('address'):
             prompt_parts.append(f"\n\nАдрес: {hotel_data['address']}")
 
-        # Contact info
         contacts = []
         if hotel_data.get('phone'):
             contacts.append(f"телефон {hotel_data['phone']}")
@@ -83,11 +101,9 @@ class AIService:
             contacts.append(f"email {hotel_data['email']}")
         if hotel_data.get('website'):
             contacts.append(f"сайт {hotel_data['website']}")
-
         if contacts:
             prompt_parts.append(f"\n\nКонтакты: {', '.join(contacts)}")
 
-        # Rooms
         if hotel_data.get('rooms'):
             rooms_info = "\n\nДоступные номера:"
             for room in hotel_data['rooms']:
@@ -95,7 +111,6 @@ class AIService:
                 rooms_info += f"цена {room.get('price')} руб/ночь. {room.get('description', '')}"
             prompt_parts.append(rooms_info)
 
-        # Rules
         if hotel_data.get('rules'):
             rules = hotel_data['rules']
             rules_info = "\n\nПравила отеля:"
@@ -111,11 +126,9 @@ class AIService:
                 rules_info += f"\n- Курение: {rules['smoking']}"
             prompt_parts.append(rules_info)
 
-        # Amenities
         if hotel_data.get('amenities'):
             amenities = hotel_data['amenities']
             amenities_list = []
-
             if amenities.get('wifi'):
                 amenities_list.append("Wi-Fi")
             if amenities.get('parking'):
@@ -130,11 +143,9 @@ class AIService:
                 amenities_list.append("бассейн")
             if amenities.get('spa'):
                 amenities_list.append("спа")
-
             if amenities_list:
                 prompt_parts.append(f"\n\nУдобства: {', '.join(amenities_list)}")
 
-        # Communication style
         style = hotel_data.get('communication_style', 'friendly')
         style_instructions = {
             'friendly': '\n\nОбщайтесь дружелюбно и неформально, как с хорошими знакомыми.',
@@ -143,7 +154,6 @@ class AIService:
         }
         prompt_parts.append(style_instructions.get(style, style_instructions['friendly']))
 
-        # Final instructions
         prompt_parts.append(
             "\n\nВажно:\n"
             "- Отвечайте кратко и по делу\n"

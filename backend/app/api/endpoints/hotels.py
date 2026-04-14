@@ -8,6 +8,7 @@ from ...db.models import User, Hotel, Conversation, Message, AIUsage
 from ..dependencies import get_current_user
 from ..schemas import HotelCreate, HotelUpdate, Hotel as HotelSchema, HotelList, HotelStatsResponse
 from ...services.telegram_service import TelegramService
+from ...services.ai_service import ai_service
 from ...core.config import settings
 import re
 
@@ -36,7 +37,6 @@ async def create_hotel(
     existing = result.scalar_one_or_none()
 
     if existing:
-        # Add number suffix
         counter = 1
         while existing:
             new_slug = f"{slug}-{counter}"
@@ -44,6 +44,27 @@ async def create_hotel(
             existing = result.scalar_one_or_none()
             counter += 1
         slug = new_slug
+
+    # Auto-generate system prompt if not provided
+    system_prompt = hotel_data.system_prompt
+    if not system_prompt:
+        hotel_dict = {
+            "name": hotel_data.name,
+            "description": hotel_data.description,
+            "address": hotel_data.address,
+            "phone": hotel_data.phone,
+            "email": hotel_data.email,
+            "website": hotel_data.website,
+            "rooms": [r.model_dump() for r in hotel_data.rooms] if hotel_data.rooms else [],
+            "rules": hotel_data.rules.model_dump() if hotel_data.rules else {},
+            "amenities": hotel_data.amenities.model_dump() if hotel_data.amenities else {},
+            "communication_style": hotel_data.communication_style,
+        }
+        system_prompt = await ai_service.generate_system_prompt(hotel_dict)
+
+    # Determine initial status
+    has_channel = bool(hotel_data.telegram_bot_token or hotel_data.whatsapp_phone)
+    initial_status = "active" if has_channel else "demo"
 
     # Create hotel
     new_hotel = Hotel(
@@ -58,44 +79,30 @@ async def create_hotel(
         telegram_bot_token=hotel_data.telegram_bot_token,
         whatsapp_phone=hotel_data.whatsapp_phone,
         ai_model=hotel_data.ai_model,
-        system_prompt=hotel_data.system_prompt,
+        system_prompt=system_prompt,
         rooms=[room.model_dump() for room in hotel_data.rooms] if hotel_data.rooms else [],
         rules=hotel_data.rules.model_dump() if hotel_data.rules else {},
         amenities=hotel_data.amenities.model_dump() if hotel_data.amenities else {},
         communication_style=hotel_data.communication_style,
         languages=hotel_data.languages,
+        monthly_budget=hotel_data.monthly_budget,
+        status=initial_status,
     )
 
     db.add(new_hotel)
     await db.commit()
     await db.refresh(new_hotel)
 
-    # Register Telegram webhook if bot token provided
-    if hotel_data.telegram_bot_token:
+    # Register Telegram webhook only if token provided
+    if hotel_data.telegram_bot_token and settings.WEBHOOK_BASE_URL:
         try:
-            # Validate bot token
             is_valid = await TelegramService.validate_bot_token(hotel_data.telegram_bot_token)
-
-            if not is_valid:
-                # Rollback hotel creation if token is invalid
-                await db.delete(new_hotel)
-                await db.commit()
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Invalid Telegram bot token"
-                )
-
-            # Register webhook
-            telegram = TelegramService(hotel_data.telegram_bot_token)
-            webhook_url = f"{settings.WEBHOOK_BASE_URL}/webhooks/telegram/{slug}"
-            await telegram.set_webhook(webhook_url)
-
-        except HTTPException:
-            raise
+            if is_valid:
+                telegram = TelegramService(hotel_data.telegram_bot_token)
+                webhook_url = f"{settings.WEBHOOK_BASE_URL}/webhooks/telegram/{slug}"
+                await telegram.set_webhook(webhook_url)
         except Exception as e:
             print(f"Webhook registration error: {e}")
-            # Continue even if webhook registration fails
-            # User can manually register it later
 
     return new_hotel
 
@@ -122,16 +129,9 @@ async def get_hotel(
     hotel = result.scalar_one_or_none()
 
     if not hotel:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Hotel not found"
-        )
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hotel not found")
     if hotel.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to access this hotel"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     return hotel
 
@@ -147,27 +147,16 @@ async def update_hotel(
     hotel = result.scalar_one_or_none()
 
     if not hotel:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Hotel not found"
-        )
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hotel not found")
     if hotel.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to modify this hotel"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
-    # Update fields
     update_data = hotel_data.model_dump(exclude_unset=True)
 
-    # Convert Pydantic models to dicts
     if 'rooms' in update_data and update_data['rooms']:
         update_data['rooms'] = [room.model_dump() if hasattr(room, 'model_dump') else room for room in update_data['rooms']]
-
     if 'rules' in update_data and update_data['rules']:
         update_data['rules'] = update_data['rules'].model_dump() if hasattr(update_data['rules'], 'model_dump') else update_data['rules']
-
     if 'amenities' in update_data and update_data['amenities']:
         update_data['amenities'] = update_data['amenities'].model_dump() if hasattr(update_data['amenities'], 'model_dump') else update_data['amenities']
 
@@ -176,7 +165,57 @@ async def update_hotel(
 
     await db.commit()
     await db.refresh(hotel)
+    return hotel
 
+
+@router.post("/{hotel_id}/configure-channels", response_model=HotelSchema)
+async def configure_channels(
+    hotel_id: int,
+    channel_data: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Configure Telegram/WhatsApp channels for an existing hotel.
+    Called by admin after hotel is created via questionnaire.
+    """
+    result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
+    hotel = result.scalar_one_or_none()
+
+    if not hotel:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hotel not found")
+    if hotel.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+
+    telegram_token = channel_data.get("telegram_bot_token")
+    whatsapp_phone = channel_data.get("whatsapp_phone")
+
+    # Configure Telegram
+    if telegram_token:
+        is_valid = await TelegramService.validate_bot_token(telegram_token)
+        if not is_valid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid Telegram bot token"
+            )
+        hotel.telegram_bot_token = telegram_token
+
+        # Register webhook
+        if settings.WEBHOOK_BASE_URL:
+            telegram = TelegramService(telegram_token)
+            webhook_url = f"{settings.WEBHOOK_BASE_URL}/webhooks/telegram/{hotel.slug}"
+            await telegram.set_webhook(webhook_url)
+
+    # Configure WhatsApp
+    if whatsapp_phone:
+        hotel.whatsapp_phone = whatsapp_phone
+
+    # Activate hotel if at least one channel configured
+    if hotel.telegram_bot_token or hotel.whatsapp_phone:
+        hotel.status = "active"
+
+    await db.commit()
+    await db.refresh(hotel)
     return hotel
 
 
@@ -186,7 +225,7 @@ async def get_hotel_stats(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    """Get hotel statistics for the hotel manager (no $ amounts)."""
+    """Get hotel statistics."""
     result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
     hotel = result.scalar_one_or_none()
 
@@ -198,7 +237,6 @@ async def get_hotel_stats(
     now = datetime.utcnow()
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    # Total messages
     msg_result = await db.execute(
         select(func.count(Message.id))
         .join(Conversation, Message.conversation_id == Conversation.id)
@@ -206,13 +244,11 @@ async def get_hotel_stats(
     )
     messages_total = msg_result.scalar() or 0
 
-    # Total conversations
     conv_total_result = await db.execute(
         select(func.count(Conversation.id)).where(Conversation.hotel_id == hotel_id)
     )
     conversations_total = conv_total_result.scalar() or 0
 
-    # Conversations this month
     conv_month_result = await db.execute(
         select(func.count(Conversation.id)).where(
             and_(Conversation.hotel_id == hotel_id, Conversation.created_at >= month_start)
@@ -220,7 +256,6 @@ async def get_hotel_stats(
     )
     conversations_month = conv_month_result.scalar() or 0
 
-    # Requests handled by bot this month (assistant messages)
     handled_result = await db.execute(
         select(func.count(Message.id))
         .join(Conversation, Message.conversation_id == Conversation.id)
@@ -234,7 +269,6 @@ async def get_hotel_stats(
     )
     requests_handled = handled_result.scalar() or 0
 
-    # Automation rate: conversations completed without operator / total completed
     completed_result = await db.execute(
         select(func.count(Conversation.id)).where(
             and_(Conversation.hotel_id == hotel_id, Conversation.status == "completed")
@@ -271,16 +305,9 @@ async def delete_hotel(
     hotel = result.scalar_one_or_none()
 
     if not hotel:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Hotel not found"
-        )
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Hotel not found")
     if hotel.owner_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to delete this hotel"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
 
     await db.delete(hotel)
     await db.commit()

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...db.database import get_db
 from ...db.models import Hotel, Client, Conversation, Message
 from ...services.ai_service import ai_service
+from ...services.budget_service import budget_service
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,26 @@ async def whatsapp_webhook(
     sender = messages.get("chat_id", "").replace("@c.us", "")
     name = messages.get("senderName", "")
     if not sender:
+        return {"ok": True}
+
+    # Budget check BEFORE processing
+    has_budget, remaining = await budget_service.check_budget(hotel.id, db)
+    if not has_budget:
+        fallback = (
+            f"Спасибо за обращение! К сожалению, бот временно недоступен. "
+            f"Пожалуйста, свяжитесь с отелем напрямую"
+        )
+        if hotel.phone:
+            fallback += f": {hotel.phone}"
+        else:
+            fallback += "."
+        if hotel.whatsapp_phone:
+            await _send_whatsapp(
+                api_key=hotel.whatsapp_phone,
+                profile_id="",
+                recipient=sender,
+                text=fallback,
+            )
         return {"ok": True}
 
     try:
@@ -130,21 +151,32 @@ async def whatsapp_webhook(
             ai_messages.append({"role": msg.role, "content": msg.content})
         ai_messages.append({"role": "user", "content": text})
 
-        ai_response = await ai_service.generate_response(
+        ai_response, usage = await ai_service.generate_response(
             messages=ai_messages,
-            model=hotel.ai_model or "anthropic/claude-3.5-haiku",
+            model=hotel.ai_model or None,
             temperature=0.3,
         )
+
+        # Record usage
+        if usage:
+            await budget_service.record_usage(
+                hotel_id=hotel.id,
+                prompt_tokens=usage["prompt_tokens"],
+                completion_tokens=usage["completion_tokens"],
+                model=usage["model"],
+                db=db,
+                conversation_id=conversation.id,
+            )
 
         # Сохраняем ответ
         db.add(Message(conversation_id=conversation.id, role="assistant", content=ai_response))
         await db.commit()
 
         # Отправляем через wappi
-        if hotel.whatsapp_phone:  # whatsapp_phone используется как маркер что WA настроен
+        if hotel.whatsapp_phone:
             await _send_whatsapp(
-                api_key=hotel.whatsapp_phone,  # TODO: отдельное поле для api_key
-                profile_id="",  # TODO: profile_id из hotel config
+                api_key=hotel.whatsapp_phone,
+                profile_id="",
                 recipient=sender,
                 text=ai_response,
             )
@@ -154,4 +186,4 @@ async def whatsapp_webhook(
     except Exception as e:
         logger.error(f"WhatsApp webhook error: {e}")
         await db.rollback()
-        return {"ok": True}  # Не возвращаем 500 — wappi будет ретраить
+        return {"ok": True}

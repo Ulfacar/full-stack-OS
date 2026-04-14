@@ -4,7 +4,7 @@ from typing import Optional, List
 
 class Settings(BaseSettings):
     # App
-    APP_NAME: str = "Asystem Platform"
+    APP_NAME: str = "Ex-Machina"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = True
 
@@ -23,8 +23,12 @@ class Settings(BaseSettings):
     # CORS - supports comma-separated list in env var
     BACKEND_CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
 
+    # AI defaults
+    DEFAULT_AI_MODEL: str = "anthropic/claude-3.5-haiku"
+    DEFAULT_MONTHLY_BUDGET: float = 5.0
+
     # Webhooks
-    WEBHOOK_BASE_URL: str = ""  # Will be set to Railway URL
+    WEBHOOK_BASE_URL: str = ""  # Will be set to VPS URL
 
     @property
     def cors_origins(self) -> List[str]:

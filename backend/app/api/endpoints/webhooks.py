@@ -11,6 +11,7 @@ from ...db.database import get_db
 from ...db.models import Hotel, Client, Conversation, Message
 from ...services.telegram_service import TelegramService
 from ...services.ai_service import ai_service
+from ...services.budget_service import budget_service
 
 router = APIRouter(prefix="/webhooks/telegram", tags=["webhooks"])
 
@@ -21,17 +22,7 @@ async def telegram_webhook(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Receive Telegram webhook updates for specific hotel bot
-
-    Args:
-        hotel_slug: Hotel's unique slug identifier
-        request: FastAPI request with webhook payload
-        db: Database session
-
-    Returns:
-        Success response
-    """
+    """Receive Telegram webhook updates for specific hotel bot."""
     # Get hotel by slug
     result = await db.execute(select(Hotel).where(Hotel.slug == hotel_slug))
     hotel = result.scalar_one_or_none()
@@ -58,6 +49,20 @@ async def telegram_webhook(
     # Initialize Telegram service
     telegram = TelegramService(hotel.telegram_bot_token)
 
+    # Budget check BEFORE processing
+    has_budget, remaining = await budget_service.check_budget(hotel.id, db)
+    if not has_budget:
+        fallback = (
+            f"Спасибо за обращение! К сожалению, бот временно недоступен. "
+            f"Пожалуйста, свяжитесь с отелем напрямую"
+        )
+        if hotel.phone:
+            fallback += f": {hotel.phone}"
+        else:
+            fallback += "."
+        await telegram.send_message(chat_id=chat_id, text=fallback)
+        return {"ok": True}
+
     # Send typing indicator
     await telegram.send_chat_action(chat_id, "typing")
 
@@ -72,12 +77,11 @@ async def telegram_webhook(
         client = client_result.scalar_one_or_none()
 
         if not client:
-            # Create new client
             client = Client(
                 hotel_id=hotel.id,
                 telegram_id=telegram_id,
                 telegram_username=telegram_username,
-                language="ru"  # Default language
+                language="ru"
             )
             db.add(client)
             await db.flush()
@@ -93,7 +97,6 @@ async def telegram_webhook(
         conversation = conv_result.scalar_one_or_none()
 
         if not conversation:
-            # Create new conversation
             conversation = Conversation(
                 hotel_id=hotel.id,
                 client_id=client.id,
@@ -121,7 +124,6 @@ async def telegram_webhook(
         )
         history_messages = list(reversed(history_result.scalars().all()))
 
-        # Build context for AI
         # Generate system prompt if not exists
         if not hotel.system_prompt:
             hotel_data = {
@@ -142,25 +144,26 @@ async def telegram_webhook(
 
         # Build messages for AI
         ai_messages = [{"role": "system", "content": hotel.system_prompt}]
-
-        # Add conversation history
-        for msg in history_messages[:-1]:  # Exclude the latest message we just added
-            ai_messages.append({
-                "role": msg.role,
-                "content": msg.content
-            })
-
-        # Add current user message
-        ai_messages.append({
-            "role": "user",
-            "content": user_message
-        })
+        for msg in history_messages[:-1]:
+            ai_messages.append({"role": msg.role, "content": msg.content})
+        ai_messages.append({"role": "user", "content": user_message})
 
         # Generate AI response
-        ai_response = await ai_service.generate_response(
+        ai_response, usage = await ai_service.generate_response(
             messages=ai_messages,
-            model=hotel.ai_model or "deepseek/deepseek-chat"
+            model=hotel.ai_model or None
         )
+
+        # Record AI usage with cost
+        if usage:
+            await budget_service.record_usage(
+                hotel_id=hotel.id,
+                prompt_tokens=usage["prompt_tokens"],
+                completion_tokens=usage["completion_tokens"],
+                model=usage["model"],
+                db=db,
+                conversation_id=conversation.id,
+            )
 
         # Save AI response
         assistant_msg = Message(
@@ -169,15 +172,10 @@ async def telegram_webhook(
             content=ai_response
         )
         db.add(assistant_msg)
-
-        # Commit all changes
         await db.commit()
 
         # Send response to Telegram
-        await telegram.send_message(
-            chat_id=chat_id,
-            text=ai_response
-        )
+        await telegram.send_message(chat_id=chat_id, text=ai_response)
 
         return {"ok": True}
 
@@ -185,7 +183,6 @@ async def telegram_webhook(
         print(f"Webhook error: {e}")
         await db.rollback()
 
-        # Send error message to user
         try:
             await telegram.send_message(
                 chat_id=chat_id,

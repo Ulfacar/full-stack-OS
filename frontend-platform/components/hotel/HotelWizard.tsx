@@ -8,12 +8,11 @@ import { BotPreview } from './BotPreview'
 import { Step1 } from './steps/Step1'
 import { Step2 } from './steps/Step2'
 import { Step3 } from './steps/Step3'
-import { Step4 } from './steps/Step4'
-import { Step5 } from './steps/Step5'
 import api from '@/lib/api'
+import { generatePrompt } from '@/lib/promptGenerator'
 import type { HotelFormData } from '@/lib/types'
 
-const TOTAL_STEPS = 5
+const TOTAL_STEPS = 3
 
 export function HotelWizard() {
   const router = useRouter()
@@ -51,10 +50,8 @@ export function HotelWizard() {
     },
     communicationStyle: 'friendly',
     languages: ['ru', 'en'],
-    aiModel: 'deepseek/deepseek-chat',
+    aiModel: 'anthropic/claude-3.5-haiku',
     systemPrompt: '',
-    telegramBotToken: '',
-    whatsappPhone: '',
   })
 
   const updateFormData = (data: Partial<HotelFormData>) => {
@@ -62,17 +59,9 @@ export function HotelWizard() {
   }
 
   const nextStep = () => {
-    // Валидация
     if (currentStep === 1) {
       if (!formData.name || !formData.phone) {
         setError('Заполните обязательные поля: Название и Телефон')
-        return
-      }
-    }
-
-    if (currentStep === 5) {
-      if (!formData.telegramBotToken) {
-        setError('Укажите токен Telegram бота')
         return
       }
     }
@@ -91,16 +80,13 @@ export function HotelWizard() {
   }
 
   const handleSubmit = async () => {
-    if (!formData.telegramBotToken) {
-      setError('Укажите токен Telegram бота')
-      return
-    }
-
     setLoading(true)
     setError('')
 
     try {
-      // Создаём отель
+      // Auto-generate system prompt from form data
+      const systemPrompt = generatePrompt(formData as HotelFormData)
+
       const payload = {
         name: formData.name,
         address: formData.address,
@@ -111,19 +97,18 @@ export function HotelWizard() {
         rooms: formData.rooms,
         rules: formData.rules,
         amenities: formData.amenities,
-        telegram_bot_token: formData.telegramBotToken,
-        whatsapp_phone: formData.whatsappPhone,
-        ai_model: formData.aiModel,
-        system_prompt: formData.systemPrompt,
-        communication_style: formData.communicationStyle,
-        languages: formData.languages,
+        ai_model: formData.aiModel || 'anthropic/claude-3.5-haiku',
+        system_prompt: systemPrompt,
+        communication_style: formData.communicationStyle || 'friendly',
+        languages: formData.languages || ['ru', 'en'],
+        // No telegram_bot_token — channels configured later by admin
       }
 
       const response = await api.post('/hotels', payload)
       const hotelId = response.data.id
 
-      // Перенаправляем на страницу отеля
-      router.push(`/hotels/${hotelId}`)
+      // Redirect to demo page — the wow moment
+      router.push(`/hotels/${hotelId}/demo`)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Ошибка создания бота')
     } finally {
@@ -133,6 +118,8 @@ export function HotelWizard() {
 
   const progress = (currentStep / TOTAL_STEPS) * 100
 
+  const stepTitles = ['Об отеле', 'Номера и цены', 'Правила и услуги']
+
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Progress Bar */}
@@ -140,10 +127,10 @@ export function HotelWizard() {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-3">
             <h1 className="text-lg font-semibold tracking-tight">
-              Создание AI-ассистента
+              Ex-Machina — Создание AI-бота
             </h1>
             <div className="text-sm text-neutral-500">
-              Шаг {currentStep} из {TOTAL_STEPS}
+              Шаг {currentStep} из {TOTAL_STEPS}: {stepTitles[currentStep - 1]}
             </div>
           </div>
           <Progress value={progress} />
@@ -170,12 +157,6 @@ export function HotelWizard() {
             {currentStep === 3 && (
               <Step3 formData={formData} updateFormData={updateFormData} />
             )}
-            {currentStep === 4 && (
-              <Step4 formData={formData} updateFormData={updateFormData} />
-            )}
-            {currentStep === 5 && (
-              <Step5 formData={formData} updateFormData={updateFormData} />
-            )}
 
             {/* Navigation */}
             <div className="flex justify-between mt-8 pt-6 border-t border-neutral-200">
@@ -191,7 +172,7 @@ export function HotelWizard() {
                 <Button onClick={nextStep}>Далее →</Button>
               ) : (
                 <Button onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Создание...' : 'Создать бота! 🚀'}
+                  {loading ? 'Создание...' : 'Создать демо-бота'}
                 </Button>
               )}
             </div>

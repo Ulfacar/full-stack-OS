@@ -75,10 +75,11 @@ class HotelCreate(BaseModel):
     telegram_bot_token: Optional[str] = None
     whatsapp_phone: Optional[str] = None
 
-    ai_model: str = "deepseek/deepseek-chat"
+    ai_model: str = "anthropic/claude-3.5-haiku"
     system_prompt: Optional[str] = None
     communication_style: str = "friendly"
     languages: List[str] = ["ru", "en"]
+    monthly_budget: float = 5.0
 
 
 class HotelUpdate(BaseModel):
@@ -101,6 +102,7 @@ class HotelUpdate(BaseModel):
     communication_style: Optional[str] = None
     languages: Optional[List[str]] = None
     is_active: Optional[bool] = None
+    monthly_budget: Optional[float] = None
 
 
 class Hotel(BaseModel):
@@ -126,6 +128,8 @@ class Hotel(BaseModel):
     communication_style: str
     languages: List[str]
     is_active: bool
+    monthly_budget: float = 5.0
+    status: str = "demo"
 
     created_at: datetime
     updated_at: Optional[datetime]
@@ -140,6 +144,8 @@ class HotelList(BaseModel):
     slug: str
     ai_model: str
     is_active: bool
+    status: str = "demo"
+    monthly_budget: float = 5.0
     telegram_bot_token: Optional[str]
     created_at: datetime
 
@@ -158,6 +164,10 @@ class HotelWithStats(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: Optional[datetime]
+    status: str = "demo"
+    monthly_budget: float = 5.0
+    budget_used: float = 0.0
+    budget_remaining: float = 5.0
     conversations_month: int = 0
     active_conversations: int = 0
     ai_cost_month: float = 0.0

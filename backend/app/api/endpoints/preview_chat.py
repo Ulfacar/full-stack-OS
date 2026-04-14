@@ -1,10 +1,8 @@
 """Preview Chat — мини-чат для тестирования бота при создании отеля."""
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...db.database import get_db
 from ...services.ai_service import ai_service
 
 router = APIRouter(prefix="/preview-chat", tags=["preview"])
@@ -18,17 +16,17 @@ class PreviewRequest(BaseModel):
 
 @router.post("")
 async def preview_chat(data: PreviewRequest):
-    """Генерировать ответ бота для превью (без сохранения в БД)."""
+    """Генерировать ответ бота для превью (без сохранения в БД, без проверки бюджета)."""
     system_prompt = await ai_service.generate_system_prompt(data.hotel_data)
 
     messages = [{"role": "system", "content": system_prompt}]
-    for msg in data.history[-10:]:  # Макс 10 сообщений истории
+    for msg in data.history[-10:]:
         messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
     messages.append({"role": "user", "content": data.message})
 
-    reply = await ai_service.generate_response(
+    reply, _usage = await ai_service.generate_response(
         messages=messages,
-        model=data.hotel_data.get("ai_model", "anthropic/claude-3.5-haiku"),
+        model=data.hotel_data.get("ai_model", None),
         temperature=0.3,
         max_tokens=800,
     )
