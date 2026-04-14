@@ -61,7 +61,9 @@ class BudgetService:
             cost_usd=cost,
         )
         db.add(usage)
-        await db.commit()
+        # Don't commit here — let the caller commit the whole transaction
+        # (webhook saves Message + AIUsage in one atomic commit)
+        await db.flush()
         return usage
 
 
