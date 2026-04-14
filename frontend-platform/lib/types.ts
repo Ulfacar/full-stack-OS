@@ -79,6 +79,9 @@ export interface HotelFormData {
   languages: string[]
   botRestrictions: string
   specialOffers: string
+  // Bot personality
+  proactiveness: 'active' | 'balanced' | 'reserved'  // навязчивость
+  notAvailable: string  // чего НЕТ в отеле
   // Технические (не для клиента)
   aiModel: string
   systemPrompt: string

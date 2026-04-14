@@ -50,6 +50,8 @@ export function HotelWizard() {
     },
     communicationStyle: 'friendly',
     languages: ['ru', 'en'],
+    proactiveness: 'balanced',
+    notAvailable: '',
     aiModel: 'anthropic/claude-3.5-haiku',
     systemPrompt: '',
   })

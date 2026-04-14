@@ -232,6 +232,78 @@ export function Step3({ formData, updateFormData }: Step3Props) {
           />
         </div>
       </div>
+
+      {/* Чего НЕТ */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Чего нет в отеле</h3>
+        <p className="text-sm text-neutral-500">
+          Укажите чего нет, чтобы бот не выдумывал. Например: кондиционеры, лифт, сейфы, халаты, спа.
+        </p>
+        <Textarea
+          placeholder="Нет кондиционеров, лифта, сейфов в номерах, халатов..."
+          rows={2}
+          value={formData.notAvailable || ''}
+          onChange={(e) => updateFormData({ notAvailable: e.target.value })}
+        />
+      </div>
+
+      {/* Стиль общения бота */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Стиль общения бота</h3>
+
+        <div className="space-y-2">
+          <label className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50">
+            <input
+              type="radio"
+              name="proactiveness"
+              value="active"
+              checked={(formData.proactiveness || 'balanced') === 'active'}
+              onChange={() => updateFormData({ proactiveness: 'active' })}
+              className="mt-1"
+            />
+            <div>
+              <div className="font-medium">Активный</div>
+              <div className="text-sm text-neutral-500">
+                Бот сам предлагает услуги, трансфер, экскурсии. Подходит если хотите максимум продаж.
+              </div>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50">
+            <input
+              type="radio"
+              name="proactiveness"
+              value="balanced"
+              checked={(formData.proactiveness || 'balanced') === 'balanced'}
+              onChange={() => updateFormData({ proactiveness: 'balanced' })}
+              className="mt-1"
+            />
+            <div>
+              <div className="font-medium">Сбалансированный (рекомендуем)</div>
+              <div className="text-sm text-neutral-500">
+                Отвечает на вопросы, иногда предлагает релевантные услуги. Золотая середина.
+              </div>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50">
+            <input
+              type="radio"
+              name="proactiveness"
+              value="reserved"
+              checked={(formData.proactiveness || 'balanced') === 'reserved'}
+              onChange={() => updateFormData({ proactiveness: 'reserved' })}
+              className="mt-1"
+            />
+            <div>
+              <div className="font-medium">Сдержанный</div>
+              <div className="text-sm text-neutral-500">
+                Только отвечает на вопросы, ничего не предлагает сам. Чётко и по делу.
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
     </div>
   )
 }
