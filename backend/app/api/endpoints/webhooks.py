@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import Depends
 from typing import Dict, Any
+from datetime import datetime, timedelta
 from ...db.database import get_db
 from ...db.models import Hotel, Client, Conversation, Message
 from ...services.telegram_service import TelegramService
@@ -89,15 +90,26 @@ async def telegram_webhook(
             db.add(client)
             await db.flush()
 
-        # Get or create active conversation
+        # Get or create/reopen conversation
+        reopen_hours = hotel.reopen_window_hours or 24
+        reopen_cutoff = datetime.utcnow() - timedelta(hours=reopen_hours)
+
+        # Look for active conversation OR recently closed one (within reopen window)
         conv_result = await db.execute(
             select(Conversation).where(
                 Conversation.hotel_id == hotel.id,
                 Conversation.client_id == client.id,
-                Conversation.status == "active"
+                Conversation.status.in_(["active", "completed", "needs_operator"]),
+                Conversation.updated_at >= reopen_cutoff,
             ).order_by(Conversation.created_at.desc())
         )
         conversation = conv_result.scalar_one_or_none()
+
+        # Reopen if it was closed
+        if conversation and conversation.status in ("completed", "needs_operator"):
+            conversation.status = "active"
+            conversation.operator_telegram_id = None
+            await db.flush()
 
         if not conversation:
             conversation = Conversation(

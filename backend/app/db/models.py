@@ -59,6 +59,9 @@ class Hotel(Base):
     manager_telegram_id = Column(String(100))  # TG user ID for notifications
     manager_name = Column(String(255))
 
+    # Conversation settings
+    reopen_window_hours = Column(Integer, default=24)  # Hours to reopen closed dialog
+
     # Budget
     monthly_budget = Column(Float, default=5.0)  # Monthly limit in USD
     status = Column(String(20), default="demo")  # demo, active, suspended
