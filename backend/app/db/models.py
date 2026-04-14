@@ -145,6 +145,8 @@ class AIUsage(Base):
     completion_tokens = Column(Integer, default=0)
     model = Column(String(100))
     cost_usd = Column(Float, default=0.0)  # Pre-calculated cost in USD
+    prompt_text = Column(Text)  # Full prompt sent to AI (for debugging)
+    response_text = Column(Text)  # Raw AI response (before post-processing)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

@@ -48,8 +48,10 @@ class BudgetService:
         model: str,
         db: AsyncSession,
         conversation_id: int = None,
+        prompt_text: str = None,
+        response_text: str = None,
     ) -> AIUsage:
-        """Record AI usage with pre-calculated cost."""
+        """Record AI usage with pre-calculated cost and debug logs."""
         cost = AIService.calculate_cost(model, prompt_tokens, completion_tokens)
 
         usage = AIUsage(
@@ -59,6 +61,8 @@ class BudgetService:
             completion_tokens=completion_tokens,
             model=model,
             cost_usd=cost,
+            prompt_text=prompt_text,
+            response_text=response_text,
         )
         db.add(usage)
         # Don't commit here — let the caller commit the whole transaction

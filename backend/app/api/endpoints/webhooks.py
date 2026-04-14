@@ -185,8 +185,10 @@ async def telegram_webhook(
                 last_message=user_message,
             )
 
-        # Record AI usage with cost
+        # Record AI usage with cost + debug logs
         if usage:
+            # Build prompt text for debugging (system prompt + last user message)
+            debug_prompt = f"[system] {hotel.system_prompt[:500]}...\n[user] {user_message}"
             await budget_service.record_usage(
                 hotel_id=hotel.id,
                 prompt_tokens=usage["prompt_tokens"],
@@ -194,6 +196,8 @@ async def telegram_webhook(
                 model=usage["model"],
                 db=db,
                 conversation_id=conversation.id,
+                prompt_text=debug_prompt,
+                response_text=raw_response,
             )
 
         # Save AI response
