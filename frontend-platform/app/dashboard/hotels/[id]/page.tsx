@@ -32,6 +32,10 @@ export default function AdminHotelPage() {
   const [whatsappPhone, setWhatsappPhone] = useState('')
   const [wappiApiKey, setWappiApiKey] = useState('')
   const [wappiProfileId, setWappiProfileId] = useState('')
+  const [waProvider, setWaProvider] = useState('none')
+  const [metaAccessToken, setMetaAccessToken] = useState('')
+  const [metaPhoneNumberId, setMetaPhoneNumberId] = useState('')
+  const [metaBusinessId, setMetaBusinessId] = useState('')
   const [managerTgId, setManagerTgId] = useState('')
   const [managerName, setManagerName] = useState('')
   const [budgetInput, setBudgetInput] = useState('')
@@ -49,6 +53,10 @@ export default function AdminHotelPage() {
         setWhatsappPhone(hotelRes.data.whatsapp_phone || '')
         setWappiApiKey(hotelRes.data.wappi_api_key || '')
         setWappiProfileId(hotelRes.data.wappi_profile_id || '')
+        setWaProvider(hotelRes.data.whatsapp_provider || 'none')
+        setMetaAccessToken(hotelRes.data.meta_access_token || '')
+        setMetaPhoneNumberId(hotelRes.data.meta_phone_number_id || '')
+        setMetaBusinessId(hotelRes.data.meta_business_id || '')
         setManagerTgId(hotelRes.data.manager_telegram_id || '')
         setManagerName(hotelRes.data.manager_name || '')
         setBudgetInput(String(budgetRes.data.monthly_budget))
@@ -68,8 +76,12 @@ export default function AdminHotelPage() {
       const res = await api.post(`/hotels/${params.id}/configure-channels`, {
         telegram_bot_token: telegramToken || undefined,
         whatsapp_phone: whatsappPhone || undefined,
+        whatsapp_provider: waProvider,
         wappi_api_key: wappiApiKey || undefined,
         wappi_profile_id: wappiProfileId || undefined,
+        meta_access_token: metaAccessToken || undefined,
+        meta_phone_number_id: metaPhoneNumberId || undefined,
+        meta_business_id: metaBusinessId || undefined,
         manager_telegram_id: managerTgId || undefined,
         manager_name: managerName || undefined,
       })
@@ -245,30 +257,52 @@ export default function AdminHotelPage() {
                 Получить у @BotFather в Telegram
               </p>
             </div>
+            {/* WhatsApp Provider */}
             <div>
-              <Label>WhatsApp номер</Label>
-              <Input
-                value={whatsappPhone}
-                onChange={(e) => setWhatsappPhone(e.target.value)}
-                placeholder="+996700123456"
-              />
+              <Label>WhatsApp провайдер</Label>
+              <div className="flex gap-2 mt-1">
+                <Button size="sm" variant={waProvider === 'none' ? 'default' : 'outline'} onClick={() => setWaProvider('none')}>Нет</Button>
+                <Button size="sm" variant={waProvider === 'wappi' ? 'default' : 'outline'} onClick={() => setWaProvider('wappi')}>Wappi.pro</Button>
+                <Button size="sm" variant={waProvider === 'meta' ? 'default' : 'outline'} onClick={() => setWaProvider('meta')}>Meta API</Button>
+              </div>
             </div>
-            <div>
-              <Label>Wappi.pro API Key</Label>
-              <Input
-                value={wappiApiKey}
-                onChange={(e) => setWappiApiKey(e.target.value)}
-                placeholder="API key от wappi.pro"
-              />
-            </div>
-            <div>
-              <Label>Wappi.pro Profile ID</Label>
-              <Input
-                value={wappiProfileId}
-                onChange={(e) => setWappiProfileId(e.target.value)}
-                placeholder="Profile ID из wappi.pro"
-              />
-            </div>
+
+            {waProvider === 'wappi' && (
+              <>
+                <div>
+                  <Label>WhatsApp номер</Label>
+                  <Input value={whatsappPhone} onChange={(e) => setWhatsappPhone(e.target.value)} placeholder="+996700123456" />
+                </div>
+                <div>
+                  <Label>Wappi.pro API Key</Label>
+                  <Input value={wappiApiKey} onChange={(e) => setWappiApiKey(e.target.value)} placeholder="API key от wappi.pro" />
+                </div>
+                <div>
+                  <Label>Wappi.pro Profile ID</Label>
+                  <Input value={wappiProfileId} onChange={(e) => setWappiProfileId(e.target.value)} placeholder="Profile ID из wappi.pro" />
+                </div>
+              </>
+            )}
+
+            {waProvider === 'meta' && (
+              <>
+                <div>
+                  <Label>Meta Access Token</Label>
+                  <Input value={metaAccessToken} onChange={(e) => setMetaAccessToken(e.target.value)} placeholder="Постоянный токен из Meta Business" />
+                </div>
+                <div>
+                  <Label>Phone Number ID</Label>
+                  <Input value={metaPhoneNumberId} onChange={(e) => setMetaPhoneNumberId(e.target.value)} placeholder="ID из WhatsApp Business API" />
+                </div>
+                <div>
+                  <Label>Business ID</Label>
+                  <Input value={metaBusinessId} onChange={(e) => setMetaBusinessId(e.target.value)} placeholder="Meta Business ID" />
+                </div>
+                <p className="text-xs text-neutral-500">
+                  Webhook URL для Meta: <code className="bg-neutral-100 px-1 rounded">{`https://exmachina.kg/webhooks/whatsapp/meta/${hotel?.slug}`}</code>
+                </p>
+              </>
+            )}
             <Button onClick={handleConfigureChannels} disabled={saving}>
               {saving ? 'Сохранение...' : 'Подключить каналы'}
             </Button>

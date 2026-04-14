@@ -201,8 +201,12 @@ async def configure_channels(
 
     telegram_token = channel_data.get("telegram_bot_token")
     whatsapp_phone = channel_data.get("whatsapp_phone")
+    whatsapp_provider = channel_data.get("whatsapp_provider")
     wappi_api_key = channel_data.get("wappi_api_key")
     wappi_profile_id = channel_data.get("wappi_profile_id")
+    meta_access_token = channel_data.get("meta_access_token")
+    meta_phone_number_id = channel_data.get("meta_phone_number_id")
+    meta_business_id = channel_data.get("meta_business_id")
     manager_telegram_id = channel_data.get("manager_telegram_id")
     manager_name = channel_data.get("manager_name")
 
@@ -229,6 +233,16 @@ async def configure_channels(
         hotel.wappi_api_key = wappi_api_key
     if wappi_profile_id:
         hotel.wappi_profile_id = wappi_profile_id
+
+    # Configure Meta WhatsApp
+    if whatsapp_provider:
+        hotel.whatsapp_provider = whatsapp_provider
+    if meta_access_token:
+        hotel.meta_access_token = meta_access_token
+    if meta_phone_number_id:
+        hotel.meta_phone_number_id = meta_phone_number_id
+    if meta_business_id:
+        hotel.meta_business_id = meta_business_id
 
     # Configure manager
     if manager_telegram_id:

@@ -1,8 +1,8 @@
-"""WhatsApp Webhook (wappi.pro) — приём сообщений из WhatsApp."""
+"""WhatsApp Webhook — supports both wappi.pro and Meta Cloud API."""
 
 import logging
 import httpx
-from fastapi import APIRouter, HTTPException, Request, Depends, status
+from fastapi import APIRouter, HTTPException, Request, Depends, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,14 +11,17 @@ from ...db.models import Hotel, Client, Conversation, Message
 from ...services.ai_service import ai_service
 from ...services.budget_service import budget_service
 from ...services.response_processor import process_response
+from ...services.meta_whatsapp_service import send_meta_whatsapp, parse_meta_webhook
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/webhooks/whatsapp", tags=["webhooks"])
 
 
-async def _send_whatsapp(api_key: str, profile_id: str, recipient: str, text: str) -> bool:
-    """Отправить сообщение через wappi.pro."""
+# === WAPPI.PRO ===
+
+async def _send_wappi(api_key: str, profile_id: str, recipient: str, text: str) -> bool:
+    """Send message via wappi.pro."""
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.post(
@@ -29,9 +32,145 @@ async def _send_whatsapp(api_key: str, profile_id: str, recipient: str, text: st
             )
         return response.status_code == 200
     except Exception as e:
-        logger.error(f"WhatsApp send error: {e}")
+        logger.error(f"Wappi send error: {e}")
         return False
 
+
+# === SHARED LOGIC ===
+
+async def _handle_whatsapp_message(
+    hotel: Hotel,
+    sender: str,
+    name: str,
+    text: str,
+    db: AsyncSession,
+):
+    """Process WhatsApp message from any provider."""
+
+    # Budget check
+    has_budget, remaining = await budget_service.check_budget(hotel.id, db)
+    if not has_budget:
+        fallback = "Спасибо за обращение! Бот временно недоступен."
+        if hotel.phone:
+            fallback += f" Свяжитесь с отелем: {hotel.phone}"
+        await _send_reply(hotel, sender, fallback)
+        return
+
+    # Client
+    client_result = await db.execute(
+        select(Client).where(Client.hotel_id == hotel.id, Client.whatsapp_phone == sender)
+    )
+    client = client_result.scalar_one_or_none()
+
+    if not client:
+        client = Client(hotel_id=hotel.id, whatsapp_phone=sender, name=name or sender, language="ru")
+        db.add(client)
+        await db.flush()
+
+    # Conversation
+    conv_result = await db.execute(
+        select(Conversation).where(
+            Conversation.hotel_id == hotel.id,
+            Conversation.client_id == client.id,
+            Conversation.status == "active",
+        ).order_by(Conversation.created_at.desc())
+    )
+    conversation = conv_result.scalar_one_or_none()
+
+    if not conversation:
+        conversation = Conversation(hotel_id=hotel.id, client_id=client.id, status="active", channel="whatsapp")
+        db.add(conversation)
+        await db.flush()
+
+    # If operator active — skip AI
+    if conversation.status == "operator_active":
+        db.add(Message(conversation_id=conversation.id, role="user", content=text))
+        await db.commit()
+        return
+
+    # Save message
+    db.add(Message(conversation_id=conversation.id, role="user", content=text))
+    await db.flush()
+
+    # History
+    history_result = await db.execute(
+        select(Message).where(Message.conversation_id == conversation.id)
+        .order_by(Message.created_at.desc()).limit(10)
+    )
+    history = list(reversed(history_result.scalars().all()))
+
+    # System prompt
+    if not hotel.system_prompt:
+        hotel.system_prompt = await ai_service.generate_system_prompt({
+            "name": hotel.name, "description": hotel.description,
+            "address": hotel.address, "phone": hotel.phone,
+            "rooms": hotel.rooms, "rules": hotel.rules,
+            "amenities": hotel.amenities,
+            "communication_style": hotel.communication_style or "friendly",
+        })
+        await db.flush()
+
+    # AI
+    ai_messages = [{"role": "system", "content": hotel.system_prompt}]
+    for msg in history[:-1]:
+        ai_messages.append({"role": msg.role, "content": msg.content})
+    ai_messages.append({"role": "user", "content": text})
+
+    raw_response, usage = await ai_service.generate_response(
+        messages=ai_messages, model=hotel.ai_model or None, temperature=0.3,
+    )
+
+    ai_response, needs_manager = process_response(raw_response)
+
+    # Record usage
+    if usage:
+        await budget_service.record_usage(
+            hotel_id=hotel.id, prompt_tokens=usage["prompt_tokens"],
+            completion_tokens=usage["completion_tokens"], model=usage["model"],
+            db=db, conversation_id=conversation.id,
+        )
+
+    # Handle manager transfer
+    if needs_manager and hotel.manager_telegram_id and hotel.telegram_bot_token:
+        conversation.status = "needs_operator"
+        from ...services.notification_service import NotificationService
+        notifier = NotificationService(hotel.telegram_bot_token)
+        await notifier.notify_needs_manager(
+            manager_telegram_id=hotel.manager_telegram_id,
+            hotel_name=hotel.name, client_name=name or sender,
+            channel="whatsapp", conversation_id=conversation.id,
+            last_message=text,
+        )
+
+    # Save response
+    db.add(Message(conversation_id=conversation.id, role="assistant", content=ai_response))
+    await db.commit()
+
+    # Send reply
+    await _send_reply(hotel, sender, ai_response)
+
+
+async def _send_reply(hotel: Hotel, recipient: str, text: str):
+    """Send reply via the configured WhatsApp provider."""
+    provider = hotel.whatsapp_provider or "wappi"
+
+    if provider == "meta" and hotel.meta_access_token and hotel.meta_phone_number_id:
+        await send_meta_whatsapp(
+            access_token=hotel.meta_access_token,
+            phone_number_id=hotel.meta_phone_number_id,
+            recipient=recipient,
+            text=text,
+        )
+    elif hotel.wappi_api_key and hotel.wappi_profile_id:
+        await _send_wappi(
+            api_key=hotel.wappi_api_key,
+            profile_id=hotel.wappi_profile_id,
+            recipient=recipient,
+            text=text,
+        )
+
+
+# === WAPPI.PRO WEBHOOK ===
 
 @router.post("/{hotel_slug}")
 async def whatsapp_webhook(
@@ -39,13 +178,9 @@ async def whatsapp_webhook(
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    """Приём WhatsApp сообщений через wappi.pro webhook."""
+    """Receive WhatsApp messages via wappi.pro webhook."""
     result = await db.execute(
-        select(Hotel).where(
-            Hotel.slug == hotel_slug,
-            Hotel.is_active == True,
-            Hotel.status != "suspended",
-        )
+        select(Hotel).where(Hotel.slug == hotel_slug, Hotel.is_active == True, Hotel.status != "suspended")
     )
     hotel = result.scalar_one_or_none()
     if not hotel:
@@ -54,7 +189,6 @@ async def whatsapp_webhook(
     data = await request.json()
     messages = data.get("messages", {})
 
-    # Игнорируем статусы доставки
     if messages.get("wh_type") in ("delivery_status", "ack"):
         return {"ok": True}
 
@@ -67,134 +201,54 @@ async def whatsapp_webhook(
     if not sender:
         return {"ok": True}
 
-    # Check wappi credentials
-    if not hotel.wappi_api_key or not hotel.wappi_profile_id:
-        logger.warning(f"Hotel {hotel.slug}: wappi credentials not configured")
-        return {"ok": True}
+    try:
+        await _handle_whatsapp_message(hotel, sender, name, text, db)
+    except Exception as e:
+        logger.error(f"Wappi webhook error: {e}")
+        await db.rollback()
 
-    # Budget check BEFORE processing
-    has_budget, remaining = await budget_service.check_budget(hotel.id, db)
-    if not has_budget:
-        fallback = (
-            f"Спасибо за обращение! К сожалению, бот временно недоступен. "
-            f"Пожалуйста, свяжитесь с отелем напрямую"
-        )
-        if hotel.phone:
-            fallback += f": {hotel.phone}"
-        else:
-            fallback += "."
-        await _send_whatsapp(
-            api_key=hotel.wappi_api_key,
-            profile_id=hotel.wappi_profile_id,
-            recipient=sender,
-            text=fallback,
-        )
+    return {"ok": True}
+
+
+# === META CLOUD API WEBHOOK ===
+
+@router.get("/meta/{hotel_slug}")
+async def meta_webhook_verify(
+    hotel_slug: str,
+    mode: str = Query(None, alias="hub.mode"),
+    token: str = Query(None, alias="hub.verify_token"),
+    challenge: str = Query(None, alias="hub.challenge"),
+):
+    """Meta webhook verification (GET request)."""
+    # Verify token = hotel slug (simple verification)
+    if mode == "subscribe" and token == hotel_slug:
+        return int(challenge) if challenge else ""
+    raise HTTPException(status_code=403, detail="Verification failed")
+
+
+@router.post("/meta/{hotel_slug}")
+async def meta_webhook(
+    hotel_slug: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Receive WhatsApp messages via Meta Cloud API webhook."""
+    result = await db.execute(
+        select(Hotel).where(Hotel.slug == hotel_slug, Hotel.is_active == True, Hotel.status != "suspended")
+    )
+    hotel = result.scalar_one_or_none()
+    if not hotel:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+
+    data = await request.json()
+    parsed = parse_meta_webhook(data)
+    if not parsed:
         return {"ok": True}
 
     try:
-        # Клиент
-        client_result = await db.execute(
-            select(Client).where(
-                Client.hotel_id == hotel.id,
-                Client.whatsapp_phone == sender,
-            )
-        )
-        client = client_result.scalar_one_or_none()
-
-        if not client:
-            client = Client(
-                hotel_id=hotel.id,
-                whatsapp_phone=sender,
-                name=name or sender,
-                language="ru",
-            )
-            db.add(client)
-            await db.flush()
-
-        # Диалог
-        conv_result = await db.execute(
-            select(Conversation).where(
-                Conversation.hotel_id == hotel.id,
-                Conversation.client_id == client.id,
-                Conversation.status == "active",
-            ).order_by(Conversation.created_at.desc())
-        )
-        conversation = conv_result.scalar_one_or_none()
-
-        if not conversation:
-            conversation = Conversation(
-                hotel_id=hotel.id,
-                client_id=client.id,
-                status="active",
-                channel="whatsapp",
-            )
-            db.add(conversation)
-            await db.flush()
-
-        # Сохраняем сообщение
-        db.add(Message(conversation_id=conversation.id, role="user", content=text))
-        await db.flush()
-
-        # История
-        history_result = await db.execute(
-            select(Message)
-            .where(Message.conversation_id == conversation.id)
-            .order_by(Message.created_at.desc())
-            .limit(10)
-        )
-        history = list(reversed(history_result.scalars().all()))
-
-        # System prompt
-        if not hotel.system_prompt:
-            hotel.system_prompt = await ai_service.generate_system_prompt({
-                "name": hotel.name, "description": hotel.description,
-                "address": hotel.address, "phone": hotel.phone,
-                "rooms": hotel.rooms, "rules": hotel.rules,
-                "amenities": hotel.amenities,
-            })
-            await db.flush()
-
-        # AI
-        ai_messages = [{"role": "system", "content": hotel.system_prompt}]
-        for msg in history[:-1]:
-            ai_messages.append({"role": msg.role, "content": msg.content})
-        ai_messages.append({"role": "user", "content": text})
-
-        raw_response, usage = await ai_service.generate_response(
-            messages=ai_messages,
-            model=hotel.ai_model or None,
-            temperature=0.3,
-        )
-
-        # Post-process
-        ai_response, needs_manager = process_response(raw_response)
-
-        # Record usage
-        if usage:
-            await budget_service.record_usage(
-                hotel_id=hotel.id,
-                prompt_tokens=usage["prompt_tokens"],
-                completion_tokens=usage["completion_tokens"],
-                model=usage["model"],
-                db=db,
-                conversation_id=conversation.id,
-            )
-
-        # Сохраняем ответ
-        db.add(Message(conversation_id=conversation.id, role="assistant", content=ai_response))
-        await db.commit()
-
-        # Отправляем через wappi
-        await _send_whatsapp(
-            api_key=hotel.wappi_api_key,
-            profile_id=hotel.wappi_profile_id,
-            recipient=sender,
-            text=ai_response,
-        )
-
-        return {"ok": True}
-
+        await _handle_whatsapp_message(hotel, parsed["sender"], parsed["name"], parsed["text"], db)
     except Exception as e:
-        logger.error(f"WhatsApp webhook error: {e}")
+        logger.error(f"Meta webhook error: {e}")
         await db.rollback()
-        return {"ok": True}
+
+    return {"ok": True}

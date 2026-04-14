@@ -38,8 +38,15 @@ class Hotel(Base):
     # Bot configuration
     telegram_bot_token = Column(String(255), unique=True, index=True)
     whatsapp_phone = Column(String(50))
+    # WhatsApp — wappi.pro
     wappi_api_key = Column(String(255))
     wappi_profile_id = Column(String(100))
+    # WhatsApp — Meta Cloud API
+    whatsapp_provider = Column(String(20), default="none")  # none, wappi, meta
+    meta_access_token = Column(String(500))
+    meta_phone_number_id = Column(String(100))
+    meta_business_id = Column(String(100))
+
     ai_model = Column(String(100), default="anthropic/claude-3.5-haiku")
     system_prompt = Column(Text)
 
