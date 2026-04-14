@@ -100,6 +100,16 @@ export function generatePrompt(data: Partial<HotelFormData>): string {
 
 Чеклист перед [НУЖЕН_МЕНЕДЖЕР]: даты + кол-во гостей + ФИО + телефон. Без любого пункта — спроси!`)
 
+  // === RESTAURANT ===
+  if (data.restaurantMenu) {
+    parts.push(`\n## РЕСТОРАН / МЕНЮ\n${data.restaurantMenu}`)
+  }
+
+  // === NEARBY ===
+  if (data.nearbyPlaces) {
+    parts.push(`\n## РЯДОМ С ОТЕЛЕМ\n${data.nearbyPlaces}`)
+  }
+
   // === NOT AVAILABLE ===
   if (data.notAvailable) {
     parts.push(`\nЧего НЕТ в отеле (НЕ выдумывай): ${data.notAvailable}`)

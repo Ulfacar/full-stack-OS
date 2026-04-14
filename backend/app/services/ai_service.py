@@ -184,6 +184,14 @@ class AIService:
             if have:
                 parts.append(f"\n\n## УДОБСТВА: {', '.join(have)}")
 
+        # Restaurant
+        if hotel_data.get('restaurant_menu'):
+            parts.append(f"\n\n## РЕСТОРАН / МЕНЮ\n{hotel_data['restaurant_menu']}")
+
+        # Nearby places
+        if hotel_data.get('nearby_places'):
+            parts.append(f"\n\n## РЯДОМ С ОТЕЛЕМ\n{hotel_data['nearby_places']}")
+
         # Not available
         if hotel_data.get('not_available'):
             parts.append(f"\n\nЧего НЕТ в отеле (НЕ выдумывай): {hotel_data['not_available']}")

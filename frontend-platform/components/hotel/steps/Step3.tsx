@@ -233,6 +233,28 @@ export function Step3({ formData, updateFormData }: Step3Props) {
         </div>
       </div>
 
+      {/* Ресторан/меню */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Ресторан / меню (опционально)</h3>
+        <Textarea
+          placeholder="Завтрак включён (шведский стол). Ресторан: обед 500 сом, ужин 700 сом. Бар: напитки от 150 сом..."
+          rows={3}
+          value={formData.restaurantMenu || ''}
+          onChange={(e) => updateFormData({ restaurantMenu: e.target.value })}
+        />
+      </div>
+
+      {/* Рядом с отелем */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium">Рядом с отелем (опционально)</h3>
+        <Textarea
+          placeholder="Банкомат — 200м, аптека — напротив, магазин — 5 мин пешком, пляж — 100м..."
+          rows={3}
+          value={formData.nearbyPlaces || ''}
+          onChange={(e) => updateFormData({ nearbyPlaces: e.target.value })}
+        />
+      </div>
+
       {/* Чего НЕТ */}
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Чего нет в отеле</h3>
