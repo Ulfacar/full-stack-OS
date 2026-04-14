@@ -27,7 +27,7 @@ async def telegram_webhook(
     result = await db.execute(select(Hotel).where(Hotel.slug == hotel_slug))
     hotel = result.scalar_one_or_none()
 
-    if not hotel or not hotel.is_active:
+    if not hotel or not hotel.is_active or hotel.status == "suspended":
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Hotel bot not found or inactive"

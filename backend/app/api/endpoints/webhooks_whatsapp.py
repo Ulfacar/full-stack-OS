@@ -40,7 +40,11 @@ async def whatsapp_webhook(
 ):
     """Приём WhatsApp сообщений через wappi.pro webhook."""
     result = await db.execute(
-        select(Hotel).where(Hotel.slug == hotel_slug, Hotel.is_active == True)
+        select(Hotel).where(
+            Hotel.slug == hotel_slug,
+            Hotel.is_active == True,
+            Hotel.status != "suspended",
+        )
     )
     hotel = result.scalar_one_or_none()
     if not hotel:
