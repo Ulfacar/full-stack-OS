@@ -203,6 +203,8 @@ async def configure_channels(
     whatsapp_phone = channel_data.get("whatsapp_phone")
     wappi_api_key = channel_data.get("wappi_api_key")
     wappi_profile_id = channel_data.get("wappi_profile_id")
+    manager_telegram_id = channel_data.get("manager_telegram_id")
+    manager_name = channel_data.get("manager_name")
 
     # Configure Telegram
     if telegram_token:
@@ -227,6 +229,12 @@ async def configure_channels(
         hotel.wappi_api_key = wappi_api_key
     if wappi_profile_id:
         hotel.wappi_profile_id = wappi_profile_id
+
+    # Configure manager
+    if manager_telegram_id:
+        hotel.manager_telegram_id = manager_telegram_id
+    if manager_name:
+        hotel.manager_name = manager_name
 
     # Activate hotel if at least one channel configured
     if hotel.telegram_bot_token or (hotel.wappi_api_key and hotel.wappi_profile_id):

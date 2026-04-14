@@ -48,6 +48,10 @@ class Hotel(Base):
     rules = Column(JSON)  # {checkin, checkout, cancellation, etc}
     amenities = Column(JSON)  # {wifi, parking, breakfast, etc}
 
+    # Manager
+    manager_telegram_id = Column(String(100))  # TG user ID for notifications
+    manager_name = Column(String(255))
+
     # Budget
     monthly_budget = Column(Float, default=5.0)  # Monthly limit in USD
     status = Column(String(20), default="demo")  # demo, active, suspended
@@ -95,8 +99,9 @@ class Conversation(Base):
     hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
     client_id = Column(Integer, ForeignKey("clients.id"), nullable=False)
 
-    status = Column(String(50), default="active")  # active, completed, needs_operator
+    status = Column(String(50), default="active")  # active, needs_operator, operator_active, completed
     channel = Column(String(50))  # telegram, whatsapp
+    operator_telegram_id = Column(String(100))  # TG ID of manager who took over
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

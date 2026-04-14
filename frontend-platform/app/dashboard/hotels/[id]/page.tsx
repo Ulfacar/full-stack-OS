@@ -32,6 +32,8 @@ export default function AdminHotelPage() {
   const [whatsappPhone, setWhatsappPhone] = useState('')
   const [wappiApiKey, setWappiApiKey] = useState('')
   const [wappiProfileId, setWappiProfileId] = useState('')
+  const [managerTgId, setManagerTgId] = useState('')
+  const [managerName, setManagerName] = useState('')
   const [budgetInput, setBudgetInput] = useState('')
 
   useEffect(() => {
@@ -47,6 +49,8 @@ export default function AdminHotelPage() {
         setWhatsappPhone(hotelRes.data.whatsapp_phone || '')
         setWappiApiKey(hotelRes.data.wappi_api_key || '')
         setWappiProfileId(hotelRes.data.wappi_profile_id || '')
+        setManagerTgId(hotelRes.data.manager_telegram_id || '')
+        setManagerName(hotelRes.data.manager_name || '')
         setBudgetInput(String(budgetRes.data.monthly_budget))
       } catch {
         router.push('/dashboard/hotels')
@@ -66,6 +70,8 @@ export default function AdminHotelPage() {
         whatsapp_phone: whatsappPhone || undefined,
         wappi_api_key: wappiApiKey || undefined,
         wappi_profile_id: wappiProfileId || undefined,
+        manager_telegram_id: managerTgId || undefined,
+        manager_name: managerName || undefined,
       })
       setHotel(res.data)
       setMessage('Каналы настроены!')
@@ -195,6 +201,32 @@ export default function AdminHotelPage() {
             >
               Приостановлен
             </Button>
+          </div>
+        </Card>
+
+        {/* Manager */}
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-4">Менеджер отеля</h2>
+          <p className="text-sm text-neutral-500 mb-4">
+            Менеджер получает уведомления в Telegram когда бот передаёт диалог.
+          </p>
+          <div className="space-y-4">
+            <div>
+              <Label>Имя менеджера</Label>
+              <Input
+                value={managerName}
+                onChange={(e) => setManagerName(e.target.value)}
+                placeholder="Айгуль"
+              />
+            </div>
+            <div>
+              <Label>Telegram ID менеджера</Label>
+              <Input
+                value={managerTgId}
+                onChange={(e) => setManagerTgId(e.target.value)}
+                placeholder="123456789 (узнать через @userinfobot)"
+              />
+            </div>
           </div>
         </Card>
 

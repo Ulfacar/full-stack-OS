@@ -13,6 +13,7 @@ from ...services.telegram_service import TelegramService
 from ...services.ai_service import ai_service
 from ...services.budget_service import budget_service
 from ...services.response_processor import process_response
+from ...services.notification_service import NotificationService
 
 router = APIRouter(prefix="/webhooks/telegram", tags=["webhooks"])
 
@@ -107,6 +108,13 @@ async def telegram_webhook(
             db.add(conversation)
             await db.flush()
 
+        # If manager is handling — don't let AI respond, just save message
+        if conversation.status == "operator_active":
+            db.add(Message(conversation_id=conversation.id, role="user", content=user_message))
+            await db.commit()
+            # TODO: forward to manager's Telegram
+            return {"ok": True}
+
         # Save user message
         user_msg = Message(
             conversation_id=conversation.id,
@@ -158,7 +166,20 @@ async def telegram_webhook(
         # Post-process: clean tags, pushy questions, detect manager transfer
         ai_response, needs_manager = process_response(raw_response)
 
-        # TODO: handle needs_manager — notify hotel managers
+        # Handle manager transfer
+        if needs_manager and hotel.manager_telegram_id and hotel.telegram_bot_token:
+            conversation.status = "needs_operator"
+            await db.flush()
+            notifier = NotificationService(hotel.telegram_bot_token)
+            client_name = client.telegram_username or client.name or telegram_id
+            await notifier.notify_needs_manager(
+                manager_telegram_id=hotel.manager_telegram_id,
+                hotel_name=hotel.name,
+                client_name=client_name,
+                channel="telegram",
+                conversation_id=conversation.id,
+                last_message=user_message,
+            )
 
         # Record AI usage with cost
         if usage:
