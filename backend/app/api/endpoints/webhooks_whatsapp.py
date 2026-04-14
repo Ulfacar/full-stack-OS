@@ -10,6 +10,7 @@ from ...db.database import get_db
 from ...db.models import Hotel, Client, Conversation, Message
 from ...services.ai_service import ai_service
 from ...services.budget_service import budget_service
+from ...services.response_processor import process_response
 
 logger = logging.getLogger(__name__)
 
@@ -159,11 +160,14 @@ async def whatsapp_webhook(
             ai_messages.append({"role": msg.role, "content": msg.content})
         ai_messages.append({"role": "user", "content": text})
 
-        ai_response, usage = await ai_service.generate_response(
+        raw_response, usage = await ai_service.generate_response(
             messages=ai_messages,
             model=hotel.ai_model or None,
             temperature=0.3,
         )
+
+        # Post-process
+        ai_response, needs_manager = process_response(raw_response)
 
         # Record usage
         if usage:

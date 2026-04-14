@@ -12,6 +12,7 @@ from ...db.models import Hotel, Client, Conversation, Message
 from ...services.telegram_service import TelegramService
 from ...services.ai_service import ai_service
 from ...services.budget_service import budget_service
+from ...services.response_processor import process_response
 
 router = APIRouter(prefix="/webhooks/telegram", tags=["webhooks"])
 
@@ -149,10 +150,15 @@ async def telegram_webhook(
         ai_messages.append({"role": "user", "content": user_message})
 
         # Generate AI response
-        ai_response, usage = await ai_service.generate_response(
+        raw_response, usage = await ai_service.generate_response(
             messages=ai_messages,
             model=hotel.ai_model or None
         )
+
+        # Post-process: clean tags, pushy questions, detect manager transfer
+        ai_response, needs_manager = process_response(raw_response)
+
+        # TODO: handle needs_manager — notify hotel managers
 
         # Record AI usage with cost
         if usage:

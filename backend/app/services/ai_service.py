@@ -5,6 +5,7 @@ Handles communication with AI models (Haiku, GPT-4, Claude, etc.)
 from openai import AsyncOpenAI
 from typing import List, Dict, Tuple, Optional
 from ..core.config import settings
+from .response_processor import is_garbled, process_response
 
 
 # Pricing per 1M tokens (input, output) in USD
@@ -51,33 +52,52 @@ class AIService:
         if model is None:
             model = settings.DEFAULT_AI_MODEL
 
-        try:
-            response = await self.client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+        max_retries = 3
+        total_usage = None
 
-            text = response.choices[0].message.content
-            usage = None
+        for attempt in range(max_retries):
+            try:
+                response = await self.client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
 
-            if response.usage:
-                prompt_tokens = response.usage.prompt_tokens or 0
-                completion_tokens = response.usage.completion_tokens or 0
-                cost = self.calculate_cost(model, prompt_tokens, completion_tokens)
-                usage = {
-                    "prompt_tokens": prompt_tokens,
-                    "completion_tokens": completion_tokens,
-                    "model": model,
-                    "cost_usd": cost,
-                }
+                text = response.choices[0].message.content
+                usage = None
 
-            return text, usage
+                if response.usage:
+                    prompt_tokens = response.usage.prompt_tokens or 0
+                    completion_tokens = response.usage.completion_tokens or 0
+                    cost = self.calculate_cost(model, prompt_tokens, completion_tokens)
+                    usage = {
+                        "prompt_tokens": prompt_tokens,
+                        "completion_tokens": completion_tokens,
+                        "model": model,
+                        "cost_usd": cost,
+                    }
+                    # Accumulate usage across retries
+                    if total_usage:
+                        total_usage["prompt_tokens"] += usage["prompt_tokens"]
+                        total_usage["completion_tokens"] += usage["completion_tokens"]
+                        total_usage["cost_usd"] += usage["cost_usd"]
+                    else:
+                        total_usage = usage.copy()
 
-        except Exception as e:
-            print(f"AI Service Error: {e}")
-            return "Извините, произошла ошибка. Попробуйте позже или свяжитесь с администрацией отеля.", None
+                # Check for garbled output — retry if corrupted
+                if is_garbled(text):
+                    print(f"Garbled response (attempt {attempt + 1}), retrying...")
+                    continue
+
+                return text, total_usage
+
+            except Exception as e:
+                print(f"AI Service Error (attempt {attempt + 1}): {e}")
+                if attempt == max_retries - 1:
+                    return "Извините, произошла ошибка. Попробуйте позже или свяжитесь с администрацией отеля.", total_usage
+
+        return "Извините, произошла ошибка. Попробуйте позже или свяжитесь с администрацией отеля.", total_usage
 
     async def generate_system_prompt(self, hotel_data: dict) -> str:
         """Generate system prompt based on hotel data."""
