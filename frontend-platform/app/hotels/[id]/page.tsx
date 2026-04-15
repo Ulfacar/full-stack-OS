@@ -16,6 +16,9 @@ interface HotelStats {
   conversations_month: number
   requests_handled: number
   automation_rate: number
+  needs_operator_count: number
+  channels: { telegram: number; whatsapp: number }
+  daily: { date: string; count: number }[]
 }
 
 export default function HotelDetailPage() {
@@ -54,6 +57,9 @@ export default function HotelDetailPage() {
           conversations_month: 0,
           requests_handled: 0,
           automation_rate: 0,
+          needs_operator_count: 0,
+          channels: { telegram: 0, whatsapp: 0 },
+          daily: [],
         } as HotelStats
       }
     },
@@ -171,6 +177,57 @@ export default function HotelDetailPage() {
               <div className="text-xs text-neutral-400 mt-1">бот справился сам</div>
             </Card>
           </div>
+
+          {/* Channel breakdown + manager transfers */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-6 mb-6 lg:mb-8">
+            <Card className="p-4 lg:p-6">
+              <div className="text-2xl lg:text-3xl font-semibold mb-1">
+                {stats?.channels?.telegram || 0}
+              </div>
+              <div className="text-xs lg:text-sm text-neutral-500">Telegram</div>
+              <div className="text-xs text-neutral-400 mt-1">диалогов / мес</div>
+            </Card>
+            <Card className="p-4 lg:p-6">
+              <div className="text-2xl lg:text-3xl font-semibold mb-1">
+                {stats?.channels?.whatsapp || 0}
+              </div>
+              <div className="text-xs lg:text-sm text-neutral-500">WhatsApp</div>
+              <div className="text-xs text-neutral-400 mt-1">диалогов / мес</div>
+            </Card>
+            <Card className="p-4 lg:p-6 col-span-2 lg:col-span-1">
+              <div className="text-2xl lg:text-3xl font-semibold mb-1 text-orange-600">
+                {stats?.needs_operator_count || 0}
+              </div>
+              <div className="text-xs lg:text-sm text-neutral-500">Передано менеджеру</div>
+              <div className="text-xs text-neutral-400 mt-1">потенциальные брони</div>
+            </Card>
+          </div>
+
+          {/* Daily chart */}
+          {stats?.daily && stats.daily.length > 0 && (
+            <Card className="mb-4 lg:mb-6">
+              <h3 className="text-lg font-medium mb-4">Обращения по дням</h3>
+              <div className="space-y-1.5">
+                {stats.daily.slice(-14).map((day) => {
+                  const maxCount = Math.max(...stats.daily.map(d => d.count), 1)
+                  return (
+                    <div key={day.date} className="flex items-center gap-3 text-sm">
+                      <span className="text-neutral-500 w-20 shrink-0 text-xs">
+                        {new Date(day.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                      </span>
+                      <div className="flex-1 bg-neutral-100 rounded-full h-2">
+                        <div
+                          className="bg-neutral-900 rounded-full h-2"
+                          style={{ width: `${(day.count / maxCount) * 100}%` }}
+                        />
+                      </div>
+                      <span className="font-mono text-xs w-8 text-right">{day.count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </Card>
+          )}
 
           {/* Hotel info */}
           <Card className="mb-4 lg:mb-6">

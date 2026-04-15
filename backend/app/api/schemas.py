@@ -225,9 +225,20 @@ class BillingRecord(BaseModel):
         from_attributes = True
 
 
+class ChannelBreakdown(BaseModel):
+    telegram: int = 0
+    whatsapp: int = 0
+
+class DailyConversations(BaseModel):
+    date: str
+    count: int
+
 class HotelStatsResponse(BaseModel):
     messages_total: int
     conversations_total: int
     conversations_month: int
     requests_handled: int
     automation_rate: int
+    needs_operator_count: int = 0
+    channels: ChannelBreakdown = ChannelBreakdown()
+    daily: List[DailyConversations] = []

@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 from typing import List
-from datetime import datetime
+from datetime import datetime, timedelta
 from ...db.database import get_db
 from ...db.models import User, Hotel, Conversation, Message, AIUsage
 from ..dependencies import get_current_user
-from ..schemas import HotelCreate, HotelUpdate, Hotel as HotelSchema, HotelList, HotelStatsResponse
+from ..schemas import HotelCreate, HotelUpdate, Hotel as HotelSchema, HotelList, HotelStatsResponse, ChannelBreakdown, DailyConversations
 from ...services.telegram_service import TelegramService
 from ...services.ai_service import ai_service
 from ...core.config import settings
@@ -335,12 +335,43 @@ async def get_hotel_stats(
     total_resolved = completed + needs_operator
     automation_rate = int((completed / total_resolved * 100)) if total_resolved > 0 else 0
 
+    # Channel breakdown this month
+    tg_result = await db.execute(
+        select(func.count(Conversation.id)).where(
+            and_(Conversation.hotel_id == hotel_id, Conversation.channel == "telegram", Conversation.created_at >= month_start)
+        )
+    )
+    tg_count = tg_result.scalar() or 0
+
+    wa_result = await db.execute(
+        select(func.count(Conversation.id)).where(
+            and_(Conversation.hotel_id == hotel_id, Conversation.channel == "whatsapp", Conversation.created_at >= month_start)
+        )
+    )
+    wa_count = wa_result.scalar() or 0
+
+    # Daily conversations (last 30 days)
+    thirty_days_ago = now - timedelta(days=30)
+    daily_result = await db.execute(
+        select(
+            func.date(Conversation.created_at).label("date"),
+            func.count(Conversation.id).label("count"),
+        )
+        .where(and_(Conversation.hotel_id == hotel_id, Conversation.created_at >= thirty_days_ago))
+        .group_by(func.date(Conversation.created_at))
+        .order_by(func.date(Conversation.created_at))
+    )
+    daily = [DailyConversations(date=str(row.date), count=row.count) for row in daily_result.all()]
+
     return HotelStatsResponse(
         messages_total=messages_total,
         conversations_total=conversations_total,
         conversations_month=conversations_month,
         requests_handled=requests_handled,
         automation_rate=automation_rate,
+        needs_operator_count=needs_operator,
+        channels=ChannelBreakdown(telegram=tg_count, whatsapp=wa_count),
+        daily=daily,
     )
 
 
