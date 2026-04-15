@@ -187,7 +187,7 @@ export default function HotelDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div className="text-neutral-500">Telegram:</div>
                 <div className="font-medium">
-                  {hotel.telegram_bot_token ? 'Подключен' : 'Не подключен'}
+                  {hotel.has_telegram_bot ? 'Подключен' : 'Не подключен'}
                 </div>
               </div>
             </div>
@@ -220,10 +220,10 @@ export default function HotelDetailPage() {
           <div className="space-y-4">
             <div>
               <div className="text-sm text-neutral-500 mb-2">
-                Токен Telegram:
+                Telegram:
               </div>
               <div className="text-sm font-mono bg-neutral-50 p-3 rounded break-all">
-                {hotel.telegram_bot_token || 'Не указан'}
+                {hotel.has_telegram_bot ? 'Подключен' : 'Не подключен'}
               </div>
             </div>
 

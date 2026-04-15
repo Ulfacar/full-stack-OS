@@ -19,20 +19,24 @@ class TelegramService:
         self.bot_token = bot_token
         self.api_base = f"https://api.telegram.org/bot{bot_token}"
 
-    async def set_webhook(self, webhook_url: str) -> Dict[str, Any]:
+    async def set_webhook(self, webhook_url: str, secret_token: str = None) -> Dict[str, Any]:
         """
         Register webhook URL for receiving messages
 
         Args:
             webhook_url: Public HTTPS URL where Telegram will send updates
+            secret_token: Secret token for X-Telegram-Bot-Api-Secret-Token verification
 
         Returns:
             API response dict
         """
+        payload = {"url": webhook_url}
+        if secret_token:
+            payload["secret_token"] = secret_token
         async with httpx.AsyncClient() as client:
             response = await client.post(
                 f"{self.api_base}/setWebhook",
-                json={"url": webhook_url}
+                json=payload
             )
             return response.json()
 

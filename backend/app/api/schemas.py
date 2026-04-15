@@ -121,7 +121,7 @@ class Hotel(BaseModel):
     website: Optional[str]
     description: Optional[str]
 
-    telegram_bot_token: Optional[str]
+    has_telegram_bot: bool = False
     whatsapp_phone: Optional[str]
     ai_model: str
     system_prompt: Optional[str] = None
@@ -142,6 +142,12 @@ class Hotel(BaseModel):
     class Config:
         from_attributes = True
 
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        if hasattr(obj, 'telegram_bot_token'):
+            obj.__dict__['has_telegram_bot'] = bool(obj.telegram_bot_token)
+        return super().model_validate(obj, **kwargs)
+
 
 class HotelList(BaseModel):
     id: int
@@ -151,11 +157,17 @@ class HotelList(BaseModel):
     is_active: bool
     status: str = "demo"
     monthly_budget: float = 5.0
-    telegram_bot_token: Optional[str]
+    has_telegram_bot: bool = False
     created_at: datetime
 
     class Config:
         from_attributes = True
+
+    @classmethod
+    def model_validate(cls, obj, **kwargs):
+        if hasattr(obj, 'telegram_bot_token'):
+            obj.__dict__['has_telegram_bot'] = bool(obj.telegram_bot_token)
+        return super().model_validate(obj, **kwargs)
 
 
 # Admin schemas

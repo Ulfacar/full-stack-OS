@@ -1,5 +1,7 @@
 """WhatsApp Webhook — supports both wappi.pro and Meta Cloud API."""
 
+import hashlib
+import hmac
 import logging
 import httpx
 from fastapi import APIRouter, HTTPException, Request, Depends, Query, status
@@ -176,6 +178,7 @@ async def _send_reply(hotel: Hotel, recipient: str, text: str):
 async def whatsapp_webhook(
     hotel_slug: str,
     request: Request,
+    secret: str = Query(None),
     db: AsyncSession = Depends(get_db),
 ):
     """Receive WhatsApp messages via wappi.pro webhook."""
@@ -185,6 +188,10 @@ async def whatsapp_webhook(
     hotel = result.scalar_one_or_none()
     if not hotel:
         raise HTTPException(status_code=404, detail="Hotel not found")
+
+    # Verify webhook secret
+    if hotel.webhook_secret and secret != hotel.webhook_secret:
+        raise HTTPException(status_code=403, detail="Invalid webhook secret")
 
     data = await request.json()
     messages = data.get("messages", {})
@@ -218,10 +225,16 @@ async def meta_webhook_verify(
     mode: str = Query(None, alias="hub.mode"),
     token: str = Query(None, alias="hub.verify_token"),
     challenge: str = Query(None, alias="hub.challenge"),
+    db: AsyncSession = Depends(get_db),
 ):
     """Meta webhook verification (GET request)."""
-    # Verify token = hotel slug (simple verification)
-    if mode == "subscribe" and token == hotel_slug:
+    # Use webhook_secret as verify token (not the public slug)
+    result = await db.execute(select(Hotel).where(Hotel.slug == hotel_slug))
+    hotel = result.scalar_one_or_none()
+    if not hotel or not hotel.webhook_secret:
+        raise HTTPException(status_code=403, detail="Verification failed")
+
+    if mode == "subscribe" and token == hotel.webhook_secret:
         return int(challenge) if challenge else ""
     raise HTTPException(status_code=403, detail="Verification failed")
 
@@ -239,6 +252,16 @@ async def meta_webhook(
     hotel = result.scalar_one_or_none()
     if not hotel:
         raise HTTPException(status_code=404, detail="Hotel not found")
+
+    # Verify Meta X-Hub-Signature-256
+    if hotel.meta_app_secret:
+        signature = request.headers.get("X-Hub-Signature-256", "")
+        body = await request.body()
+        expected = "sha256=" + hmac.HMAC(
+            hotel.meta_app_secret.encode(), body, hashlib.sha256
+        ).hexdigest()
+        if not hmac.compare_digest(signature, expected):
+            raise HTTPException(status_code=403, detail="Invalid signature")
 
     data = await request.json()
     parsed = parse_meta_webhook(data)

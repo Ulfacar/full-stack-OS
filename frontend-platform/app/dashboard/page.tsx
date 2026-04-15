@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import api from '@/lib/api'
 
 interface Application { id: number; status: string; hotel_name: string; contact_name: string | null; contact_phone: string | null; created_at: string }
-interface Hotel { id: number; name: string; slug: string; is_active: boolean; telegram_bot_token: string | null; created_at: string }
+interface Hotel { id: number; name: string; slug: string; is_active: boolean; has_telegram_bot: boolean; created_at: string }
 
 const STATUS_LABELS: Record<string, string> = { pending: 'Ожидает', configuring: 'Настройка', active: 'Активен', rejected: 'Отклонён' }
 const STATUS_COLORS: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-700', configuring: 'bg-blue-100 text-blue-700', active: 'bg-green-100 text-green-700', rejected: 'bg-red-100 text-red-700' }
@@ -69,7 +69,7 @@ export default function DashboardPage() {
           <div className="space-y-2">
             {hotels.map(hotel => (
               <div key={hotel.id} className="bg-white rounded-xl p-4 shadow-sm flex justify-between items-center">
-                <div><div className="font-medium">{hotel.name}</div><div className="text-sm text-neutral-500">/{hotel.slug} &middot; {hotel.telegram_bot_token ? 'TG connected' : 'TG not set'}</div></div>
+                <div><div className="font-medium">{hotel.name}</div><div className="text-sm text-neutral-500">/{hotel.slug} &middot; {hotel.has_telegram_bot ? 'TG connected' : 'TG not set'}</div></div>
                 <div className={`w-3 h-3 rounded-full ${hotel.is_active ? 'bg-green-500' : 'bg-neutral-300'}`} />
               </div>
             ))}

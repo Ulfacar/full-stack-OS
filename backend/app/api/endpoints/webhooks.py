@@ -37,6 +37,15 @@ async def telegram_webhook(
             detail="Hotel bot not found or inactive"
         )
 
+    # Verify Telegram secret token
+    if hotel.webhook_secret:
+        incoming_secret = request.headers.get("X-Telegram-Bot-Api-Secret-Token")
+        if incoming_secret != hotel.webhook_secret:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Invalid webhook secret"
+            )
+
     # Parse Telegram update
     update: Dict[str, Any] = await request.json()
 

@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # Auth
     SECRET_KEY: str = "your-secret-key-change-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 43200  # 30 days
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440  # 24 hours
 
     # OpenRouter
     OPENROUTER_API_KEY: str = ""
@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     # AI defaults
     DEFAULT_AI_MODEL: str = "anthropic/claude-3.5-haiku"
     DEFAULT_MONTHLY_BUDGET: float = 5.0
+
+    # Registration
+    INVITE_CODE: str = "EXMACHINA2026"
 
     # Webhooks
     WEBHOOK_BASE_URL: str = ""  # Will be set to VPS URL
@@ -43,3 +46,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Fail-fast if SECRET_KEY is still the default in production
+if not settings.DEBUG and settings.SECRET_KEY == "your-secret-key-change-in-production":
+    raise RuntimeError("FATAL: Set SECRET_KEY in environment variables before running in production!")

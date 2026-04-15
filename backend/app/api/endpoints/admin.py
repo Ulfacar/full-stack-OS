@@ -347,7 +347,9 @@ async def update_hotel_budget(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Update hotel monthly budget."""
+    """Update hotel monthly budget (admin only)."""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
     result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
     hotel = result.scalar_one_or_none()
     if not hotel or hotel.owner_id != current_user.id:

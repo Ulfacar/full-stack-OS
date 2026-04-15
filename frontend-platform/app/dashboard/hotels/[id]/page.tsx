@@ -49,7 +49,7 @@ export default function AdminHotelPage() {
         ])
         setHotel(hotelRes.data)
         setBudget(budgetRes.data)
-        setTelegramToken(hotelRes.data.telegram_bot_token || '')
+        setTelegramToken('')  // Token not exposed in API for security
         setWhatsappPhone(hotelRes.data.whatsapp_phone || '')
         setWappiApiKey(hotelRes.data.wappi_api_key || '')
         setWappiProfileId(hotelRes.data.wappi_profile_id || '')

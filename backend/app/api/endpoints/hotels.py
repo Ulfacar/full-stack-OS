@@ -11,6 +11,7 @@ from ...services.telegram_service import TelegramService
 from ...services.ai_service import ai_service
 from ...core.config import settings
 import re
+import secrets
 
 router = APIRouter(prefix="/hotels", tags=["hotels"])
 
@@ -78,6 +79,9 @@ async def create_hotel(
     has_channel = bool(hotel_data.telegram_bot_token or hotel_data.whatsapp_phone)
     initial_status = "active" if has_channel else "demo"
 
+    # Generate webhook secret for this hotel
+    webhook_secret = secrets.token_hex(32)
+
     # Create hotel
     new_hotel = Hotel(
         owner_id=current_user.id,
@@ -99,6 +103,7 @@ async def create_hotel(
         languages=hotel_data.languages,
         monthly_budget=hotel_data.monthly_budget,
         status=initial_status,
+        webhook_secret=webhook_secret,
     )
 
     db.add(new_hotel)
@@ -112,7 +117,7 @@ async def create_hotel(
             if is_valid:
                 telegram = TelegramService(hotel_data.telegram_bot_token)
                 webhook_url = f"{settings.WEBHOOK_BASE_URL}/webhooks/telegram/{slug}"
-                await telegram.set_webhook(webhook_url)
+                await telegram.set_webhook(webhook_url, secret_token=webhook_secret)
         except Exception as e:
             print(f"Webhook registration error: {e}")
 
@@ -210,6 +215,10 @@ async def configure_channels(
     manager_telegram_id = channel_data.get("manager_telegram_id")
     manager_name = channel_data.get("manager_name")
 
+    # Generate webhook secret if not exists
+    if not hotel.webhook_secret:
+        hotel.webhook_secret = secrets.token_hex(32)
+
     # Configure Telegram
     if telegram_token:
         is_valid = await TelegramService.validate_bot_token(telegram_token)
@@ -224,7 +233,7 @@ async def configure_channels(
         if settings.WEBHOOK_BASE_URL:
             telegram = TelegramService(telegram_token)
             webhook_url = f"{settings.WEBHOOK_BASE_URL}/webhooks/telegram/{hotel.slug}"
-            await telegram.set_webhook(webhook_url)
+            await telegram.set_webhook(webhook_url, secret_token=hotel.webhook_secret)
 
     # Configure WhatsApp (wappi.pro)
     if whatsapp_phone:

@@ -11,7 +11,7 @@ class User(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(String(20), default="admin")  # admin, sales
+    role = Column(String(20), default="sales")  # admin, sales
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -46,6 +46,10 @@ class Hotel(Base):
     meta_access_token = Column(String(500))
     meta_phone_number_id = Column(String(100))
     meta_business_id = Column(String(100))
+    meta_app_secret = Column(String(255))  # For X-Hub-Signature-256 verification
+
+    # Webhook security
+    webhook_secret = Column(String(64))  # Shared secret for webhook verification
 
     ai_model = Column(String(100), default="anthropic/claude-3.5-haiku")
     system_prompt = Column(Text)

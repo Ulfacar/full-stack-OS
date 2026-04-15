@@ -11,9 +11,7 @@ from ...core.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# Max allowed users — prevents open registration abuse.
-# First user becomes admin, subsequent registrations require invite code.
-INVITE_CODE = "EXMACHINA2026"
+# Invite code from environment variable
 
 
 @router.post("/register", response_model=UserSchema)
@@ -38,19 +36,21 @@ async def register(
     if user_count > 0:
         # Not the first user — require invite code in the name field
         # Format: "Name|INVITE_CODE"
-        if "|" not in user_data.name or user_data.name.split("|")[-1] != INVITE_CODE:
+        if "|" not in user_data.name or user_data.name.split("|")[-1] != settings.INVITE_CODE:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Registration is invite-only. Contact admin."
             )
         user_data.name = user_data.name.split("|")[0].strip()
 
-    # Create user
+    # Create user — first user becomes admin, rest get sales role
     hashed_password = get_password_hash(user_data.password)
+    role = "admin" if user_count == 0 else "sales"
     new_user = User(
         name=user_data.name,
         email=user_data.email,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        role=role,
     )
 
     db.add(new_user)

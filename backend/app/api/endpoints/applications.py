@@ -82,7 +82,9 @@ async def list_applications(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Список заявок для дашборда."""
+    """Список заявок для дашборда (admin only)."""
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
     query = select(Application).order_by(Application.created_at.desc())
     if status:
         query = query.where(Application.status == status)
@@ -96,7 +98,9 @@ async def get_application(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Детали заявки."""
+    """Детали заявки (admin only)."""
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
     result = await db.execute(select(Application).where(Application.id == app_id))
     app = result.scalar_one_or_none()
     if not app:
@@ -111,7 +115,9 @@ async def update_application(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Обновить статус заявки."""
+    """Обновить статус заявки (admin only)."""
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
     result = await db.execute(select(Application).where(Application.id == app_id))
     app = result.scalar_one_or_none()
     if not app:
@@ -130,7 +136,9 @@ async def activate_application(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Активировать заявку — создать отель и запустить бота."""
+    """Активировать заявку — создать отель и запустить бота (admin only)."""
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
     result = await db.execute(select(Application).where(Application.id == app_id))
     app = result.scalar_one_or_none()
     if not app:
