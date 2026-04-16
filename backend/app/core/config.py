@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     # App
     APP_NAME: str = "Ex-Machina"
     APP_VERSION: str = "1.0.0"
-    DEBUG: bool = True
+    DEBUG: bool = False
 
     # Database
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/asystem"
@@ -47,6 +47,9 @@ class Settings(BaseSettings):
 
 settings = Settings()
 
-# Fail-fast if SECRET_KEY is still the default in production
-if not settings.DEBUG and settings.SECRET_KEY == "your-secret-key-change-in-production":
-    raise RuntimeError("FATAL: Set SECRET_KEY in environment variables before running in production!")
+# Fail-fast checks for production
+if not settings.DEBUG:
+    if settings.SECRET_KEY == "your-secret-key-change-in-production":
+        raise RuntimeError("FATAL: Set SECRET_KEY in environment variables before running in production!")
+    if settings.INVITE_CODE == "EXMACHINA2026":
+        raise RuntimeError("FATAL: Set INVITE_CODE in environment variables before running in production!")

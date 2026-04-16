@@ -189,8 +189,10 @@ async def whatsapp_webhook(
     if not hotel:
         raise HTTPException(status_code=404, detail="Hotel not found")
 
-    # Verify webhook secret
-    if hotel.webhook_secret and secret != hotel.webhook_secret:
+    # Verify webhook secret (mandatory)
+    if not hotel.webhook_secret:
+        raise HTTPException(status_code=403, detail="Webhook secret not configured")
+    if secret != hotel.webhook_secret:
         raise HTTPException(status_code=403, detail="Invalid webhook secret")
 
     data = await request.json()
@@ -253,15 +255,16 @@ async def meta_webhook(
     if not hotel:
         raise HTTPException(status_code=404, detail="Hotel not found")
 
-    # Verify Meta X-Hub-Signature-256
-    if hotel.meta_app_secret:
-        signature = request.headers.get("X-Hub-Signature-256", "")
-        body = await request.body()
-        expected = "sha256=" + hmac.HMAC(
-            hotel.meta_app_secret.encode(), body, hashlib.sha256
-        ).hexdigest()
-        if not hmac.compare_digest(signature, expected):
-            raise HTTPException(status_code=403, detail="Invalid signature")
+    # Verify Meta X-Hub-Signature-256 (mandatory)
+    if not hotel.meta_app_secret:
+        raise HTTPException(status_code=403, detail="Meta app secret not configured")
+    signature = request.headers.get("X-Hub-Signature-256", "")
+    body = await request.body()
+    expected = "sha256=" + hmac.HMAC(
+        hotel.meta_app_secret.encode(), body, hashlib.sha256
+    ).hexdigest()
+    if not hmac.compare_digest(signature, expected):
+        raise HTTPException(status_code=403, detail="Invalid signature")
 
     data = await request.json()
     parsed = parse_meta_webhook(data)

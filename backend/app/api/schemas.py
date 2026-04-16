@@ -104,8 +104,7 @@ class HotelUpdate(BaseModel):
     system_prompt: Optional[str] = None
     communication_style: Optional[str] = None
     languages: Optional[List[str]] = None
-    is_active: Optional[bool] = None
-    monthly_budget: Optional[float] = None
+    # is_active, monthly_budget, status — admin-only, managed via /admin/hotels/{id}/budget
     wappi_api_key: Optional[str] = None
     wappi_profile_id: Optional[str] = None
 

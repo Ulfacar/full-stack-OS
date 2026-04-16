@@ -152,6 +152,7 @@ async def activate_application(
         raise HTTPException(status_code=400, detail="Slug already in use")
 
     # Создаём отель из заявки
+    import secrets as _secrets
     form = app.form_data or {}
     hotel = Hotel(
         owner_id=user.id,
@@ -171,6 +172,7 @@ async def activate_application(
         communication_style=form.get("communication_style", "friendly"),
         languages=form.get("languages", ["ru"]),
         is_active=True,
+        webhook_secret=_secrets.token_hex(32),
     )
     db.add(hotel)
     await db.flush()

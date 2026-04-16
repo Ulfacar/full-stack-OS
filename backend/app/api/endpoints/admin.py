@@ -12,6 +12,12 @@ from ...core.security import get_password_hash
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
+
+def require_admin(user: User):
+    """Raise 403 if user is not admin."""
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+
 # Cost per token (Claude 3.5 Haiku approximate)
 COST_PER_PROMPT_TOKEN = 0.00000025
 COST_PER_COMPLETION_TOKEN = 0.00000125
@@ -23,6 +29,7 @@ async def get_admin_hotels(
     db: AsyncSession = Depends(get_db)
 ):
     """Get all hotels with AI usage stats for OS Dashboard."""
+    require_admin(current_user)
     now = datetime.utcnow()
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
@@ -114,6 +121,7 @@ async def get_admin_stats(
     db: AsyncSession = Depends(get_db)
 ):
     """Get overall platform statistics for OS Dashboard."""
+    require_admin(current_user)
     now = datetime.utcnow()
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
@@ -184,6 +192,7 @@ async def get_daily_usage(
     db: AsyncSession = Depends(get_db)
 ):
     """Get daily AI usage breakdown for the current month."""
+    require_admin(current_user)
     now = datetime.utcnow()
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
@@ -234,6 +243,7 @@ async def get_billing(
     db: AsyncSession = Depends(get_db)
 ):
     """Get billing records with optional status filter."""
+    require_admin(current_user)
     hotel_ids_result = await db.execute(
         select(Hotel.id).where(Hotel.owner_id == current_user.id)
     )
@@ -324,10 +334,10 @@ async def get_hotel_budget(
     db: AsyncSession = Depends(get_db),
 ):
     """Get hotel budget details."""
+    require_admin(current_user)
     result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
     hotel = result.scalar_one_or_none()
     if not hotel or hotel.owner_id != current_user.id:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Hotel not found")
 
     spent = await budget_service.get_monthly_spend(hotel_id, db)

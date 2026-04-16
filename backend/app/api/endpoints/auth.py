@@ -7,6 +7,7 @@ from ...core.security import verify_password, get_password_hash, create_access_t
 from ...db.database import get_db
 from ...db.models import User
 from ..schemas import UserCreate, UserLogin, Token, User as UserSchema
+from ..dependencies import get_current_user
 from ...core.config import settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -86,19 +87,7 @@ async def login(
 
 @router.get("/me", response_model=UserSchema)
 async def get_me(
-    db: AsyncSession = Depends(get_db),
-    credentials: HTTPAuthorizationCredentials = Depends(security),
+    current_user: User = Depends(get_current_user),
 ):
     """Получить текущего пользователя по токену."""
-    from ...core.security import decode_access_token
-
-    payload = decode_access_token(credentials.credentials)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-    user_id = payload.get("sub")
-    result = await db.execute(select(User).where(User.id == int(user_id)))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
+    return current_user
