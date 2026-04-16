@@ -1,348 +1,360 @@
 'use client'
 
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
-import { ArrowRight, Clipboard, Sparkles, MessageCircleMore, Globe, Settings2, Smartphone, PieChart, Layout, Shield, Check } from 'lucide-react'
-import ClickSpark from '@/components/effects/ClickSpark'
-import SpotlightCard from '@/components/effects/SpotlightCard'
-import PhoneMockup from '@/components/landing/PhoneMockup'
-import { CaseFlipCard } from '@/components/landing/CaseFlipCard'
-import { ClipboardWriteIcon, SparklesAnimIcon, ChatBotIcon } from '@/components/landing/StepIcons'
-import CardNav from '@/components/layout/CardNav'
-
-const Antigravity = dynamic(() => import('@/components/effects/Antigravity'), { ssr: false })
-
-const navCards = [
-  {
-    label: 'Как это работает',
-    href: '#how-it-works',
-    description: 'От брифа до готового AI-бота за 3 шага',
-    bgColor: '#1a1a2e',
-    textColor: '#fff',
-  },
-  {
-    label: 'Возможности',
-    href: '#features',
-    description: 'Telegram, WhatsApp, аналитика и интеграции',
-    bgColor: '#0f2744',
-    textColor: '#fff',
-  },
-  {
-    label: 'Кейсы',
-    href: '#case',
-    description: 'Реальные результаты наших клиентов',
-    bgColor: '#1a1a2e',
-    textColor: '#fff',
-  },
-  {
-    label: 'Тарифы',
-    href: '#pricing',
-    description: 'Прозрачные условия без скрытых платежей',
-    bgColor: '#0f2744',
-    textColor: '#fff',
-  },
-]
+import { ArrowRight, ArrowUpRight, MessageSquare, Globe, Zap, BarChart3, Shield, Layers, Check, Star } from 'lucide-react'
 
 export default function LandingPage() {
   return (
-    <div className="antialiased selection:bg-[#3B82F6]/30 selection:text-white">
-      {/* Navbar */}
-      <CardNav cards={navCards} />
+    <div className="antialiased selection:bg-amber-200/30 selection:text-amber-900 relative">
+      {/* Grain overlay */}
+      <div className="pointer-events-none fixed inset-0 z-50 opacity-[0.03]" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")' }} />
 
-      {/* Hero Section */}
-      <ClickSpark sparkColor="#fff" sparkSize={10} sparkRadius={15} sparkCount={8} duration={400}>
-      <section className="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden bg-[#0A0A0A]">
-        {/* Antigravity particle background */}
-        <div className="absolute inset-0 pointer-events-auto">
-          <Antigravity
-            count={200}
-            magnetRadius={6}
-            ringRadius={7}
-            waveSpeed={0.3}
-            waveAmplitude={1}
-            particleSize={3}
-            lerpSpeed={0.04}
-            color="#3B82F6"
-            autoAnimate
-            particleVariance={1.5}
-            depthFactor={1}
-            pulseSpeed={2}
-            particleShape="capsule"
-            fieldStrength={8}
-          />
-        </div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[400px] bg-[#3B82F6]/8 blur-[100px] rounded-full pointer-events-none" />
-
-        <div className="max-w-6xl mx-auto px-6 relative z-10 grid md:grid-cols-2 gap-12 items-center pointer-events-none">
-          <div className="max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#262626] bg-[#0A0A0A] text-xs text-[#A3A3A3] mb-8">
-              <Sparkles size={14} className="text-[#3B82F6]" />
-              <span>Создание демо-бота за 5 минут</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-semibold text-white mb-6 leading-[1.1] tracking-tight">
-              Продавайте AI-ботов прямо на встрече с клиентом.
-            </h1>
-            <p className="text-base text-[#A3A3A3] mb-8 leading-relaxed">
-              SaaS-платформа для создания умных ассистентов для отелей. Заполните опросник, и ваш клиент увидит работающий продукт мгновенно. Никакого кода.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 pointer-events-auto">
-              <Link href="/create-bot" className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-5 py-2.5 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2 group shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                Начать бесплатно
-                <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-              <Link href="/login" className="border border-[#262626] text-[#D4D4D4] hover:bg-[#1A1A1A] px-5 py-2.5 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2">
-                Смотреть демо
-              </Link>
-            </div>
+      {/* ═══ NAVBAR ═══ */}
+      <nav className="fixed top-0 w-full z-40 bg-[#1A1814]/80 backdrop-blur-xl border-b border-[#2A2520]/50">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <span className="font-display text-xl tracking-tight text-[#F5F0EB]">
+            Ex<span className="text-[#C8A96E]">—</span>Machina
+          </span>
+          <div className="hidden md:flex items-center gap-8 text-sm text-[#A69F93]">
+            <a href="#how" className="hover:text-[#F5F0EB] transition-colors">Процесс</a>
+            <a href="#features" className="hover:text-[#F5F0EB] transition-colors">Возможности</a>
+            <a href="#cases" className="hover:text-[#F5F0EB] transition-colors">Кейсы</a>
+            <a href="#pricing" className="hover:text-[#F5F0EB] transition-colors">Тарифы</a>
           </div>
-
-          {/* Phone Mockup */}
-          <PhoneMockup />
-        </div>
-      </section>
-      </ClickSpark>
-
-      {/* Light sections — blue sparks */}
-      <ClickSpark sparkColor="#3B82F6" sparkSize={10} sparkRadius={15} sparkCount={8} duration={400}>
-      <section id="how-it-works" className="bg-white text-[#0A0A0A] py-24 border-t border-[#E5E5E5]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl font-semibold tracking-tight mb-4">От брифа до готового AI за минуты</h2>
-            <p className="text-sm text-[#737373]">Процесс продаж меняется навсегда. Покажите клиенту результат, а не презентацию.</p>
+          <div className="flex items-center gap-3">
+            <Link href="/login" className="text-sm text-[#A69F93] hover:text-[#F5F0EB] transition-colors">
+              Войти
+            </Link>
+            <Link href="/create-bot" className="text-sm bg-[#C8A96E] hover:bg-[#B89A5F] text-[#1A1814] px-4 py-2 rounded-md font-medium transition-all">
+              Создать бота
+            </Link>
           </div>
+        </div>
+      </nav>
 
-          <div className="grid md:grid-cols-3 gap-12 relative">
-            {/* Track 1: icon 1 → icon 2 */}
-            <div className="hidden md:block absolute top-6 left-[8%] h-[4px] bg-[#E5E5E5] rounded-full" style={{ width: '38%' }} />
-            <div className="hidden md:block absolute top-6 left-[8%] h-[4px] bg-[#3B82F6] rounded-full" style={{ width: '38%', transformOrigin: 'left', animation: 'progressBar1 6s linear infinite' }} />
-            {/* Track 2: icon 2 → icon 3 */}
-            <div className="hidden md:block absolute top-6 left-[54%] h-[4px] bg-[#E5E5E5] rounded-full" style={{ width: '38%' }} />
-            <div className="hidden md:block absolute top-6 left-[54%] h-[4px] bg-[#3B82F6] rounded-full" style={{ width: '38%', transformOrigin: 'left', animation: 'progressBar2 6s linear infinite' }} />
+      {/* ═══ HERO ═══ */}
+      <section className="relative min-h-screen flex items-center bg-[#1A1814] overflow-hidden">
+        {/* Warm gradient orbs */}
+        <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-[#C8A96E]/5 rounded-full blur-[120px]" />
+        <div className="absolute bottom-1/4 right-0 w-[400px] h-[400px] bg-[#8B7355]/5 rounded-full blur-[100px]" />
 
-            <div className="relative bg-white z-10 flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-xl border border-[#E5E5E5] bg-[#FAFAFA] flex items-center justify-center mb-6 shadow-sm">
-                <ClipboardWriteIcon />
+        {/* Diagonal line decoration */}
+        <div className="absolute top-0 right-[20%] w-px h-full bg-gradient-to-b from-transparent via-[#2A2520] to-transparent opacity-40" />
+        <div className="absolute top-0 right-[40%] w-px h-full bg-gradient-to-b from-transparent via-[#2A2520] to-transparent opacity-20" />
+
+        <div className="max-w-7xl mx-auto px-6 pt-32 pb-20 relative z-10">
+          <div className="grid md:grid-cols-12 gap-8 items-end">
+            {/* Left — Main content */}
+            <div className="md:col-span-7 space-y-8">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#2A2520] text-xs text-[#A69F93] tracking-wider uppercase">
+                <span className="w-1.5 h-1.5 bg-[#C8A96E] rounded-full animate-pulse-soft" />
+                AI для гостеприимства
               </div>
-              <div className="text-xs font-medium text-[#3B82F6] mb-2">Шаг 1</div>
-              <h3 className="text-lg font-medium tracking-tight mb-2">Заполняете опросник</h3>
-              <p className="text-sm text-[#737373]">Прямо на встрече с отельером вносите базовые данные: название, цены, услуги.</p>
+
+              <h1 className="font-display text-5xl md:text-7xl lg:text-8xl text-[#F5F0EB] leading-[0.95] tracking-tight">
+                Продавайте
+                <br />
+                <span className="italic text-[#C8A96E]">AI-ботов</span>
+                <br />
+                прямо на встрече
+              </h1>
+
+              <p className="text-lg md:text-xl text-[#A69F93] max-w-lg leading-relaxed">
+                Заполните опросник за 5 минут — клиент увидит работающий продукт мгновенно. Никакого кода.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <Link href="/create-bot" className="group bg-[#C8A96E] hover:bg-[#B89A5F] text-[#1A1814] px-8 py-3.5 rounded-md text-sm font-semibold transition-all flex items-center justify-center gap-2">
+                  Начать бесплатно
+                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link href="/login" className="border border-[#2A2520] hover:border-[#C8A96E]/30 text-[#A69F93] hover:text-[#F5F0EB] px-8 py-3.5 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2">
+                  Смотреть демо
+                  <ArrowUpRight size={14} />
+                </Link>
+              </div>
             </div>
 
-            <div className="relative bg-white z-10 flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-xl border border-[#E5E5E5] bg-[#FAFAFA] flex items-center justify-center mb-6 shadow-sm">
-                <SparklesAnimIcon />
+            {/* Right — Stats card */}
+            <div className="md:col-span-5 md:pl-12">
+              <div className="bg-[#211F1A] border border-[#2A2520] rounded-2xl p-8 space-y-6 landing-card-enter">
+                <div className="text-xs text-[#A69F93] tracking-wider uppercase mb-4">Результаты клиентов</div>
+                <div className="space-y-5">
+                  {[
+                    { value: '86%', label: 'автоматизация рутинных запросов', color: 'text-[#C8A96E]' },
+                    { value: '90+', label: 'диалогов в день на отель', color: 'text-[#F5F0EB]' },
+                    { value: '2 сек', label: 'среднее время ответа бота', color: 'text-[#C8A96E]' },
+                    { value: '15x', label: 'быстрее чем ручная обработка', color: 'text-[#F5F0EB]' },
+                  ].map((stat, i) => (
+                    <div key={i} className="flex items-baseline justify-between border-b border-[#2A2520]/50 pb-4 last:border-0 last:pb-0">
+                      <span className={`font-display text-3xl tracking-tight ${stat.color}`}>{stat.value}</span>
+                      <span className="text-xs text-[#6B6560] max-w-[160px] text-right leading-tight">{stat.label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="text-xs font-medium text-[#3B82F6] mb-2">Шаг 2</div>
-              <h3 className="text-lg font-medium tracking-tight mb-2">Демо-бот готов</h3>
-              <p className="text-sm text-[#737373]">Система моментально генерирует промпты и обучает модель на ваших данных.</p>
-            </div>
-
-            <div className="relative bg-white z-10 flex flex-col items-center text-center">
-              <div className="w-12 h-12 rounded-xl border border-[#E5E5E5] bg-[#FAFAFA] flex items-center justify-center mb-6 shadow-sm">
-                <ChatBotIcon />
-              </div>
-              <div className="text-xs font-medium text-[#3B82F6] mb-2">Шаг 3</div>
-              <h3 className="text-lg font-medium tracking-tight mb-2">Бот работает 24/7</h3>
-              <p className="text-sm text-[#737373]">Клиент тестирует бота в Telegram или WhatsApp. 86% автоматизации рутины.</p>
             </div>
           </div>
         </div>
+
+        {/* Bottom border accent */}
+        <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-[#C8A96E]/20 to-transparent" />
       </section>
 
-      {/* Features */}
-      <section id="features" className="bg-[#FAFAFA] text-[#0A0A0A] py-24 border-t border-[#E5E5E5]">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-3xl font-semibold tracking-tight mb-12 text-center">Всё, что нужно для автоматизации</h2>
+      {/* ═══ HOW IT WORKS ═══ */}
+      <section id="how" className="bg-[#F5F0EB] text-[#1A1814] py-28">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-12 gap-12 mb-20">
+            <div className="md:col-span-5">
+              <span className="text-xs tracking-wider uppercase text-[#8B7355] font-medium">Процесс</span>
+              <h2 className="font-display text-4xl md:text-5xl tracking-tight mt-4 leading-[1.05]">
+                От брифа до
+                <br />
+                <span className="italic">готового AI</span>
+              </h2>
+            </div>
+            <div className="md:col-span-5 md:col-start-8 flex items-end">
+              <p className="text-[#6B6560] leading-relaxed">
+                Процесс продаж меняется навсегда. Покажите клиенту результат, а не презентацию. Три шага — и у вас работающий продукт.
+              </p>
+            </div>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 gap-6">
             {[
-              { icon: Globe, title: 'Мультиязычность', desc: 'Бот понимает и отвечает на десятках языков, автоматически подстраиваясь под клиента.' },
-              { icon: Settings2, title: 'Умный контекст', desc: 'AI помнит историю диалога и учитывает специфику конкретного отеля.' },
-              { icon: Smartphone, title: 'Telegram & WhatsApp', desc: 'Подключение к самым популярным мессенджерам в пару кликов.' },
-              { icon: PieChart, title: 'Контроль бюджета', desc: 'Визуальный прогресс-бар расхода AI. Лимиты и уведомления.' },
-              { icon: Layout, title: 'Удобный Dashboard', desc: 'Единая панель для управления всеми подключенными отелями.' },
-              { icon: Shield, title: 'Надёжность', desc: 'Архитектура на Next.js 14 — тысячи запросов без задержек.' },
-            ].map((item) => {
+              {
+                num: '01',
+                title: 'Заполните опросник',
+                desc: 'Прямо на встрече с отельером внесите базовые данные: название, цены, услуги, правила.',
+              },
+              {
+                num: '02',
+                title: 'AI создаёт бота',
+                desc: 'Система генерирует промпты и обучает модель на данных отеля. Демо готово за секунды.',
+              },
+              {
+                num: '03',
+                title: 'Бот работает 24/7',
+                desc: 'Подключите Telegram или WhatsApp. 86% запросов обрабатываются без участия человека.',
+              },
+            ].map((step, i) => (
+              <div key={i} className="group relative bg-white border border-[#E5DFD6] rounded-xl p-8 hover:border-[#C8A96E]/40 transition-all duration-300 hover:shadow-[0_8px_40px_rgba(200,169,110,0.08)]">
+                <span className="font-display text-6xl text-[#E5DFD6] group-hover:text-[#C8A96E]/30 transition-colors absolute top-6 right-8">{step.num}</span>
+                <div className="relative pt-12">
+                  <h3 className="text-lg font-semibold tracking-tight mb-3">{step.title}</h3>
+                  <p className="text-sm text-[#6B6560] leading-relaxed">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ FEATURES ═══ */}
+      <section id="features" className="bg-[#1A1814] text-[#F5F0EB] py-28">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <span className="text-xs tracking-wider uppercase text-[#C8A96E] font-medium">Возможности</span>
+            <h2 className="font-display text-4xl md:text-5xl tracking-tight mt-4">
+              Всё для <span className="italic">автоматизации</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[#2A2520]/50 border border-[#2A2520] rounded-2xl overflow-hidden">
+            {[
+              { icon: Globe, title: 'Мультиязычность', desc: 'Бот понимает и отвечает на десятках языков, подстраиваясь под клиента автоматически.' },
+              { icon: MessageSquare, title: 'Telegram & WhatsApp', desc: 'Подключение к самым популярным мессенджерам в пару кликов.' },
+              { icon: Zap, title: 'Умный контекст', desc: 'AI помнит историю диалога и учитывает специфику конкретного отеля.' },
+              { icon: BarChart3, title: 'Контроль бюджета', desc: 'Визуальный прогресс-бар расхода AI. Лимиты и уведомления при превышении.' },
+              { icon: Layers, title: 'Dashboard', desc: 'Единая панель управления всеми подключенными отелями и аналитикой.' },
+              { icon: Shield, title: 'Надёжность', desc: 'Архитектура на Next.js 14 + FastAPI — тысячи запросов без задержек.' },
+            ].map((item, i) => {
               const Icon = item.icon
               return (
-                <SpotlightCard key={item.title} className="bg-white border border-[#E5E5E5] rounded-xl p-6 hover:border-[#D4D4D4]" spotlightColor="rgba(59, 130, 246, 0.08)">
-                  <Icon size={24} strokeWidth={1.5} className="text-[#0A0A0A] mb-4" />
+                <div key={i} className="bg-[#1A1814] p-8 hover:bg-[#211F1A] transition-colors group">
+                  <div className="w-10 h-10 rounded-lg border border-[#2A2520] flex items-center justify-center mb-5 group-hover:border-[#C8A96E]/30 transition-colors">
+                    <Icon size={18} strokeWidth={1.5} className="text-[#C8A96E]" />
+                  </div>
                   <h3 className="text-base font-medium tracking-tight mb-2">{item.title}</h3>
-                  <p className="text-xs text-[#737373] leading-relaxed">{item.desc}</p>
-                </SpotlightCard>
+                  <p className="text-sm text-[#6B6560] leading-relaxed">{item.desc}</p>
+                </div>
               )
             })}
           </div>
         </div>
       </section>
 
-      {/* Case Studies */}
-      <section id="case" className="bg-white text-[#0A0A0A] py-24 border-t border-[#E5E5E5]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <h2 className="text-3xl font-semibold tracking-tight mb-4">Успешные кейсы</h2>
-            <p className="text-sm text-[#737373]">Отели, которые уже автоматизировали общение с гостями</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <CaseFlipCard data={{
-              name: 'Ton Azure',
-              tag: 'Бутик-отель',
-              description: 'Разгрузили ресепшн в пиковый сезон. Бот взял на себя ответы на частые вопросы, бронирование спа и консультации.',
-              stats: [
-                { label: 'Диалогов / день', value: '90+' },
-                { label: 'Автоматизация', value: '86%', color: 'text-[#10B981]' },
-                { label: 'Языков', value: '3' },
-                { label: 'Время ответа', value: '2 сек', color: 'text-[#3B82F6]' },
-              ],
-              result: 'Полная автоматизация рутинных запросов гостей за 2 недели внедрения.',
-            }} />
-
-            <CaseFlipCard data={{
-              name: 'Grand Hotel Bishkek',
-              tag: 'Бизнес-отель',
-              description: 'Мультиязычный бот для международных гостей. Обрабатывает запросы на русском, английском и турецком 24/7.',
-              stats: [
-                { label: 'Запросов / мес', value: '2.4K' },
-                { label: 'Экономия', value: '$1.2K', color: 'text-[#10B981]' },
-                { label: 'Каналов', value: '2' },
-                { label: 'Uptime', value: '99.9%', color: 'text-[#3B82F6]' },
-              ],
-              result: 'Сократили нагрузку на ресепшн на 60%, увеличили скорость ответа в 15 раз.',
-            }} />
-
-            <CaseFlipCard data={{
-              name: 'Mountain Lodge',
-              tag: 'Горный курорт',
-              description: 'Бот помогает гостям бронировать экскурсии, трансферы и спа прямо в Telegram без звонков на ресепшн.',
-              stats: [
-                { label: 'Бронирований', value: '340+' },
-                { label: 'Конверсия', value: '42%', color: 'text-[#10B981]' },
-                { label: 'Доп. продажи', value: '+28%' },
-                { label: 'NPS', value: '94', color: 'text-[#3B82F6]' },
-              ],
-              result: 'Допродажи через бота увеличили средний чек гостя на 28%.',
-            }} />
-          </div>
-        </div>
-      </section>
-      </ClickSpark>
-
-      {/* Pricing + Footer — white sparks */}
-      <ClickSpark sparkColor="#fff" sparkSize={10} sparkRadius={15} sparkCount={8} duration={400}>
-      <section id="pricing" className="bg-[#0A0A0A] text-[#FAFAFA] py-24 pb-12 border-t border-[#262626]">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-semibold tracking-tight mb-4 text-white">Прозрачные условия</h2>
-            <p className="text-sm text-[#A3A3A3]">Выберите тариф, который подходит вашему бизнесу. Никаких скрытых платежей.</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            {/* Starter */}
-            <SpotlightCard className="border border-[#262626] bg-[#0A0A0A] rounded-2xl p-8 relative overflow-hidden" spotlightColor="rgba(59, 130, 246, 0.08)">
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#262626] to-transparent" />
-              <div className="mb-8">
-                <h3 className="text-lg font-medium tracking-tight mb-2 text-white">Starter</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-semibold tracking-tight text-white">$129</span>
-                  <span className="text-sm text-[#A3A3A3]">/ мес</span>
-                </div>
-                <div className="text-xs text-[#737373] mt-2">До 1 000 сообщений / мес</div>
-              </div>
-              <div className="space-y-3 mb-8">
-                {[
-                  'Неограниченное кол-во ботов',
-                  'AI-модель: DeepSeek',
-                  'Канал: Telegram',
-                  'Базовая аналитика',
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3">
-                    <Check size={16} strokeWidth={1.5} className="text-[#A3A3A3] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-[#A3A3A3]">{item}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href="/create-bot" className="block w-full border border-[#262626] hover:border-[#3B82F6]/50 text-[#D4D4D4] hover:text-white font-medium py-2.5 rounded-md text-sm transition-all text-center">
-                Начать
-              </Link>
-            </SpotlightCard>
-
-            {/* Business */}
-            <SpotlightCard className="border border-[#262626] bg-[#0A0A0A] rounded-2xl p-8 relative overflow-hidden" spotlightColor="rgba(59, 130, 246, 0.08)">
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#262626] to-transparent" />
-              <div className="mb-8">
-                <h3 className="text-lg font-medium tracking-tight mb-2 text-white">Business</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-semibold tracking-tight text-white">$249</span>
-                  <span className="text-sm text-[#A3A3A3]">/ мес</span>
-                </div>
-                <div className="text-xs text-[#737373] mt-2">До 5 000 сообщений / мес</div>
-              </div>
-              <div className="space-y-3 mb-8">
-                {[
-                  'Неограниченное кол-во ботов',
-                  'AI-модель: GPT-4',
-                  'Telegram + WhatsApp',
-                  'Интеграция Exely (базовая)',
-                  'Расширенная аналитика',
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3">
-                    <Check size={16} strokeWidth={1.5} className="text-[#A3A3A3] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-[#A3A3A3]">{item}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href="/create-bot" className="block w-full border border-[#262626] hover:border-[#3B82F6]/50 text-[#D4D4D4] hover:text-white font-medium py-2.5 rounded-md text-sm transition-all text-center">
-                Начать
-              </Link>
-            </SpotlightCard>
-
-            {/* Premium — highlighted */}
-            <SpotlightCard className="border border-[#3B82F6]/40 bg-[#0A0A0A] rounded-2xl p-8 relative overflow-hidden shadow-[0_0_30px_rgba(59,130,246,0.1)]" spotlightColor="rgba(59, 130, 246, 0.15)">
-              <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#3B82F6] to-transparent opacity-60" />
-              <div className="absolute top-4 right-4 text-[10px] font-medium tracking-wider uppercase bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/20 px-2 py-0.5 rounded-full">
-                Выгодный
-              </div>
-              <div className="mb-8">
-                <h3 className="text-lg font-medium tracking-tight mb-2 text-white">Premium</h3>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-semibold tracking-tight text-white">$299</span>
-                  <span className="text-sm text-[#A3A3A3]">/ мес</span>
-                </div>
-                <div className="text-xs text-[#737373] mt-2">До 20 000 сообщений / мес</div>
-              </div>
-              <div className="space-y-3 mb-8">
-                {[
-                  'Неограниченное кол-во ботов',
-                  'AI-модели: GPT-4 + Claude',
-                  'Все каналы',
-                  'Полная интеграция Exely',
-                  'Полная аналитика + экспорт',
-                ].map((item) => (
-                  <div key={item} className="flex items-start gap-3">
-                    <Check size={16} strokeWidth={1.5} className="text-[#3B82F6] flex-shrink-0 mt-0.5" />
-                    <span className="text-sm text-[#D4D4D4]">{item}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href="/create-bot" className="block w-full bg-[#3B82F6] hover:bg-[#2563EB] text-white font-medium py-2.5 rounded-md text-sm transition-all text-center shadow-[0_0_15px_rgba(59,130,246,0.3)]">
-                Начать
-              </Link>
-            </SpotlightCard>
-          </div>
-
-          {/* Footer */}
-          <footer className="mt-24 pt-8 border-t border-[#262626] flex flex-col md:flex-row justify-between items-center gap-4">
-            <span className="font-medium text-base tracking-tighter text-[#A3A3A3]">
-              Ex<span className="text-[#3B82F6]">-Machina</span>
-            </span>
-            <div className="text-xs text-[#737373]">
-              &copy; 2026 Ex-Machina &middot; exmachina.kg
+      {/* ═══ CASE STUDIES ═══ */}
+      <section id="cases" className="bg-[#F5F0EB] text-[#1A1814] py-28">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-16">
+            <div>
+              <span className="text-xs tracking-wider uppercase text-[#8B7355] font-medium">Кейсы</span>
+              <h2 className="font-display text-4xl md:text-5xl tracking-tight mt-4">
+                Успешные <span className="italic">внедрения</span>
+              </h2>
             </div>
-          </footer>
+            <p className="text-[#6B6560] max-w-md leading-relaxed">
+              Отели, которые уже автоматизировали общение с гостями и увеличили продажи.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              {
+                name: 'Ton Azure',
+                type: 'Бутик-отель',
+                quote: 'Разгрузили ресепшн в пиковый сезон. Бот взял на себя ответы, бронирование спа и консультации.',
+                stats: { dialogs: '90+/день', auto: '86%', speed: '2 сек' },
+              },
+              {
+                name: 'Grand Hotel Bishkek',
+                type: 'Бизнес-отель',
+                quote: 'Мультиязычный бот для международных гостей. Обрабатывает запросы на 3 языках 24/7.',
+                stats: { dialogs: '2.4K/мес', auto: '$1.2K экономия', speed: '99.9% uptime' },
+              },
+              {
+                name: 'Mountain Lodge',
+                type: 'Горный курорт',
+                quote: 'Бот помогает гостям бронировать экскурсии и трансферы прямо в Telegram.',
+                stats: { dialogs: '340+ броней', auto: '42% конверсия', speed: '+28% чек' },
+              },
+            ].map((c, i) => (
+              <div key={i} className="bg-white border border-[#E5DFD6] rounded-xl overflow-hidden hover:shadow-[0_12px_48px_rgba(200,169,110,0.1)] transition-all duration-300 group">
+                {/* Header bar */}
+                <div className="h-1 bg-gradient-to-r from-[#C8A96E] to-[#8B7355]" />
+                <div className="p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-full bg-[#1A1814] flex items-center justify-center">
+                      <Star size={14} className="text-[#C8A96E]" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-sm">{c.name}</div>
+                      <div className="text-xs text-[#8B7355]">{c.type}</div>
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-[#6B6560] leading-relaxed mb-8 min-h-[60px]">
+                    &ldquo;{c.quote}&rdquo;
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-3 pt-6 border-t border-[#E5DFD6]">
+                    {Object.entries(c.stats).map(([_, val], j) => (
+                      <div key={j} className="text-center">
+                        <div className="font-display text-lg text-[#1A1814] tracking-tight">{val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
-      </ClickSpark>
+
+      {/* ═══ PRICING ═══ */}
+      <section id="pricing" className="bg-[#1A1814] text-[#F5F0EB] py-28">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <span className="text-xs tracking-wider uppercase text-[#C8A96E] font-medium">Тарифы</span>
+            <h2 className="font-display text-4xl md:text-5xl tracking-tight mt-4">
+              Прозрачные <span className="italic">условия</span>
+            </h2>
+            <p className="text-sm text-[#6B6560] mt-4">Никаких скрытых платежей. Выберите план под ваш бизнес.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              {
+                name: 'Starter',
+                price: '$129',
+                period: '/мес',
+                limit: 'До 1 000 сообщений',
+                features: ['Неограниченное кол-во ботов', 'AI-модель: DeepSeek', 'Канал: Telegram', 'Базовая аналитика'],
+                highlighted: false,
+              },
+              {
+                name: 'Business',
+                price: '$249',
+                period: '/мес',
+                limit: 'До 5 000 сообщений',
+                features: ['Неограниченное кол-во ботов', 'AI-модель: GPT-4', 'Telegram + WhatsApp', 'Интеграция Exely', 'Расширенная аналитика'],
+                highlighted: false,
+              },
+              {
+                name: 'Premium',
+                price: '$299',
+                period: '/мес',
+                limit: 'До 20 000 сообщений',
+                features: ['Неограниченное кол-во ботов', 'AI: GPT-4 + Claude', 'Все каналы', 'Полная интеграция Exely', 'Полная аналитика + экспорт'],
+                highlighted: true,
+              },
+            ].map((plan, i) => (
+              <div
+                key={i}
+                className={`relative rounded-2xl p-8 border transition-all duration-300 ${
+                  plan.highlighted
+                    ? 'border-[#C8A96E]/40 bg-[#211F1A] shadow-[0_0_40px_rgba(200,169,110,0.06)]'
+                    : 'border-[#2A2520] bg-[#1A1814] hover:border-[#2A2520]/80'
+                }`}
+              >
+                {plan.highlighted && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-semibold tracking-widest uppercase bg-[#C8A96E] text-[#1A1814] px-4 py-1 rounded-full">
+                    Популярный
+                  </div>
+                )}
+
+                <div className="mb-8">
+                  <h3 className="text-base font-medium tracking-tight mb-4 text-[#A69F93]">{plan.name}</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-display text-5xl tracking-tight text-[#F5F0EB]">{plan.price}</span>
+                    <span className="text-sm text-[#6B6560]">{plan.period}</span>
+                  </div>
+                  <div className="text-xs text-[#6B6560] mt-2">{plan.limit}</div>
+                </div>
+
+                <div className="space-y-3 mb-8">
+                  {plan.features.map((f, j) => (
+                    <div key={j} className="flex items-start gap-3">
+                      <Check size={14} strokeWidth={2} className={plan.highlighted ? 'text-[#C8A96E] mt-0.5' : 'text-[#6B6560] mt-0.5'} />
+                      <span className="text-sm text-[#A69F93]">{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <Link
+                  href="/create-bot"
+                  className={`block w-full py-3 rounded-md text-sm font-medium text-center transition-all ${
+                    plan.highlighted
+                      ? 'bg-[#C8A96E] hover:bg-[#B89A5F] text-[#1A1814]'
+                      : 'border border-[#2A2520] hover:border-[#C8A96E]/30 text-[#A69F93] hover:text-[#F5F0EB]'
+                  }`}
+                >
+                  Начать
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ FOOTER ═══ */}
+      <footer className="bg-[#1A1814] border-t border-[#2A2520]/50 py-12">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
+          <span className="font-display text-lg tracking-tight text-[#A69F93]">
+            Ex<span className="text-[#C8A96E]">—</span>Machina
+          </span>
+          <div className="flex items-center gap-8 text-xs text-[#6B6560]">
+            <a href="#how" className="hover:text-[#A69F93] transition-colors">Процесс</a>
+            <a href="#features" className="hover:text-[#A69F93] transition-colors">Возможности</a>
+            <a href="#cases" className="hover:text-[#A69F93] transition-colors">Кейсы</a>
+            <a href="#pricing" className="hover:text-[#A69F93] transition-colors">Тарифы</a>
+          </div>
+          <div className="text-xs text-[#6B6560]">
+            &copy; 2026 Ex-Machina
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

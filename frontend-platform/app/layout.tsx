@@ -1,9 +1,10 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { DM_Sans, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/lib/providers'
 
-const inter = Inter({ subsets: ['latin', 'cyrillic'] })
+const dmSans = DM_Sans({ subsets: ['latin', 'latin-ext'], variable: '--font-body' })
+const playfair = Playfair_Display({ subsets: ['latin', 'cyrillic'], variable: '--font-display' })
 
 export const metadata: Metadata = {
   title: 'Ex-Machina | AI-боты для отелей',
@@ -17,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru" className="scroll-smooth">
-      <body className={inter.className}>
+      <body className={`${dmSans.variable} ${playfair.variable} font-sans`}>
         <Providers>
           {children}
         </Providers>

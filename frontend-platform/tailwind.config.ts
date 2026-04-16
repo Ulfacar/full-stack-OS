@@ -15,7 +15,8 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['var(--font-body)', 'DM Sans', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'Playfair Display', 'Georgia', 'serif'],
       },
       colors: {
         background: '#0A0A0A',
