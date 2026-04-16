@@ -21,6 +21,9 @@ openai==1.10.0
 # Telegram
 python-telegram-bot==20.7
 
+# Encryption
+cryptography>=42.0.0
+
 # Other
 pydantic==2.5.3
 pydantic-settings==2.1.0

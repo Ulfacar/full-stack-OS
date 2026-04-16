@@ -11,6 +11,7 @@ from ...db.database import get_db
 from ...db.models import Application, Hotel, User
 from ..dependencies import get_current_user
 from ...services.ai_service import ai_service
+from ...core.crypto import encrypt_token
 
 router = APIRouter(tags=["applications"])
 
@@ -162,7 +163,7 @@ async def activate_application(
         phone=app.contact_phone,
         email=app.contact_email,
         description=form.get("description"),
-        telegram_bot_token=data.telegram_bot_token,
+        telegram_bot_token=encrypt_token(data.telegram_bot_token) if data.telegram_bot_token else None,
         whatsapp_phone=data.whatsapp_phone,
         ai_model=data.ai_model,
         system_prompt=app.generated_prompt,

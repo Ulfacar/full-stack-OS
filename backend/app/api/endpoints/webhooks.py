@@ -16,6 +16,7 @@ from ...services.budget_service import budget_service
 from ...services.response_processor import process_response
 from ...services.notification_service import NotificationService
 from ...services.followup_service import schedule_followup, cancel_followup
+from ...core.crypto import decrypt_token
 
 router = APIRouter(prefix="/webhooks/telegram", tags=["webhooks"])
 
@@ -63,8 +64,8 @@ async def telegram_webhook(
     telegram_username = message_data["from"].get("username")
     telegram_id = str(message_data["from"]["id"])
 
-    # Initialize Telegram service
-    telegram = TelegramService(hotel.telegram_bot_token)
+    # Initialize Telegram service (decrypt token from DB)
+    telegram = TelegramService(decrypt_token(hotel.telegram_bot_token))
 
     # Budget check BEFORE processing
     has_budget, remaining = await budget_service.check_budget(hotel.id, db)
@@ -231,7 +232,7 @@ async def telegram_webhook(
         if needs_manager and hotel.manager_telegram_id and hotel.telegram_bot_token:
             conversation.status = "needs_operator"
             await db.flush()
-            notifier = NotificationService(hotel.telegram_bot_token)
+            notifier = NotificationService(decrypt_token(hotel.telegram_bot_token))
             client_name = client.telegram_username or client.name or telegram_id
             await notifier.notify_needs_manager(
                 manager_telegram_id=hotel.manager_telegram_id,

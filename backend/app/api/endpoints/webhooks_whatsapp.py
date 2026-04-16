@@ -14,6 +14,7 @@ from ...services.ai_service import ai_service
 from ...services.budget_service import budget_service
 from ...services.response_processor import process_response
 from ...services.meta_whatsapp_service import send_meta_whatsapp, parse_meta_webhook
+from ...core.crypto import decrypt_token
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +137,7 @@ async def _handle_whatsapp_message(
     if needs_manager and hotel.manager_telegram_id and hotel.telegram_bot_token:
         conversation.status = "needs_operator"
         from ...services.notification_service import NotificationService
-        notifier = NotificationService(hotel.telegram_bot_token)
+        notifier = NotificationService(decrypt_token(hotel.telegram_bot_token))
         await notifier.notify_needs_manager(
             manager_telegram_id=hotel.manager_telegram_id,
             hotel_name=hotel.name, client_name=name or sender,
@@ -158,14 +159,14 @@ async def _send_reply(hotel: Hotel, recipient: str, text: str):
 
     if provider == "meta" and hotel.meta_access_token and hotel.meta_phone_number_id:
         await send_meta_whatsapp(
-            access_token=hotel.meta_access_token,
+            access_token=decrypt_token(hotel.meta_access_token),
             phone_number_id=hotel.meta_phone_number_id,
             recipient=recipient,
             text=text,
         )
     elif hotel.wappi_api_key and hotel.wappi_profile_id:
         await _send_wappi(
-            api_key=hotel.wappi_api_key,
+            api_key=decrypt_token(hotel.wappi_api_key),
             profile_id=hotel.wappi_profile_id,
             recipient=recipient,
             text=text,
@@ -260,8 +261,9 @@ async def meta_webhook(
         raise HTTPException(status_code=403, detail="Meta app secret not configured")
     signature = request.headers.get("X-Hub-Signature-256", "")
     body = await request.body()
+    app_secret = decrypt_token(hotel.meta_app_secret)
     expected = "sha256=" + hmac.HMAC(
-        hotel.meta_app_secret.encode(), body, hashlib.sha256
+        app_secret.encode(), body, hashlib.sha256
     ).hexdigest()
     if not hmac.compare_digest(signature, expected):
         raise HTTPException(status_code=403, detail="Invalid signature")

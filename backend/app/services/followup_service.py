@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.models import Conversation, Message, Hotel, Client
 from ..db.database import AsyncSessionLocal
 from .telegram_service import TelegramService
+from ..core.crypto import decrypt_token
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +103,7 @@ async def _followup_worker(
 
             # Send followup
             if client_channel == "telegram":
-                tg = TelegramService(hotel.telegram_bot_token)
+                tg = TelegramService(decrypt_token(hotel.telegram_bot_token))
                 await tg.send_message(chat_id=int(client_channel_id), text=text)
 
             # Save followup as bot message

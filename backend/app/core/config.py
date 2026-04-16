@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Registration
     INVITE_CODE: str = "EXMACHINA2026"
 
+    # Encryption
+    TOKEN_ENCRYPTION_KEY: str = ""  # Fernet key for encrypting bot tokens in DB
+
     # Webhooks
     WEBHOOK_BASE_URL: str = ""  # Will be set to VPS URL
 

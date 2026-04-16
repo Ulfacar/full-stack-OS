@@ -10,6 +10,7 @@ from ..schemas import HotelCreate, HotelUpdate, Hotel as HotelSchema, HotelList,
 from ...services.telegram_service import TelegramService
 from ...services.ai_service import ai_service
 from ...core.config import settings
+from ...core.crypto import encrypt_token, decrypt_token
 import re
 import secrets
 
@@ -92,7 +93,7 @@ async def create_hotel(
         email=hotel_data.email,
         website=hotel_data.website,
         description=hotel_data.description,
-        telegram_bot_token=hotel_data.telegram_bot_token,
+        telegram_bot_token=encrypt_token(hotel_data.telegram_bot_token) if hotel_data.telegram_bot_token else None,
         whatsapp_phone=hotel_data.whatsapp_phone,
         ai_model=hotel_data.ai_model,
         system_prompt=system_prompt,
@@ -227,9 +228,9 @@ async def configure_channels(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid Telegram bot token"
             )
-        hotel.telegram_bot_token = telegram_token
+        hotel.telegram_bot_token = encrypt_token(telegram_token)
 
-        # Register webhook
+        # Register webhook (use plaintext token for Telegram API)
         if settings.WEBHOOK_BASE_URL:
             telegram = TelegramService(telegram_token)
             webhook_url = f"{settings.WEBHOOK_BASE_URL}/webhooks/telegram/{hotel.slug}"
@@ -239,7 +240,7 @@ async def configure_channels(
     if whatsapp_phone:
         hotel.whatsapp_phone = whatsapp_phone
     if wappi_api_key:
-        hotel.wappi_api_key = wappi_api_key
+        hotel.wappi_api_key = encrypt_token(wappi_api_key)
     if wappi_profile_id:
         hotel.wappi_profile_id = wappi_profile_id
 
@@ -247,7 +248,7 @@ async def configure_channels(
     if whatsapp_provider:
         hotel.whatsapp_provider = whatsapp_provider
     if meta_access_token:
-        hotel.meta_access_token = meta_access_token
+        hotel.meta_access_token = encrypt_token(meta_access_token)
     if meta_phone_number_id:
         hotel.meta_phone_number_id = meta_phone_number_id
     if meta_business_id:
