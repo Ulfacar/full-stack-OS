@@ -1,8 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import axios from 'axios'
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+import api from '@/lib/api'
 interface Room { name: string; capacity: number; price: number; description: string }
 interface FormData { hotelName: string; address: string; phone: string; contactName: string; email: string; description: string; rooms: Room[]; checkin: string; checkout: string; pets: string; smoking: string; wifi: boolean; parking: boolean; pool: boolean; restaurant: boolean; transfer: boolean; breakfast: boolean; communicationStyle: string }
 const defaultForm: FormData = { hotelName: '', address: '', phone: '', contactName: '', email: '', description: '', rooms: [{ name: '', capacity: 2, price: 0, description: '' }], checkin: '14:00', checkout: '12:00', pets: 'no', smoking: 'no', wifi: true, parking: false, pool: false, restaurant: false, transfer: false, breakfast: false, communicationStyle: 'friendly' }
@@ -24,7 +23,7 @@ export default function CreateBotPage() {
     const newMsgs = [...chatMessages, { role: 'user', content: userMsg }]
     setChatMessages(newMsgs); setChatLoading(true)
     try {
-      const { data } = await axios.post(API + '/preview-chat', { message: userMsg, hotel_data: { name: form.hotelName, description: form.description, address: form.address, phone: form.phone, rooms: form.rooms.filter(r => r.name), communication_style: form.communicationStyle }, history: newMsgs.slice(-8) })
+      const { data } = await api.post('/preview-chat', { message: userMsg, hotel_data: { name: form.hotelName, description: form.description, address: form.address, phone: form.phone, rooms: form.rooms.filter(r => r.name), communication_style: form.communicationStyle }, history: newMsgs.slice(-8) })
       setChatMessages([...newMsgs, { role: 'assistant', content: data.reply }])
     } catch { setChatMessages([...newMsgs, { role: 'assistant', content: 'Connection error.' }]) }
     setChatLoading(false)
@@ -32,7 +31,7 @@ export default function CreateBotPage() {
   const submitApplication = async () => {
     setSubmitting(true)
     try {
-      await axios.post(API + '/applications', { hotel_name: form.hotelName, contact_name: form.contactName, contact_phone: form.phone, contact_email: form.email, form_data: { description: form.description, address: form.address, rooms: form.rooms, rules: { checkin: form.checkin, checkout: form.checkout, pets: form.pets, smoking: form.smoking }, amenities: { wifi: form.wifi, parking: form.parking, pool: form.pool, restaurant: form.restaurant, transfer: form.transfer, breakfast: form.breakfast }, communication_style: form.communicationStyle } })
+      await api.post('/applications', { hotel_name: form.hotelName, contact_name: form.contactName, contact_phone: form.phone, contact_email: form.email, form_data: { description: form.description, address: form.address, rooms: form.rooms, rules: { checkin: form.checkin, checkout: form.checkout, pets: form.pets, smoking: form.smoking }, amenities: { wifi: form.wifi, parking: form.parking, pool: form.pool, restaurant: form.restaurant, transfer: false, breakfast: form.breakfast }, communication_style: form.communicationStyle } })
       router.push('/success')
     } catch { alert('Error submitting.') }
     setSubmitting(false)
