@@ -8,11 +8,12 @@ import { BotPreview } from './BotPreview'
 import { Step1 } from './steps/Step1'
 import { Step2 } from './steps/Step2'
 import { Step3 } from './steps/Step3'
+import { Step4 } from './steps/Step4'
+import { Step5 } from './steps/Step5'
 import api from '@/lib/api'
-import { generatePrompt } from '@/lib/promptGenerator'
 import type { HotelFormData } from '@/lib/types'
 
-const TOTAL_STEPS = 3
+const TOTAL_STEPS = 5
 
 export function HotelWizard() {
   const router = useRouter()
@@ -50,10 +51,10 @@ export function HotelWizard() {
     },
     communicationStyle: 'friendly',
     languages: ['ru', 'en'],
-    proactiveness: 'balanced',
-    notAvailable: '',
-    aiModel: 'anthropic/claude-3.5-haiku',
+    aiModel: 'deepseek/deepseek-chat',
     systemPrompt: '',
+    telegramBotToken: '',
+    whatsappPhone: '',
   })
 
   const updateFormData = (data: Partial<HotelFormData>) => {
@@ -64,6 +65,13 @@ export function HotelWizard() {
     if (currentStep === 1) {
       if (!formData.name || !formData.phone) {
         setError('Заполните обязательные поля: Название и Телефон')
+        return
+      }
+    }
+
+    if (currentStep === 5) {
+      if (!formData.telegramBotToken) {
+        setError('Укажите токен Telegram бота')
         return
       }
     }
@@ -82,13 +90,15 @@ export function HotelWizard() {
   }
 
   const handleSubmit = async () => {
+    if (!formData.telegramBotToken) {
+      setError('Укажите токен Telegram бота')
+      return
+    }
+
     setLoading(true)
     setError('')
 
     try {
-      // Auto-generate system prompt from form data
-      const systemPrompt = generatePrompt(formData as HotelFormData)
-
       const payload = {
         name: formData.name,
         address: formData.address,
@@ -99,18 +109,17 @@ export function HotelWizard() {
         rooms: formData.rooms,
         rules: formData.rules,
         amenities: formData.amenities,
-        ai_model: formData.aiModel || 'anthropic/claude-3.5-haiku',
-        system_prompt: systemPrompt,
-        communication_style: formData.communicationStyle || 'friendly',
-        languages: formData.languages || ['ru', 'en'],
-        // No telegram_bot_token — channels configured later by admin
+        telegram_bot_token: formData.telegramBotToken,
+        whatsapp_phone: formData.whatsappPhone,
+        ai_model: formData.aiModel,
+        system_prompt: formData.systemPrompt,
+        communication_style: formData.communicationStyle,
+        languages: formData.languages,
       }
 
       const response = await api.post('/hotels', payload)
       const hotelId = response.data.id
-
-      // Redirect to demo page — the wow moment
-      router.push(`/hotels/${hotelId}/demo`)
+      router.push(`/hotels/${hotelId}`)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Ошибка создания бота')
     } finally {
@@ -120,19 +129,17 @@ export function HotelWizard() {
 
   const progress = (currentStep / TOTAL_STEPS) * 100
 
-  const stepTitles = ['Об отеле', 'Номера и цены', 'Правила и услуги']
-
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-[#0A0A0A]">
       {/* Progress Bar */}
-      <div className="bg-white border-b border-neutral-200 p-6">
+      <div className="bg-[#141414] border-b border-[#262626] p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-3">
-            <h1 className="text-lg font-semibold tracking-tight">
-              Ex-Machina — Создание AI-бота
+            <h1 className="text-lg font-semibold tracking-tight text-[#FAFAFA]">
+              Создание AI-ассистента
             </h1>
-            <div className="text-sm text-neutral-500">
-              Шаг {currentStep} из {TOTAL_STEPS}: {stepTitles[currentStep - 1]}
+            <div className="text-sm text-[#737373]">
+              Шаг {currentStep} из {TOTAL_STEPS}
             </div>
           </div>
           <Progress value={progress} />
@@ -143,9 +150,9 @@ export function HotelWizard() {
       <div className="max-w-7xl mx-auto p-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left: Form */}
-          <div className="bg-white rounded-2xl p-8 border border-neutral-200">
+          <div className="bg-[#141414] rounded-2xl p-8 border border-[#262626]">
             {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+              <div className="mb-6 bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm">
                 {error}
               </div>
             )}
@@ -159,29 +166,35 @@ export function HotelWizard() {
             {currentStep === 3 && (
               <Step3 formData={formData} updateFormData={updateFormData} />
             )}
+            {currentStep === 4 && (
+              <Step4 formData={formData} updateFormData={updateFormData} />
+            )}
+            {currentStep === 5 && (
+              <Step5 formData={formData} updateFormData={updateFormData} />
+            )}
 
             {/* Navigation */}
-            <div className="flex justify-between mt-8 pt-6 border-t border-neutral-200">
+            <div className="flex justify-between mt-8 pt-6 border-t border-[#262626]">
               <Button
                 variant="outline"
                 onClick={prevStep}
                 disabled={currentStep === 1}
               >
-                ← Назад
+                Назад
               </Button>
 
               {currentStep < TOTAL_STEPS ? (
-                <Button onClick={nextStep}>Далее →</Button>
+                <Button onClick={nextStep}>Далее</Button>
               ) : (
                 <Button onClick={handleSubmit} disabled={loading}>
-                  {loading ? 'Создание...' : 'Создать демо-бота'}
+                  {loading ? 'Создание...' : 'Создать бота!'}
                 </Button>
               )}
             </div>
           </div>
 
           {/* Right: Bot Preview */}
-          <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden lg:sticky lg:top-6 h-[600px] lg:h-[calc(100vh-120px)]">
+          <div className="bg-[#141414] rounded-2xl border border-[#262626] overflow-hidden lg:sticky lg:top-6 h-[600px] lg:h-[calc(100vh-120px)]">
             <BotPreview formData={formData} />
           </div>
         </div>

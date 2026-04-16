@@ -6,8 +6,8 @@ import { Providers } from '@/lib/providers'
 const inter = Inter({ subsets: ['latin', 'cyrillic'] })
 
 export const metadata: Metadata = {
-  title: 'Ex-Machina — AI-боты для отелей',
-  description: 'Создайте AI-бота для вашего отеля за 5 минут. Telegram + WhatsApp.',
+  title: 'Ex-Machina | AI-боты для отелей',
+  description: 'SaaS-платформа для создания умных ассистентов для отелей. Демо-бот за 5 минут.',
 }
 
 export default function RootLayout({

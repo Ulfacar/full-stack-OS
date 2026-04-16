@@ -79,19 +79,19 @@ export function Step4({ formData, updateFormData }: Step4Props) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight mb-2">
+        <h2 className="text-2xl font-semibold tracking-tight mb-2 text-[#FAFAFA]">
           Настройка AI-ассистента
         </h2>
-        <p className="text-neutral-500 text-sm">
+        <p className="text-[#A3A3A3] text-sm">
           Выберите стиль общения, модель AI и языки
         </p>
       </div>
 
       {/* Стиль общения */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Стиль общения</h3>
+        <h3 className="text-lg font-medium text-[#FAFAFA]">Стиль общения</h3>
         <div className="space-y-2">
-          <label className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50">
+          <label className="flex items-start gap-3 p-4 rounded-lg border-2 border-[#262626] cursor-pointer transition-colors hover:bg-[#1A1A1A] has-[:checked]:border-[#3B82F6] has-[:checked]:bg-[#1A1A1A]">
             <input
               type="radio"
               name="style"
@@ -103,14 +103,14 @@ export function Step4({ formData, updateFormData }: Step4Props) {
               className="mt-1"
             />
             <div>
-              <div className="font-medium">Формальный</div>
-              <div className="text-sm text-neutral-500">
+              <div className="font-medium text-[#FAFAFA]">Формальный</div>
+              <div className="text-sm text-[#A3A3A3]">
                 Здравствуйте, рады приветствовать вас...
               </div>
             </div>
           </label>
 
-          <label className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50">
+          <label className="flex items-start gap-3 p-4 rounded-lg border-2 border-[#262626] cursor-pointer transition-colors hover:bg-[#1A1A1A] has-[:checked]:border-[#3B82F6] has-[:checked]:bg-[#1A1A1A]">
             <input
               type="radio"
               name="style"
@@ -122,14 +122,14 @@ export function Step4({ formData, updateFormData }: Step4Props) {
               className="mt-1"
             />
             <div>
-              <div className="font-medium">Дружелюбный (рекомендуем)</div>
-              <div className="text-sm text-neutral-500">
+              <div className="font-medium text-[#FAFAFA]">Дружелюбный (рекомендуем)</div>
+              <div className="text-sm text-[#A3A3A3]">
                 Привет! Чем могу помочь? 😊
               </div>
             </div>
           </label>
 
-          <label className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50">
+          <label className="flex items-start gap-3 p-4 rounded-lg border-2 border-[#262626] cursor-pointer transition-colors hover:bg-[#1A1A1A] has-[:checked]:border-[#3B82F6] has-[:checked]:bg-[#1A1A1A]">
             <input
               type="radio"
               name="style"
@@ -141,8 +141,8 @@ export function Step4({ formData, updateFormData }: Step4Props) {
               className="mt-1"
             />
             <div>
-              <div className="font-medium">Профессиональный</div>
-              <div className="text-sm text-neutral-500">
+              <div className="font-medium text-[#FAFAFA]">Профессиональный</div>
+              <div className="text-sm text-[#A3A3A3]">
                 Добрый день. Отвечу на ваши вопросы.
               </div>
             </div>
@@ -152,7 +152,7 @@ export function Step4({ formData, updateFormData }: Step4Props) {
 
       {/* Языки */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Языки</h3>
+        <h3 className="text-lg font-medium text-[#FAFAFA]">Языки</h3>
         <div className="space-y-2">
           {languages.map((lang) => (
             <Checkbox
@@ -163,19 +163,19 @@ export function Step4({ formData, updateFormData }: Step4Props) {
             />
           ))}
         </div>
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-[#A3A3A3]">
           AI автоматически определит язык вопроса и ответит на нём
         </p>
       </div>
 
       {/* AI модель */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">AI модель</h3>
+        <h3 className="text-lg font-medium text-[#FAFAFA]">AI модель</h3>
         <div className="space-y-2">
           {aiModels.map((model) => (
             <label
               key={model.id}
-              className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50"
+              className="flex items-start gap-3 p-4 rounded-lg border-2 border-[#262626] cursor-pointer transition-colors hover:bg-[#1A1A1A] has-[:checked]:border-[#3B82F6] has-[:checked]:bg-[#1A1A1A]"
             >
               <input
                 type="radio"
@@ -187,14 +187,14 @@ export function Step4({ formData, updateFormData }: Step4Props) {
               />
               <div className="flex-1">
                 <div className="flex items-center gap-2">
-                  <div className="font-medium">{model.name}</div>
+                  <div className="font-medium text-[#FAFAFA]">{model.name}</div>
                   {model.recommended && (
-                    <span className="text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+                    <span className="text-xs px-2 py-0.5 bg-emerald-500/10 text-emerald-400 rounded-full">
                       рекомендуем
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-neutral-500">{model.price}</div>
+                <div className="text-sm text-[#A3A3A3]">{model.price}</div>
               </div>
             </label>
           ))}
@@ -203,9 +203,9 @@ export function Step4({ formData, updateFormData }: Step4Props) {
 
       {/* Промпт */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="flex items-center gap-2 p-3 bg-[#3B82F6]/10 border border-[#3B82F6]/30 rounded-lg">
           <span className="text-xl">⚡</span>
-          <div className="text-sm text-blue-900">
+          <div className="text-sm text-[#60A5FA]">
             Промпт генерируется автоматически на основе введённых данных!
           </div>
         </div>
@@ -218,7 +218,7 @@ export function Step4({ formData, updateFormData }: Step4Props) {
             value={systemPrompt}
             onChange={(e) => updateFormData({ systemPrompt: e.target.value })}
           />
-          <div className="flex justify-between text-xs text-neutral-500">
+          <div className="flex justify-between text-xs text-[#A3A3A3]">
             <span>
               💡 Промпт обновляется автоматически. Можете отредактировать
               вручную.

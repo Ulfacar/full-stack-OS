@@ -27,7 +27,6 @@ export default function AdminHotelPage() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
-  // Channel config form
   const [telegramToken, setTelegramToken] = useState('')
   const [whatsappPhone, setWhatsappPhone] = useState('')
   const [wappiApiKey, setWappiApiKey] = useState('')
@@ -49,7 +48,7 @@ export default function AdminHotelPage() {
         ])
         setHotel(hotelRes.data)
         setBudget(budgetRes.data)
-        setTelegramToken('')  // Token not exposed in API for security
+        setTelegramToken('')
         setWhatsappPhone(hotelRes.data.whatsapp_phone || '')
         setWappiApiKey(hotelRes.data.wappi_api_key || '')
         setWappiProfileId(hotelRes.data.wappi_profile_id || '')
@@ -122,21 +121,20 @@ export default function AdminHotelPage() {
     setSaving(false)
   }
 
-  if (loading) return <div className="p-8 text-neutral-400">Загрузка...</div>
+  if (loading) return <div className="p-8 text-[#737373]">Загрузка...</div>
   if (!hotel || !budget) return null
 
   const budgetPercent = budget.monthly_budget > 0
     ? Math.min(100, (budget.budget_used / budget.monthly_budget) * 100)
     : 0
-  const budgetColor = budgetPercent > 90 ? 'bg-red-500' : budgetPercent > 70 ? 'bg-yellow-500' : 'bg-green-500'
+  const budgetColor = budgetPercent > 90 ? 'bg-red-500' : budgetPercent > 70 ? 'bg-yellow-500' : 'bg-emerald-500'
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 pt-14 lg:pt-8 max-w-4xl">
-      {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold">{hotel.name}</h1>
-          <p className="text-neutral-500 text-sm">/{hotel.slug}</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-[#FAFAFA]">{hotel.name}</h1>
+          <p className="text-[#737373] text-sm">/{hotel.slug}</p>
         </div>
         <div className="flex gap-2">
           <StatusBadge status={budget.status} />
@@ -147,7 +145,7 @@ export default function AdminHotelPage() {
       </div>
 
       {message && (
-        <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md text-sm">
+        <div className="mb-4 bg-[#3B82F6]/10 border border-[#3B82F6]/20 text-[#3B82F6] px-4 py-3 rounded-xl text-sm">
           {message}
         </div>
       )}
@@ -155,16 +153,16 @@ export default function AdminHotelPage() {
       <div className="space-y-6">
         {/* Budget */}
         <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Бюджет</h2>
+          <h2 className="text-lg font-semibold mb-4 text-[#FAFAFA]">Бюджет</h2>
           <div className="mb-4">
             <div className="flex justify-between text-sm mb-2">
-              <span>Потрачено: <strong>${budget.budget_used.toFixed(4)}</strong></span>
-              <span>Лимит: <strong>${budget.monthly_budget}</strong>/мес</span>
+              <span className="text-[#A3A3A3]">Потрачено: <strong className="text-[#FAFAFA]">${budget.budget_used.toFixed(4)}</strong></span>
+              <span className="text-[#A3A3A3]">Лимит: <strong className="text-[#FAFAFA]">${budget.monthly_budget}</strong>/мес</span>
             </div>
-            <div className="h-3 bg-neutral-100 rounded-full overflow-hidden">
+            <div className="h-3 bg-[#1A1A1A] rounded-full overflow-hidden">
               <div className={`h-full ${budgetColor} rounded-full transition-all`} style={{ width: `${budgetPercent}%` }} />
             </div>
-            <div className="text-xs text-neutral-500 mt-1">
+            <div className="text-xs text-[#737373] mt-1">
               Осталось: ${budget.budget_remaining.toFixed(4)}
             </div>
           </div>
@@ -187,7 +185,7 @@ export default function AdminHotelPage() {
 
         {/* Status */}
         <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Статус</h2>
+          <h2 className="text-lg font-semibold mb-4 text-[#FAFAFA]">Статус</h2>
           <div className="flex gap-2">
             <Button
               variant={budget.status === 'demo' ? 'default' : 'outline'}
@@ -218,8 +216,8 @@ export default function AdminHotelPage() {
 
         {/* Manager */}
         <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Менеджер отеля</h2>
-          <p className="text-sm text-neutral-500 mb-4">
+          <h2 className="text-lg font-semibold mb-4 text-[#FAFAFA]">Менеджер отеля</h2>
+          <p className="text-sm text-[#737373] mb-4">
             Менеджер получает уведомления в Telegram когда бот передаёт диалог.
           </p>
           <div className="space-y-4">
@@ -244,7 +242,7 @@ export default function AdminHotelPage() {
 
         {/* Channels */}
         <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Каналы</h2>
+          <h2 className="text-lg font-semibold mb-4 text-[#FAFAFA]">Каналы</h2>
           <div className="space-y-4">
             <div>
               <Label>Telegram Bot Token</Label>
@@ -253,11 +251,10 @@ export default function AdminHotelPage() {
                 onChange={(e) => setTelegramToken(e.target.value)}
                 placeholder="123456:ABC-DEF..."
               />
-              <p className="text-xs text-neutral-500 mt-1">
+              <p className="text-xs text-[#737373] mt-1">
                 Получить у @BotFather в Telegram
               </p>
             </div>
-            {/* WhatsApp Provider */}
             <div>
               <Label>WhatsApp провайдер</Label>
               <div className="flex gap-2 mt-1">
@@ -298,8 +295,8 @@ export default function AdminHotelPage() {
                   <Label>Business ID</Label>
                   <Input value={metaBusinessId} onChange={(e) => setMetaBusinessId(e.target.value)} placeholder="Meta Business ID" />
                 </div>
-                <p className="text-xs text-neutral-500">
-                  Webhook URL для Meta: <code className="bg-neutral-100 px-1 rounded">{`https://exmachina.kg/webhooks/whatsapp/meta/${hotel?.slug}`}</code>
+                <p className="text-xs text-[#737373]">
+                  Webhook URL для Meta: <code className="bg-[#1A1A1A] px-1.5 py-0.5 rounded border border-[#262626]">{`https://exmachina.kg/webhooks/whatsapp/meta/${hotel?.slug}`}</code>
                 </p>
               </>
             )}
@@ -311,23 +308,23 @@ export default function AdminHotelPage() {
 
         {/* Info */}
         <Card className="p-6">
-          <h2 className="text-lg font-semibold mb-4">Информация</h2>
+          <h2 className="text-lg font-semibold mb-4 text-[#FAFAFA]">Информация</h2>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="text-neutral-500">AI модель:</span>
-              <div className="font-medium">{hotel.ai_model}</div>
+              <span className="text-[#737373]">AI модель:</span>
+              <div className="font-medium text-[#FAFAFA]">{hotel.ai_model}</div>
             </div>
             <div>
-              <span className="text-neutral-500">Стиль:</span>
-              <div className="font-medium">{hotel.communication_style}</div>
+              <span className="text-[#737373]">Стиль:</span>
+              <div className="font-medium text-[#FAFAFA]">{hotel.communication_style}</div>
             </div>
             <div>
-              <span className="text-neutral-500">Языки:</span>
-              <div className="font-medium">{hotel.languages?.join(', ')}</div>
+              <span className="text-[#737373]">Языки:</span>
+              <div className="font-medium text-[#FAFAFA]">{hotel.languages?.join(', ')}</div>
             </div>
             <div>
-              <span className="text-neutral-500">Создан:</span>
-              <div className="font-medium">{new Date(hotel.created_at).toLocaleDateString('ru')}</div>
+              <span className="text-[#737373]">Создан:</span>
+              <div className="font-medium text-[#FAFAFA]">{new Date(hotel.created_at).toLocaleDateString('ru')}</div>
             </div>
           </div>
         </Card>

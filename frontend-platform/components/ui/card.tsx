@@ -8,7 +8,7 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      'rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm',
+      'rounded-xl bg-[#0A0A0A] border border-[#262626] p-6 transition-all duration-200',
       className
     )}
     {...props}
@@ -20,11 +20,7 @@ const CardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('flex flex-col space-y-1.5 mb-4', className)}
-    {...props}
-  />
+  <div ref={ref} className={cn('flex flex-col space-y-1.5 mb-4', className)} {...props} />
 ))
 CardHeader.displayName = "CardHeader"
 
@@ -32,14 +28,7 @@ const CardTitle = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn(
-      'text-xl font-medium tracking-tight text-neutral-900',
-      className
-    )}
-    {...props}
-  />
+  <h3 ref={ref} className={cn('text-xl font-semibold tracking-tight text-[#FAFAFA]', className)} {...props} />
 ))
 CardTitle.displayName = "CardTitle"
 
@@ -47,11 +36,7 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p
-    ref={ref}
-    className={cn('text-sm text-neutral-500 tracking-tight', className)}
-    {...props}
-  />
+  <p ref={ref} className={cn('text-sm text-[#A3A3A3] leading-relaxed', className)} {...props} />
 ))
 CardDescription.displayName = "CardDescription"
 
@@ -67,11 +52,7 @@ const CardFooter = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn('flex items-center pt-4 mt-4 border-t border-neutral-100', className)}
-    {...props}
-  />
+  <div ref={ref} className={cn('flex items-center pt-4 mt-4 border-t border-[#262626]', className)} {...props} />
 ))
 CardFooter.displayName = "CardFooter"
 

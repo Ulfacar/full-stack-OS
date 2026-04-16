@@ -12,10 +12,10 @@ export function Step1({ formData, updateFormData }: Step1Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight mb-2">
+        <h2 className="text-2xl font-semibold tracking-tight mb-2 text-[#FAFAFA]">
           Основная информация
         </h2>
-        <p className="text-neutral-500 text-sm">
+        <p className="text-[#A3A3A3] text-sm">
           Расскажите об отеле - эти данные бот будет использовать для ответов
         </p>
       </div>
@@ -87,7 +87,7 @@ export function Step1({ formData, updateFormData }: Step1Props) {
             value={formData.description || ''}
             onChange={(e) => updateFormData({ description: e.target.value })}
           />
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-[#A3A3A3]">
             Опишите главные преимущества отеля
           </p>
         </div>

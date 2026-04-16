@@ -1,39 +1,26 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import api from '@/lib/api'
+import {
+  LayoutDashboard, Building2, BarChart3, CreditCard,
+  Users, Settings, LogOut, Menu, X,
+} from 'lucide-react'
 
-const adminMenu = [
-  { icon: '📊', label: 'Дашборд', href: '/dashboard' },
-  { icon: '🏨', label: 'Отели', href: '/dashboard/hotels' },
-  { icon: '📈', label: 'Статистика', href: '/dashboard/stats' },
-  { icon: '💰', label: 'Биллинг', href: '/dashboard/billing' },
-  { icon: '👥', label: 'Пользователи', href: '/dashboard/users' },
-]
-
-const salesMenu = [
-  { icon: '➕', label: 'Создать бота', href: '/hotels/new' },
-  { icon: '🏨', label: 'Мои отели', href: '/dashboard/hotels' },
+const menuItems = [
+  { icon: LayoutDashboard, label: 'Дашборд', href: '/dashboard' },
+  { icon: Building2, label: 'Отели', href: '/dashboard/hotels' },
+  { icon: BarChart3, label: 'Статистика', href: '/dashboard/stats' },
+  { icon: CreditCard, label: 'Биллинг', href: '/dashboard/billing' },
+  { icon: Users, label: 'Пользователи', href: '/dashboard/users' },
+  { icon: Settings, label: 'Настройки', href: '/settings' },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [userRole, setUserRole] = useState<string>('admin')
-
-  useEffect(() => {
-    const fetchRole = async () => {
-      try {
-        const res = await api.get('/auth/me')
-        setUserRole(res.data.role || 'admin')
-      } catch {}
-    }
-    fetchRole()
-  }, [])
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -42,85 +29,81 @@ export function Sidebar() {
 
   const isActive = (href: string) => pathname === href
 
-  const menuItems = userRole === 'sales' ? salesMenu : adminMenu
-
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="p-6 border-b border-neutral-200">
-        <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold">
-          <div className="w-8 h-8 bg-neutral-900 rounded-sm flex items-center justify-center text-white text-xs font-bold">
+      <div className="p-5 border-b border-[#262626]">
+        <Link href="/dashboard" className="flex items-center gap-2.5 text-base font-medium tracking-tighter text-[#FAFAFA]">
+          <div className="w-8 h-8 bg-[#FAFAFA] rounded-lg flex items-center justify-center text-[#0A0A0A] text-xs font-semibold tracking-tighter">
             EM
           </div>
-          Ex-Machina
+          <span>Ex<span className="text-[#3B82F6]">-Machina</span></span>
         </Link>
-        {userRole === 'sales' && (
-          <div className="text-xs text-neutral-400 mt-1">Sales</div>
-        )}
       </div>
 
       {/* Menu */}
-      <nav className="flex-1 p-4 space-y-1">
-        {menuItems.map((item) => (
-          <Link
-            key={item.href + item.label}
-            href={item.href}
-            onClick={() => setMobileOpen(false)}
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              isActive(item.href)
-                ? 'bg-neutral-100 text-neutral-900'
-                : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
-            }`}
-          >
-            <span className="text-lg">{item.icon}</span>
-            {item.label}
-          </Link>
-        ))}
+      <nav className="flex-1 p-3 space-y-0.5">
+        {menuItems.map((item) => {
+          const Icon = item.icon
+          const active = isActive(item.href)
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMobileOpen(false)}
+              className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
+                active
+                  ? 'bg-[#3B82F6] text-white'
+                  : 'text-[#A3A3A3] hover:bg-[#1A1A1A] hover:text-[#FAFAFA]'
+              }`}
+            >
+              <Icon size={16} strokeWidth={1.5} />
+              {item.label}
+            </Link>
+          )
+        })}
       </nav>
 
       {/* Logout */}
-      <div className="p-4 border-t border-neutral-200">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-neutral-600"
+      <div className="p-3 border-t border-[#262626]">
+        <button
           onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-[#737373] hover:text-red-400 hover:bg-red-500/10 transition-colors duration-200 w-full"
         >
-          <span className="mr-3">🚪</span>
+          <LogOut size={16} strokeWidth={1.5} />
           Выход
-        </Button>
+        </button>
       </div>
     </>
   )
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Mobile hamburger */}
       <button
-        className="lg:hidden fixed top-4 left-4 z-50 bg-white border border-neutral-200 rounded-lg p-2 shadow-sm"
+        className="lg:hidden fixed top-4 left-4 z-50 bg-[#0A0A0A]/80 glass border border-[#262626] rounded-md p-2 text-[#FAFAFA]"
         onClick={() => setMobileOpen(!mobileOpen)}
       >
-        <span className="text-xl">{mobileOpen ? '✕' : '☰'}</span>
+        {mobileOpen ? <X size={16} /> : <Menu size={16} />}
       </button>
 
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/30 z-40"
+          className="lg:hidden fixed inset-0 bg-black/50 glass z-40"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile sidebar */}
-      <aside
-        className={`lg:hidden fixed top-0 left-0 z-40 w-64 bg-white border-r border-neutral-200 h-screen flex flex-col transition-transform duration-200 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
+      <aside className={`lg:hidden fixed top-0 left-0 z-40 w-[240px] bg-[#0A0A0A] border-r border-[#262626] h-screen flex flex-col transition-transform duration-300 ease-out ${
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
         {sidebarContent}
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex w-64 bg-white border-r border-neutral-200 h-screen sticky top-0 flex-col">
+      <aside className="hidden lg:flex w-[240px] bg-[#0A0A0A] border-r border-[#262626] h-screen sticky top-0 flex-col">
         {sidebarContent}
       </aside>
     </>

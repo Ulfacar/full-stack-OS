@@ -37,10 +37,10 @@ export function Step2({ formData, updateFormData }: Step2Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight mb-2">
+        <h2 className="text-2xl font-semibold tracking-tight mb-2 text-[#FAFAFA]">
           Номера и цены
         </h2>
-        <p className="text-neutral-500 text-sm">
+        <p className="text-[#A3A3A3] text-sm">
           Добавьте категории номеров с ценами. Бот будет автоматически отвечать на вопросы о стоимости.
         </p>
       </div>
@@ -50,7 +50,7 @@ export function Step2({ formData, updateFormData }: Step2Props) {
         {rooms.map((room, index) => (
           <Card key={index} className="relative">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-medium">Номер #{index + 1}</h3>
+              <h3 className="font-medium text-[#FAFAFA]">Номер #{index + 1}</h3>
               <Button
                 variant="destructive"
                 size="sm"
@@ -116,7 +116,7 @@ export function Step2({ formData, updateFormData }: Step2Props) {
       </Button>
 
       {rooms.length > 0 && (
-        <div className="text-sm text-neutral-500 text-center">
+        <div className="text-sm text-[#A3A3A3] text-center">
           Итого категорий: {rooms.length}
         </div>
       )}

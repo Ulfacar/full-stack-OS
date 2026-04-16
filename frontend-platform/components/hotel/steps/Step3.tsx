@@ -22,17 +22,17 @@ export function Step3({ formData, updateFormData }: Step3Props) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight mb-2">
+        <h2 className="text-2xl font-semibold tracking-tight mb-2 text-[#FAFAFA]">
           Правила и услуги
         </h2>
-        <p className="text-neutral-500 text-sm">
+        <p className="text-[#A3A3A3] text-sm">
           Укажите правила отеля и доступные удобства
         </p>
       </div>
 
       {/* Правила отеля */}
       <div className="space-y-6">
-        <h3 className="text-lg font-medium">Правила отеля</h3>
+        <h3 className="text-lg font-medium text-[#FAFAFA]">Правила отеля</h3>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -150,7 +150,7 @@ export function Step3({ formData, updateFormData }: Step3Props) {
 
       {/* Удобства */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium">Удобства</h3>
+        <h3 className="text-lg font-medium text-[#FAFAFA]">Удобства</h3>
 
         <div className="space-y-2">
           <Checkbox
@@ -230,131 +230,6 @@ export function Step3({ formData, updateFormData }: Step3Props) {
               })
             }
           />
-        </div>
-      </div>
-
-      {/* Ресторан/меню */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Ресторан / меню (опционально)</h3>
-        <Textarea
-          placeholder="Завтрак включён (шведский стол). Ресторан: обед 500 сом, ужин 700 сом. Бар: напитки от 150 сом..."
-          rows={3}
-          value={formData.restaurantMenu || ''}
-          onChange={(e) => updateFormData({ restaurantMenu: e.target.value })}
-        />
-      </div>
-
-      {/* Рядом с отелем */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Рядом с отелем (опционально)</h3>
-        <Textarea
-          placeholder="Банкомат — 200м, аптека — напротив, магазин — 5 мин пешком, пляж — 100м..."
-          rows={3}
-          value={formData.nearbyPlaces || ''}
-          onChange={(e) => updateFormData({ nearbyPlaces: e.target.value })}
-        />
-      </div>
-
-      {/* Чего НЕТ */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Чего нет в отеле</h3>
-        <p className="text-sm text-neutral-500">
-          Отметьте чего нет — бот не будет это выдумывать.
-        </p>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { key: 'noAC', label: 'Нет кондиционера' },
-            { key: 'noElevator', label: 'Нет лифта' },
-            { key: 'noSafe', label: 'Нет сейфов' },
-            { key: 'noSpa', label: 'Нет спа' },
-            { key: 'noGym', label: 'Нет спортзала' },
-            { key: 'noPool', label: 'Нет бассейна' },
-            { key: 'noRobes', label: 'Нет халатов' },
-            { key: 'noRoomService', label: 'Нет room service' },
-          ].map(({ key, label }) => {
-            const current = formData.notAvailable || ''
-            const isChecked = current.toLowerCase().includes(label.toLowerCase().replace('нет ', ''))
-            return (
-              <Checkbox
-                key={key}
-                label={label}
-                checked={isChecked}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  const item = label.replace('Нет ', '')
-                  if (e.target.checked) {
-                    updateFormData({ notAvailable: current ? `${current}, ${item}` : item })
-                  } else {
-                    const updated = current.split(',').map(s => s.trim()).filter(s => s.toLowerCase() !== item.toLowerCase()).join(', ')
-                    updateFormData({ notAvailable: updated })
-                  }
-                }}
-              />
-            )
-          })}
-        </div>
-        <Textarea
-          placeholder="Другое: нет банкомата рядом, нет детского меню..."
-          rows={2}
-          value={formData.notAvailable || ''}
-          onChange={(e) => updateFormData({ notAvailable: e.target.value })}
-        />
-      </div>
-
-      {/* Стиль общения бота */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Стиль общения бота</h3>
-
-        <div className="space-y-2">
-          <label className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50">
-            <input
-              type="radio"
-              name="proactiveness"
-              value="active"
-              checked={(formData.proactiveness || 'balanced') === 'active'}
-              onChange={() => updateFormData({ proactiveness: 'active' })}
-              className="mt-1"
-            />
-            <div>
-              <div className="font-medium">Активный</div>
-              <div className="text-sm text-neutral-500">
-                Бот сам предлагает услуги, трансфер, экскурсии. Подходит если хотите максимум продаж.
-              </div>
-            </div>
-          </label>
-
-          <label className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50">
-            <input
-              type="radio"
-              name="proactiveness"
-              value="balanced"
-              checked={(formData.proactiveness || 'balanced') === 'balanced'}
-              onChange={() => updateFormData({ proactiveness: 'balanced' })}
-              className="mt-1"
-            />
-            <div>
-              <div className="font-medium">Сбалансированный (рекомендуем)</div>
-              <div className="text-sm text-neutral-500">
-                Отвечает на вопросы, иногда предлагает релевантные услуги. Золотая середина.
-              </div>
-            </div>
-          </label>
-
-          <label className="flex items-start gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors hover:bg-neutral-50 has-[:checked]:border-neutral-900 has-[:checked]:bg-neutral-50">
-            <input
-              type="radio"
-              name="proactiveness"
-              value="reserved"
-              checked={(formData.proactiveness || 'balanced') === 'reserved'}
-              onChange={() => updateFormData({ proactiveness: 'reserved' })}
-              className="mt-1"
-            />
-            <div>
-              <div className="font-medium">Сдержанный</div>
-              <div className="text-sm text-neutral-500">
-                Только отвечает на вопросы, ничего не предлагает сам. Чётко и по делу.
-              </div>
-            </div>
-          </label>
         </div>
       </div>
     </div>

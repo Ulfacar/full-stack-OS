@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Zap } from 'lucide-react'
 import api from '@/lib/api'
 
 export default function LoginPage() {
@@ -20,109 +21,80 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-
     try {
       const response = await api.post('/auth/login', { email, password })
       localStorage.setItem('token', response.data.access_token)
       router.push('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Ошибка входа')
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   const handleQuickLogin = async () => {
-    // Быстрый вход для разработки с тестовыми креденшалами
     setEmail('demo@asystem.com')
     setPassword('demo123')
     setError('')
     setLoading(true)
-
     try {
-      const response = await api.post('/auth/login', {
-        email: 'demo@asystem.com',
-        password: 'demo123'
-      })
+      const response = await api.post('/auth/login', { email: 'demo@asystem.com', password: 'demo123' })
       localStorage.setItem('token', response.data.access_token)
       router.push('/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Ошибка входа')
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50 p-6">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 text-2xl font-semibold mb-2">
-            <div className="w-8 h-8 bg-neutral-900 rounded-sm flex items-center justify-center text-white text-sm">
-              A
+    <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A] p-6 relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[400px] bg-[#3B82F6]/10 blur-[100px] rounded-full pointer-events-none" />
+
+      <div className="w-full max-w-sm relative z-10">
+        {/* Logo */}
+        <div className="text-center mb-8 animate-fade-in-up">
+          <div className="flex items-center justify-center gap-2 text-lg font-medium tracking-tighter mb-2 text-[#FAFAFA]">
+            <div className="w-8 h-8 bg-[#FAFAFA] rounded-lg flex items-center justify-center text-[#0A0A0A] text-xs font-semibold tracking-tighter">
+              EM
             </div>
-            Asystem
+            Ex<span className="text-[#3B82F6]">-Machina</span>
           </div>
-          <p className="text-neutral-500 text-sm">AI-ассистенты для отелей</p>
+          <p className="text-[#737373] text-sm">AI-боты для отелей</p>
         </div>
 
-        <Card>
+        <Card className="animate-scale-in">
           <CardHeader>
-            <CardTitle>Вход в аккаунт</CardTitle>
+            <CardTitle>Вход</CardTitle>
             <CardDescription>Введите email и пароль</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                <div className="bg-red-500/10 border border-red-500/20 text-red-400 px-3 py-2.5 rounded-md text-sm animate-scale-in">
                   {error}
                 </div>
               )}
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+                <Input id="email" type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="password">Пароль</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+                <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Вход...' : 'Войти'}
               </Button>
 
-              {/* Quick Login for Development */}
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full border-2 border-dashed border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400"
-                onClick={handleQuickLogin}
-                disabled={loading}
-              >
-                ⚡ Быстрый вход (demo@asystem.com)
+              <Button type="button" variant="outline" className="w-full" onClick={handleQuickLogin} disabled={loading}>
+                <Zap size={14} /> Быстрый вход (demo)
               </Button>
 
-              <div className="text-center text-sm text-neutral-500">
+              <div className="text-center text-sm text-[#737373]">
                 Нет аккаунта?{' '}
-                <Link href="/register" className="text-neutral-900 font-medium hover:underline">
-                  Регистрация
-                </Link>
+                <Link href="/register" className="text-[#3B82F6] font-medium hover:underline">Регистрация</Link>
               </div>
             </form>
           </CardContent>

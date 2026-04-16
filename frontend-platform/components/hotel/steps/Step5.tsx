@@ -11,26 +11,26 @@ export function Step5({ formData, updateFormData }: Step5Props) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold tracking-tight mb-2">
+        <h2 className="text-2xl font-semibold tracking-tight mb-2 text-[#FAFAFA]">
           Подключите каналы
         </h2>
-        <p className="text-neutral-500 text-sm">
+        <p className="text-[#A3A3A3] text-sm">
           Настройте Telegram и WhatsApp для работы бота
         </p>
       </div>
 
       {/* Telegram */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium flex items-center gap-2">
+        <h3 className="text-lg font-medium text-[#FAFAFA] flex items-center gap-2">
           <span className="text-2xl">📱</span> Telegram
         </h3>
 
-        <div className="space-y-3 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
+        <div className="space-y-3 p-4 bg-[#141414] rounded-lg border border-[#262626]">
           <div className="text-sm space-y-2">
-            <p className="font-medium">Инструкция:</p>
-            <ol className="list-decimal list-inside space-y-1 text-neutral-600">
+            <p className="font-medium text-[#FAFAFA]">Инструкция:</p>
+            <ol className="list-decimal list-inside space-y-1 text-[#A3A3A3]">
               <li>Откройте Telegram и найдите @BotFather</li>
-              <li>Отправьте команду <code className="bg-white px-1 py-0.5 rounded">/newbot</code></li>
+              <li>Отправьте команду <code className="bg-[#1A1A1A] px-1 py-0.5 rounded text-[#FAFAFA]">/newbot</code></li>
               <li>Следуйте инструкциям и получите токен</li>
               <li>Скопируйте токен и вставьте ниже</li>
             </ol>
@@ -40,7 +40,7 @@ export function Step5({ formData, updateFormData }: Step5Props) {
             href="https://core.telegram.org/bots/tutorial#obtain-your-bot-token"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-[#3B82F6] hover:underline"
           >
             📖 Подробная инструкция как создать бота
           </a>
@@ -59,7 +59,7 @@ export function Step5({ formData, updateFormData }: Step5Props) {
             }
             required
           />
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-[#A3A3A3]">
             Токен выглядит примерно так: 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11
           </p>
         </div>
@@ -67,12 +67,12 @@ export function Step5({ formData, updateFormData }: Step5Props) {
 
       {/* WhatsApp */}
       <div className="space-y-4">
-        <h3 className="text-lg font-medium flex items-center gap-2">
+        <h3 className="text-lg font-medium text-[#FAFAFA] flex items-center gap-2">
           <span className="text-2xl">💬</span> WhatsApp (опционально)
         </h3>
 
-        <div className="space-y-3 p-4 bg-neutral-50 rounded-lg border border-neutral-200">
-          <div className="text-sm text-neutral-600">
+        <div className="space-y-3 p-4 bg-[#141414] rounded-lg border border-[#262626]">
+          <div className="text-sm text-[#A3A3A3]">
             <p>
               Подключение WhatsApp Business API требует верификации и займёт
               1-2 дня.
@@ -93,21 +93,21 @@ export function Step5({ formData, updateFormData }: Step5Props) {
               updateFormData({ whatsappPhone: e.target.value })
             }
           />
-          <p className="text-xs text-neutral-500">
+          <p className="text-xs text-[#A3A3A3]">
             Укажите номер, который будет использоваться для WhatsApp Business
           </p>
         </div>
       </div>
 
       {/* Final note */}
-      <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+      <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
         <div className="flex items-start gap-3">
           <span className="text-2xl">✅</span>
           <div className="text-sm">
-            <p className="font-medium text-green-900 mb-1">
+            <p className="font-medium text-emerald-400 mb-1">
               Всё готово к созданию!
             </p>
-            <p className="text-green-700">
+            <p className="text-emerald-400/80">
               После нажатия кнопки "Создать бота" мы автоматически настроим
               AI-ассистента и подключим его к Telegram. Вы сможете сразу начать
               тестирование.

@@ -1,7 +1,6 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  darkMode: ["class"],
   content: [
     './pages/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -12,50 +11,58 @@ const config: Config = {
     container: {
       center: true,
       padding: "2rem",
-      screens: {
-        "2xl": "1400px",
-      },
+      screens: { "2xl": "1400px" },
     },
     extend: {
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+      },
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        background: '#0A0A0A',
+        foreground: '#FAFAFA',
+        border: '#262626',
+        input: '#262626',
+        ring: '#3B82F6',
+        card: {
+          DEFAULT: '#141414',
+          foreground: '#FAFAFA',
+        },
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: '#3B82F6',
+          foreground: '#FFFFFF',
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
+          DEFAULT: '#1A1A1A',
+          foreground: '#FAFAFA',
         },
         muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
+          DEFAULT: '#1A1A1A',
+          foreground: '#737373',
         },
         accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
+          DEFAULT: '#3B82F6',
+          foreground: '#FFFFFF',
+        },
+        destructive: {
+          DEFAULT: '#EF4444',
+          foreground: '#FFFFFF',
         },
         popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: '#141414',
+          foreground: '#FAFAFA',
         },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      boxShadow: {
+        'soft': '0 4px 16px rgba(0, 0, 0, 0.3)',
+        'soft-lg': '0 8px 32px rgba(0, 0, 0, 0.4)',
+        'card': '0 1px 0 rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.25)',
+        'elevated': '0 4px 16px rgba(0,0,0,0.5)',
+        'glow': '0 0 15px rgba(59, 130, 246, 0.3)',
       },
       keyframes: {
         "accordion-down": {

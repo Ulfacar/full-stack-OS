@@ -22,7 +22,6 @@ export default function UsersPage() {
   const [showForm, setShowForm] = useState(false)
   const [message, setMessage] = useState('')
 
-  // New sales form
   const [newName, setNewName] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -66,14 +65,14 @@ export default function UsersPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-neutral-400">Загрузка...</div>
+  if (loading) return <div className="p-8 text-[#737373]">Загрузка...</div>
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 pt-14 lg:pt-8 max-w-4xl">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold">Пользователи</h1>
-          <p className="text-neutral-500 text-sm">Управление аккаунтами</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-[#FAFAFA]">Пользователи</h1>
+          <p className="text-[#737373] text-sm">Управление аккаунтами</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)}>
           {showForm ? 'Отмена' : '+ Продажник'}
@@ -81,15 +80,14 @@ export default function UsersPage() {
       </div>
 
       {message && (
-        <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md text-sm">
+        <div className="mb-4 bg-[#3B82F6]/10 border border-[#3B82F6]/20 text-[#3B82F6] px-4 py-3 rounded-xl text-sm">
           {message}
         </div>
       )}
 
-      {/* Create sales form */}
       {showForm && (
         <Card className="p-6 mb-6">
-          <h2 className="text-lg font-semibold mb-4">Новый продажник</h2>
+          <h2 className="text-lg font-semibold mb-4 text-[#FAFAFA]">Новый продажник</h2>
           <div className="space-y-4">
             <div>
               <Label>Имя</Label>
@@ -110,14 +108,13 @@ export default function UsersPage() {
         </Card>
       )}
 
-      {/* Users list */}
       <div className="space-y-3">
         {users.map((user) => (
           <Card key={user.id} className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium">{user.name}</div>
-                <div className="text-sm text-neutral-500">{user.email}</div>
+                <div className="font-medium text-[#FAFAFA]">{user.name}</div>
+                <div className="text-sm text-[#737373]">{user.email}</div>
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant={user.role === 'admin' ? 'success' : 'warning'}>
@@ -130,7 +127,7 @@ export default function UsersPage() {
 
         {users.length === 0 && (
           <Card className="text-center py-8">
-            <p className="text-neutral-500">Нет пользователей</p>
+            <p className="text-[#737373]">Нет пользователей</p>
           </Card>
         )}
       </div>
