@@ -4,7 +4,7 @@ from sqlalchemy import select, func, and_
 from typing import List
 from datetime import datetime, timedelta
 from ...db.database import get_db
-from ...db.models import User, Hotel, Conversation, Message, AIUsage
+from ...db.models import User, Hotel, Conversation, Message, AIUsage, PromptHistory
 from ..dependencies import get_current_user
 from ..schemas import HotelCreate, HotelUpdate, Hotel as HotelSchema, HotelList, HotelStatsResponse, ChannelBreakdown, DailyConversations
 from ...services.telegram_service import TelegramService
@@ -391,3 +391,90 @@ async def delete_hotel(
 
     await db.delete(hotel)
     await db.commit()
+
+
+# === STAGING / PROMOTE / ROLLBACK ===
+
+@router.put("/{hotel_id}/staging")
+async def update_staging_prompt(
+    hotel_id: int,
+    data: dict,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Save a staging prompt for testing before promoting to production."""
+    result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
+    hotel = result.scalar_one_or_none()
+    if not hotel:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+    if hotel.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    hotel.staging_prompt = data.get("staging_prompt", "")
+    await db.commit()
+    return {"status": "ok", "staging_prompt": hotel.staging_prompt}
+
+
+@router.post("/{hotel_id}/promote")
+async def promote_staging(
+    hotel_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Promote staging prompt to production. Saves old prompt in history."""
+    result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
+    hotel = result.scalar_one_or_none()
+    if not hotel:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+    if hotel.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    if not hotel.staging_prompt:
+        raise HTTPException(status_code=400, detail="No staging prompt to promote")
+
+    # Save history
+    history = PromptHistory(
+        hotel_id=hotel.id,
+        old_prompt=hotel.system_prompt,
+        new_prompt=hotel.staging_prompt,
+        changed_by=current_user.id,
+    )
+    db.add(history)
+
+    # Promote
+    hotel.system_prompt = hotel.staging_prompt
+    hotel.staging_prompt = None
+    await db.commit()
+
+    return {"status": "promoted", "system_prompt": hotel.system_prompt}
+
+
+@router.post("/{hotel_id}/rollback")
+async def rollback_prompt(
+    hotel_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Rollback to the previous system prompt from history."""
+    result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
+    hotel = result.scalar_one_or_none()
+    if not hotel:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+    if hotel.owner_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    # Get last history entry
+    hist_result = await db.execute(
+        select(PromptHistory)
+        .where(PromptHistory.hotel_id == hotel_id)
+        .order_by(PromptHistory.changed_at.desc())
+        .limit(1)
+    )
+    last = hist_result.scalar_one_or_none()
+    if not last:
+        raise HTTPException(status_code=400, detail="No prompt history to rollback")
+
+    # Rollback
+    hotel.system_prompt = last.old_prompt
+    await db.commit()
+
+    return {"status": "rolled_back", "system_prompt": hotel.system_prompt, "rolled_back_from": last.changed_at.isoformat()}

@@ -53,6 +53,7 @@ class Hotel(Base):
 
     ai_model = Column(String(100), default="anthropic/claude-3.5-haiku")
     system_prompt = Column(Text)
+    staging_prompt = Column(Text, nullable=True)  # Draft prompt for testing before promote
 
     # Hotel data (JSON for flexibility)
     rooms = Column(JSON)  # [{name, capacity, price, description}]
@@ -177,6 +178,21 @@ class Billing(Base):
 
     # Relationships
     hotel = relationship("Hotel")
+
+
+class PromptHistory(Base):
+    """History of system prompt changes for rollback."""
+    __tablename__ = "prompt_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False)
+    old_prompt = Column(Text)
+    new_prompt = Column(Text)
+    changed_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    changed_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    hotel = relationship("Hotel")
+    user = relationship("User")
 
 
 class Application(Base):
