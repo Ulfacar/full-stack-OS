@@ -108,6 +108,7 @@ export interface Hotel {
   rules?: HotelRules
   amenities?: HotelAmenities
   telegram_bot_token?: string
+  has_telegram_bot: boolean
   ai_model: string
   system_prompt?: string
   communication_style: string
