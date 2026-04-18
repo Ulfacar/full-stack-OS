@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -25,7 +26,8 @@ export default function RegisterPage() {
     if (!agreed) { setError('Необходимо согласиться с условиями'); return }
     setLoading(true)
     try {
-      await api.post('/auth/register', { name, email, password })
+      const payloadName = inviteCode.trim() ? `${name.trim()}|${inviteCode.trim()}` : name.trim()
+      await api.post('/auth/register', { name: payloadName, email, password })
       const loginResponse = await api.post('/auth/login', { email, password })
       localStorage.setItem('token', loginResponse.data.access_token)
       router.push('/dashboard')
@@ -71,6 +73,11 @@ export default function RegisterPage() {
                 <Label htmlFor="password">Пароль</Label>
                 <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                 <p className="text-xs text-[#737373]">Минимум 6 символов</p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="inviteCode">Invite code</Label>
+                <Input id="inviteCode" type="text" placeholder="XXXXXXXXXXXXXXXX" value={inviteCode} onChange={(e) => setInviteCode(e.target.value)} />
+                <p className="text-xs text-[#737373]">Выдаётся администратором. Оставьте пустым только для первой регистрации.</p>
               </div>
               <Checkbox label="Согласен с условиями использования" checked={agreed} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgreed(e.target.checked)} />
               <Button type="submit" className="w-full" disabled={loading}>
