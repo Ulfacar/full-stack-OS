@@ -6,13 +6,20 @@ interface Room { name: string; capacity: number; price: number; description: str
 interface FormData { hotelName: string; address: string; phone: string; contactName: string; email: string; description: string; rooms: Room[]; checkin: string; checkout: string; pets: string; smoking: string; wifi: boolean; parking: boolean; pool: boolean; restaurant: boolean; transfer: boolean; breakfast: boolean; communicationStyle: string }
 const defaultForm: FormData = { hotelName: '', address: '', phone: '', contactName: '', email: '', description: '', rooms: [{ name: '', capacity: 2, price: 0, description: '' }], checkin: '14:00', checkout: '12:00', pets: 'no', smoking: 'no', wifi: true, parking: false, pool: false, restaurant: false, transfer: false, breakfast: false, communicationStyle: 'friendly' }
 const demoForm: FormData = { hotelName: 'Ton Azure', address: 'с. Тон, Иссык-Куль', phone: '+996 555 123 456', contactName: 'Бектур', email: 'tonazure@mail.com', description: 'Бутик-отель на берегу Иссык-Куля. 12 номеров, ресторан, пляж, зона барбекю.', rooms: [ { name: 'Twin Standard', capacity: 2, price: 4500, description: 'Две раздельные кровати, душ, ТВ, Wi-Fi' }, { name: 'Double Comfort', capacity: 2, price: 5500, description: 'Одна большая кровать, балкон с видом на озеро' }, { name: 'Family Suite', capacity: 4, price: 8500, description: 'Две комнаты, кухня, балкон' }, ], checkin: '14:00', checkout: '12:00', pets: 'no', smoking: 'balcony', wifi: true, parking: true, pool: false, restaurant: true, transfer: true, breakfast: true, communicationStyle: 'friendly' }
+const DRAFT_KEY = 'exmachina:create-bot:draft'
+
 export default function CreateBotPage() {
   const router = useRouter()
   const [authChecked, setAuthChecked] = useState(false)
+  const [draftBanner, setDraftBanner] = useState(false)
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
     if (!token) { router.replace('/login?next=/create-bot'); return }
     setAuthChecked(true)
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem(DRAFT_KEY) : null
+      if (raw) setDraftBanner(true)
+    } catch {}
   }, [router])
   const [step, setStep] = useState(1)
   const [form, setForm] = useState<FormData>(defaultForm)
@@ -20,6 +27,24 @@ export default function CreateBotPage() {
   const [chatInput, setChatInput] = useState('')
   const [chatLoading, setChatLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  useEffect(() => {
+    if (!authChecked) return
+    if (form.hotelName === '' && form === defaultForm) return
+    const t = setTimeout(() => {
+      try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, step })) } catch {}
+    }, 400)
+    return () => clearTimeout(t)
+  }, [form, step, authChecked])
+  const restoreDraft = () => {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY)
+      if (!raw) return setDraftBanner(false)
+      const saved = JSON.parse(raw) as { form: FormData; step: number }
+      setForm(saved.form); setStep(saved.step || 1)
+    } catch {}
+    setDraftBanner(false)
+  }
+  const discardDraft = () => { try { localStorage.removeItem(DRAFT_KEY) } catch {}; setDraftBanner(false) }
   const update = (data: Partial<FormData>) => setForm(prev => ({ ...prev, ...data }))
   const addRoom = () => update({ rooms: [...form.rooms, { name: '', capacity: 2, price: 0, description: '' }] })
   const updateRoom = (i: number, field: keyof Room, value: any) => { const r = [...form.rooms]; r[i] = { ...r[i], [field]: value }; update({ rooms: r }) }
@@ -45,15 +70,27 @@ export default function CreateBotPage() {
   const submitApplication = async () => {
     setSubmitting(true)
     try {
-      await api.post('/applications', { hotel_name: form.hotelName, contact_name: form.contactName, contact_phone: form.phone, contact_email: form.email, form_data: { description: form.description, address: form.address, rooms: form.rooms, rules: { checkin: form.checkin, checkout: form.checkout, pets: form.pets, smoking: form.smoking }, amenities: { wifi: form.wifi, parking: form.parking, pool: form.pool, restaurant: form.restaurant, transfer: false, breakfast: form.breakfast }, communication_style: form.communicationStyle } })
-      router.push('/success')
-    } catch { alert('Error submitting.') }
+      const { data } = await api.post('/applications', { hotel_name: form.hotelName, contact_name: form.contactName, contact_phone: form.phone, contact_email: form.email, form_data: { description: form.description, address: form.address, rooms: form.rooms, rules: { checkin: form.checkin, checkout: form.checkout, pets: form.pets, smoking: form.smoking }, amenities: { wifi: form.wifi, parking: form.parking, pool: form.pool, restaurant: form.restaurant, transfer: false, breakfast: form.breakfast }, communication_style: form.communicationStyle } })
+      try { localStorage.removeItem(DRAFT_KEY) } catch {}
+      router.push(data?.id ? `/sales/leads/${data.id}` : '/sales/leads')
+    } catch { alert('Не удалось отправить заявку. Попробуйте ещё раз.') }
     setSubmitting(false)
   }
   if (!authChecked) return null
   return (
     <div className="min-h-screen bg-[#0A0A0A]">
       <nav className="bg-[#141414] border-b border-[#262626] px-6 py-4"><div className="max-w-3xl mx-auto flex justify-between items-center"><a href="/" className="text-xl font-bold text-[#3B82F6]">Ex-Machina</a><div className="flex items-center gap-4"><button onClick={() => { setForm(demoForm); setStep(4) }} className="text-xs text-[#737373] hover:text-[#3B82F6] underline">Заполнить демо (Ton Azure)</button><div className="text-sm text-[#A3A3A3]">Step {step} of 4</div></div></div></nav>
+      {draftBanner && (
+        <div className="max-w-3xl mx-auto px-6 mt-4">
+          <div className="flex items-center justify-between gap-3 bg-[#3B82F6]/10 border border-[#3B82F6]/30 rounded-lg px-4 py-3">
+            <div className="text-sm text-[#FAFAFA]">Найден черновик предыдущей анкеты. Продолжить?</div>
+            <div className="flex gap-2">
+              <button onClick={restoreDraft} className="text-xs bg-[#3B82F6] text-white px-3 py-1.5 rounded-md hover:bg-[#2563EB]">Продолжить</button>
+              <button onClick={discardDraft} className="text-xs text-[#A3A3A3] hover:text-[#FAFAFA] px-2 py-1.5">Начать заново</button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-3xl mx-auto px-6 mt-6"><div className="flex gap-2">{[1,2,3,4].map(s => (<div key={s} className={`h-2 flex-1 rounded-full ${s <= step ? 'bg-[#3B82F6]' : 'bg-[#262626]'}`} />))}</div></div>
       <div className="max-w-3xl mx-auto px-6 py-8">
         {step === 1 && (<div className="bg-[#141414] rounded-2xl p-8 border border-[#262626]"><h2 className="text-2xl font-bold mb-6 text-[#FAFAFA]">Расскажите о вашем отеле</h2><div className="space-y-4"><div><label className="block text-sm font-medium mb-1 text-[#FAFAFA]">Название отеля *</label><input className="w-full border border-[#262626] bg-[#1A1A1A] text-[#FAFAFA] rounded-lg px-4 py-2 placeholder-[#737373]" value={form.hotelName} onChange={e => update({ hotelName: e.target.value })} placeholder="Тон Азур" /></div><div><label className="block text-sm font-medium mb-1 text-[#FAFAFA]">Адрес</label><input className="w-full border border-[#262626] bg-[#1A1A1A] text-[#FAFAFA] rounded-lg px-4 py-2 placeholder-[#737373]" value={form.address} onChange={e => update({ address: e.target.value })} placeholder="с. Тон, Иссык-Куль" /></div><div className="grid grid-cols-2 gap-4"><div><label className="block text-sm font-medium mb-1 text-[#FAFAFA]">Контактное лицо *</label><input className="w-full border border-[#262626] bg-[#1A1A1A] text-[#FAFAFA] rounded-lg px-4 py-2 placeholder-[#737373]" value={form.contactName} onChange={e => update({ contactName: e.target.value })} placeholder="Бектур" /></div><div><label className="block text-sm font-medium mb-1 text-[#FAFAFA]">Телефон *</label><input className="w-full border border-[#262626] bg-[#1A1A1A] text-[#FAFAFA] rounded-lg px-4 py-2 placeholder-[#737373]" value={form.phone} onChange={e => update({ phone: e.target.value })} placeholder="+996 555 123 456" /></div></div><div><label className="block text-sm font-medium mb-1 text-[#FAFAFA]">Email</label><input className="w-full border border-[#262626] bg-[#1A1A1A] text-[#FAFAFA] rounded-lg px-4 py-2 placeholder-[#737373]" value={form.email} onChange={e => update({ email: e.target.value })} placeholder="hotel@mail.com" /></div><div><label className="block text-sm font-medium mb-1 text-[#FAFAFA]">Описание</label><textarea className="w-full border border-[#262626] bg-[#1A1A1A] text-[#FAFAFA] rounded-lg px-4 py-2 h-24 placeholder-[#737373]" value={form.description} onChange={e => update({ description: e.target.value })} placeholder="Бутик-отель на берегу Иссык-Куля..." /></div></div><div className="mt-6 flex justify-end"><button onClick={() => setStep(2)} disabled={!form.hotelName || !form.phone} className="bg-[#3B82F6] text-white px-6 py-2 rounded-lg disabled:opacity-50 hover:bg-[#2563EB]">Далее</button></div></div>)}
