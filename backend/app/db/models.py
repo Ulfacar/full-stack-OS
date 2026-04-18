@@ -208,8 +208,10 @@ class Application(Base):
     form_data = Column(JSON, nullable=True)  # Все данные формы (номера, цены, правила, удобства)
     generated_prompt = Column(Text, nullable=True)  # Сгенерированный промпт
     hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=True)  # Связь после активации
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     hotel = relationship("Hotel")
+    created_by = relationship("User", foreign_keys=[created_by_user_id])

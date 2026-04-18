@@ -9,7 +9,7 @@ from datetime import datetime
 
 from ...db.database import get_db
 from ...db.models import Application, Hotel, User
-from ..dependencies import get_current_user
+from ..dependencies import get_current_user, get_current_user_optional
 from ...services.ai_service import ai_service
 from ...core.crypto import encrypt_token
 
@@ -56,9 +56,13 @@ class ActivateRequest(BaseModel):
 async def submit_application(
     data: ApplicationCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ):
-    """Клиент отправляет заявку с данными отеля (публичный, без логина)."""
-    # Генерируем промпт из form_data
+    """Публичный endpoint подачи заявки.
+
+    Анонимный визит → `created_by_user_id` = NULL.
+    Авторизованный sales/admin → заявка становится его лидом (видна в /sales/leads).
+    """
     generated_prompt = await ai_service.generate_system_prompt(data.form_data)
 
     app = Application(
@@ -68,6 +72,7 @@ async def submit_application(
         contact_email=data.contact_email,
         form_data=data.form_data,
         generated_prompt=generated_prompt,
+        created_by_user_id=current_user.id if current_user else None,
     )
     db.add(app)
     await db.commit()
