@@ -33,7 +33,14 @@ async def preview_chat(
     data: PreviewRequest,
     current_user: User = Depends(get_current_user),
 ):
-    """Генерировать ответ бота для превью (wizard). Требует авторизации."""
+    """Генерировать ответ бота для превью (wizard). Требует авторизации.
+
+    TODO(unlock-public-wizard): when opening the wizard to the public (after
+    ≥3 active Ex-Machina hotels + 0 churn 30d), remove Depends(get_current_user)
+    and add: IP rate-limit (20/10min), message length cap (≤500), daily IP cap,
+    plus tests in backend/tests/test_preview_chat.py. Today the wizard is
+    gated behind /login so the salesperson demos it during client meetings.
+    """
     system_prompt = await ai_service.generate_system_prompt(data.hotel_data)
 
     messages = [{"role": "system", "content": system_prompt}]
