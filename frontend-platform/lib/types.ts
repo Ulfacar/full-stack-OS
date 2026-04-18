@@ -127,6 +127,39 @@ export interface User {
   is_active: boolean
 }
 
+export type UserRole = 'admin' | 'sales'
+
+export interface CurrentUser {
+  id: number
+  name: string
+  email: string
+  role: UserRole
+  is_active: boolean
+}
+
+export interface Lead {
+  id: number
+  status: 'pending' | 'configuring' | 'active' | 'rejected'
+  hotel_name: string
+  contact_name: string | null
+  contact_phone: string | null
+  contact_email: string | null
+  form_data: Record<string, any> | null
+  generated_prompt: string | null
+  hotel_id: number | null
+  created_by_user_id: number | null
+  created_at: string
+  updated_at: string | null
+}
+
+export interface SalesStats {
+  total: number
+  pending: number
+  configuring: number
+  active: number
+  rejected: number
+}
+
 // AI Usage tracking
 export interface AIUsageStats {
   hotel_id: number
