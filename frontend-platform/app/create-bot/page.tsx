@@ -70,7 +70,7 @@ export default function CreateBotPage() {
   const submitApplication = async () => {
     setSubmitting(true)
     try {
-      const { data } = await api.post('/applications', { hotel_name: form.hotelName, contact_name: form.contactName, contact_phone: form.phone, contact_email: form.email, form_data: { description: form.description, address: form.address, rooms: form.rooms, rules: { checkin: form.checkin, checkout: form.checkout, pets: form.pets, smoking: form.smoking }, amenities: { wifi: form.wifi, parking: form.parking, pool: form.pool, restaurant: form.restaurant, transfer: false, breakfast: form.breakfast }, communication_style: form.communicationStyle } })
+      const { data } = await api.post('/applications', { hotel_name: form.hotelName, contact_name: form.contactName, contact_phone: form.phone, contact_email: form.email, form_data: { name: form.hotelName, description: form.description, address: form.address, phone: form.phone, email: form.email, rooms: form.rooms, rules: { checkin: form.checkin, checkout: form.checkout, pets: form.pets, smoking: form.smoking }, amenities: { wifi: form.wifi, parking: form.parking, pool: form.pool, restaurant: form.restaurant, transfer: form.transfer, breakfast: form.breakfast }, communication_style: form.communicationStyle } })
       try { localStorage.removeItem(DRAFT_KEY) } catch {}
       router.push(data?.id ? `/sales/leads/${data.id}` : '/sales/leads')
     } catch { alert('Не удалось отправить заявку. Попробуйте ещё раз.') }
