@@ -5,15 +5,27 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, Building2, BarChart3, CreditCard,
-  Users, Settings, LogOut, Menu, X,
+  Users, Settings, LogOut, Menu, X, Sparkles, ClipboardList,
 } from 'lucide-react'
+import { useCurrentUser, clearCurrentUser } from '@/lib/useCurrentUser'
 
-const menuItems = [
+type MenuItem = { icon: any; label: string; href: string; highlight?: boolean }
+
+const adminMenu: MenuItem[] = [
   { icon: LayoutDashboard, label: 'Дашборд', href: '/dashboard' },
+  { icon: Sparkles, label: 'Создать бота', href: '/create-bot', highlight: true },
   { icon: Building2, label: 'Отели', href: '/dashboard/hotels' },
+  { icon: ClipboardList, label: 'Все лиды', href: '/sales/leads' },
   { icon: BarChart3, label: 'Статистика', href: '/dashboard/stats' },
   { icon: CreditCard, label: 'Биллинг', href: '/dashboard/billing' },
   { icon: Users, label: 'Пользователи', href: '/dashboard/users' },
+  { icon: Settings, label: 'Настройки', href: '/settings' },
+]
+
+const salesMenu: MenuItem[] = [
+  { icon: LayoutDashboard, label: 'Главная', href: '/sales' },
+  { icon: Sparkles, label: 'Создать бота', href: '/create-bot', highlight: true },
+  { icon: ClipboardList, label: 'Мои лиды', href: '/sales/leads' },
   { icon: Settings, label: 'Настройки', href: '/settings' },
 ]
 
@@ -21,9 +33,12 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { isAdmin } = useCurrentUser()
+  const menuItems = isAdmin ? adminMenu : salesMenu
 
   const handleLogout = () => {
     localStorage.removeItem('token')
+    clearCurrentUser()
     router.push('/login')
   }
 
@@ -54,7 +69,9 @@ export function Sidebar() {
               className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ${
                 active
                   ? 'bg-[#3B82F6] text-white'
-                  : 'text-[#A3A3A3] hover:bg-[#1A1A1A] hover:text-[#FAFAFA]'
+                  : item.highlight
+                    ? 'text-[#3B82F6] hover:bg-[#3B82F6]/10 border border-[#3B82F6]/30'
+                    : 'text-[#A3A3A3] hover:bg-[#1A1A1A] hover:text-[#FAFAFA]'
               }`}
             >
               <Icon size={16} strokeWidth={1.5} />

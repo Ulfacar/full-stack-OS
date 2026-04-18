@@ -30,7 +30,8 @@ export default function RegisterPage() {
       await api.post('/auth/register', { name: payloadName, email, password })
       const loginResponse = await api.post('/auth/login', { email, password })
       localStorage.setItem('token', loginResponse.data.access_token)
-      router.push('/dashboard')
+      const me = await api.get('/auth/me').catch(() => null)
+      router.push(me?.data?.role === 'sales' ? '/sales' : '/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Ошибка регистрации')
     } finally { setLoading(false) }

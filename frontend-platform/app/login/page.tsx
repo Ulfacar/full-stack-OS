@@ -24,7 +24,8 @@ export default function LoginPage() {
     try {
       const response = await api.post('/auth/login', { email, password })
       localStorage.setItem('token', response.data.access_token)
-      router.push('/dashboard')
+      const me = await api.get('/auth/me').catch(() => null)
+      router.push(me?.data?.role === 'sales' ? '/sales' : '/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Ошибка входа')
     } finally { setLoading(false) }
@@ -38,7 +39,8 @@ export default function LoginPage() {
     try {
       const response = await api.post('/auth/login', { email: 'demo@asystem.com', password: 'demo123' })
       localStorage.setItem('token', response.data.access_token)
-      router.push('/dashboard')
+      const me = await api.get('/auth/me').catch(() => null)
+      router.push(me?.data?.role === 'sales' ? '/sales' : '/dashboard')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Ошибка входа')
     } finally { setLoading(false) }

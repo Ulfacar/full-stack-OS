@@ -1,9 +1,11 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { FileText, Bot, Building2, ArrowRight } from 'lucide-react'
 import api from '@/lib/api'
+import { useCurrentUser } from '@/lib/useCurrentUser'
 
 interface Application { id: number; status: string; hotel_name: string; contact_name: string | null; contact_phone: string | null; created_at: string }
 interface Hotel { id: number; name: string; slug: string; is_active: boolean; has_telegram_bot: boolean; status: string; created_at: string }
@@ -12,21 +14,35 @@ const STATUS_LABELS: Record<string, string> = { pending: 'Ожидает', confi
 const STATUS_VARIANTS: Record<string, 'warning' | 'info' | 'success' | 'error' | 'default'> = { pending: 'warning', configuring: 'info', active: 'success', rejected: 'error' }
 
 export default function DashboardPage() {
+  const router = useRouter()
+  const { isAdmin, isSales, loading: userLoading } = useCurrentUser()
   const [applications, setApplications] = useState<Application[]>([])
   const [hotels, setHotels] = useState<Hotel[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!userLoading && isSales) {
+      router.replace('/sales')
+    }
+  }, [userLoading, isSales, router])
+
+  useEffect(() => {
     const load = async () => {
       try {
-        const [appsRes, hotelsRes] = await Promise.all([api.get('/admin/applications'), api.get('/hotels')])
-        setApplications(appsRes.data)
-        setHotels(hotelsRes.data)
+        const requests: Promise<any>[] = [api.get('/hotels')]
+        if (isAdmin) requests.unshift(api.get('/admin/applications'))
+        const results = await Promise.all(requests)
+        if (isAdmin) {
+          setApplications(results[0].data)
+          setHotels(results[1].data)
+        } else {
+          setHotels(results[0].data)
+        }
       } catch (err) { console.error(err) }
       setLoading(false)
     }
-    load()
-  }, [])
+    if (!userLoading && !isSales) load()
+  }, [userLoading, isAdmin, isSales])
 
   if (loading) {
     return (
@@ -75,7 +91,8 @@ export default function DashboardPage() {
         })}
       </div>
 
-      {/* Applications */}
+      {/* Applications — admin only */}
+      {isAdmin && (
       <div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
         <h2 className="text-base font-semibold tracking-tight mb-3 text-[#FAFAFA]">Заявки</h2>
         {applications.length === 0 ? (
@@ -116,6 +133,7 @@ export default function DashboardPage() {
           </div>
         )}
       </div>
+      )}
 
       {/* Hotels */}
       <div className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
