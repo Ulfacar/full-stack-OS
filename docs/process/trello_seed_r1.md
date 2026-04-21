@@ -8,7 +8,7 @@
 ## Формат карточки (парсер опирается на него)
 
 ```
-## [R1a|R1b|R1c|R2|R3] #NN Заголовок story
+## [R1a|R1b|R1c|R2|R3|DONE] #NN Заголовок story
 - **Size:** S|M|L
 - **$:** HIGH|High|Med|Low
 - **Sprint:** 0|1|N|-
@@ -24,6 +24,84 @@
 ### Ref
 USM #NN · Lean Canvas ссылка · …
 ```
+
+**DONE-карточки** — краткий формат: `Shipped:` однострочник + `Ref:`. AC не нужен.
+
+---
+
+# Done (историческое) — уже работает в Ex-Machina
+
+*Для контекста на Trello-доске — чтобы было видно что уже отгружено и не переделывать.*
+
+## [DONE] #D1 Мультитенантная архитектура (все модели с hotel_id)
+
+- **Shipped:** baseline multi-tenant isolation через `hotel.owner_id == current_user.id` во всех endpoints.
+- **Ref:** `backend/app/db/models.py`, все модели User/Hotel/Client/Conversation/Message/AIUsage/Billing/PromptHistory/Application с FK hotel_id
+
+## [DONE] #D2 Telegram webhook с secret-token
+
+- **Shipped:** `/webhooks/telegram/{hotel_slug}` с проверкой `X-Telegram-Bot-Api-Secret-Token`.
+- **Ref:** `backend/app/api/endpoints/webhooks.py:24-301`
+
+## [DONE] #D3 WhatsApp webhook (Wappi.pro + Meta Cloud API HMAC-SHA256)
+
+- **Shipped:** два провайдера WA — Wappi (основной) и Meta (для клиентов с готовым WA Business).
+- **Ref:** `backend/app/api/endpoints/webhooks_whatsapp.py`, `backend/app/services/meta_whatsapp_service.py`
+
+## [DONE] #D4 Fernet шифрование Telegram bot-токенов в БД
+
+- **Shipped:** миграция 011, токены не видны никому кроме сервера.
+- **Ref:** `backend/app/core/crypto.py`
+
+## [DONE] #D5 Staging prompt + Promote/Rollback endpoints
+
+- **Shipped:** редактор промпта с staging-версией, миграция 012. UI кнопок Promote/Rollback ЕЩЁ НЕТ (story #28 R1c).
+- **Ref:** `backend/app/api/endpoints/hotels.py:399-495`
+
+## [DONE] #D6 Preview-chat simulate endpoint для тестирования промптов
+
+- **Shipped:** `/preview-chat/simulate` с `Depends(get_current_user)`. Используется Назирой на встречах.
+- **Ref:** `backend/app/api/endpoints/preview_chat.py`
+
+## [DONE] #D7 Owner analytics (каналы, transfers, daily chart)
+
+- **Shipped:** эндпоинты + UI в `/dashboard`.
+- **Ref:** коммит `88c392d`
+
+## [DONE] #D8 Manager handoff (одностороннее уведомление)
+
+- **Shipped:** `notify_needs_manager` → отправка в TG ЛС менеджера. Двусторонний канал — story #26 R1a, ещё в работе.
+- **Ref:** `backend/app/api/endpoints/webhooks.py:232-244`, `backend/app/services/notification_service.py`
+
+## [DONE] #D9 Cross-dialog memory (10 msg из 3 предыдущих диалогов клиента)
+
+- **Shipped:** контекст растягивается через диалоги для конкретного клиента.
+- **Ref:** `backend/app/services/ai_service.py`
+
+## [DONE] #D10 Followup 10 мин + 15 мин
+
+- **Shipped:** автодогон клиента если бот молчит.
+- **Ref:** `backend/app/services/followup_service.py`
+
+## [DONE] #D11 Post-processing (is_garbled, clean_response, needs_manager detection)
+
+- **Shipped:** safety-пост-обработка ответа перед отправкой клиенту.
+- **Ref:** `backend/app/services/response_processor.py`
+
+## [DONE] #D12 Health check скрипт для VPS
+
+- **Shipped:** мониторинг для деплоя.
+- **Ref:** `scripts/health_check.py`
+
+## [DONE] #D13 Sales wizard application payload fix
+
+- **Shipped:** `form_data` теперь содержит `name`, `phone`, `email`, реальный `transfer` флаг. До фикса падало на `generate_system_prompt` fallback.
+- **Ref:** коммит `e61ebbe` (2026-04-18), `app/create-bot/page.tsx` submitApplication
+
+## [DONE] #D14 Sales Panel полная (миграция 013 + endpoints + hook + sidebar + страницы + autosave)
+
+- **Shipped:** `/sales` дерево (home+stats, leads list, lead detail), role-gated UI, autosave draft в localStorage. 6 отдельных модульных коммитов (`018bb1f` … `23f2c60`).
+- **Ref:** `backend/app/api/endpoints/sales.py`, `frontend-platform/app/sales/*`, `frontend-platform/lib/salesApi.ts`, `frontend-platform/lib/useCurrentUser.ts`
 
 ---
 

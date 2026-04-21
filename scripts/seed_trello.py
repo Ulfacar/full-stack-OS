@@ -40,6 +40,7 @@ LABEL_COLORS = {
     "R1c": "yellow",
     "R2": "sky",
     "R3": "purple",
+    "DONE": "blue",
     "$HIGH": "green",
     "$MED": "lime",
     "🔧 TD": "pink",
@@ -51,8 +52,8 @@ LISTS = ["Backlog", "Sprint 0", "Sprint 1", "In Progress", "Review", "Done", "Bl
 
 @dataclass
 class Card:
-    release: str              # R1a | R1b | R1c | R2 | R3
-    number: str               # #29
+    release: str              # R1a | R1b | R1c | R2 | R3 | DONE
+    number: str               # #29 or #D1
     title: str
     size: str = ""            # S | M | L
     money: str = ""           # High | Med | Low (display case)
@@ -61,9 +62,16 @@ class Card:
     why: str = ""
     ac: list[str] = field(default_factory=list)
     ref: str = ""
+    shipped: str = ""         # DONE-only: однострочник что сделано
+
+    @property
+    def is_done(self) -> bool:
+        return self.release == "DONE"
 
     @property
     def target_list(self) -> str:
+        if self.is_done:
+            return "Done"
         if self.sprint == "0":
             return "Sprint 0"
         if self.sprint == "1":
@@ -73,26 +81,31 @@ class Card:
     @property
     def display_labels(self) -> list[str]:
         out = [self.release]
-        m = self.money.upper()
-        if m == "HIGH":
-            out.append("$HIGH")
-        elif m == "MED":
-            out.append("$MED")
+        if not self.is_done:
+            m = self.money.upper()
+            if m == "HIGH":
+                out.append("$HIGH")
+            elif m == "MED":
+                out.append("$MED")
         out.extend(self.labels_extra)
         return out
 
     def description(self) -> str:
         lines = []
-        lines.append(f"**Size:** {self.size}   **$:** {self.money}   **Sprint:** {self.sprint}")
-        if self.why:
-            lines.append("")
-            lines.append("## Why")
-            lines.append(self.why)
-        if self.ac:
-            lines.append("")
-            lines.append("## Acceptance Criteria")
-            for item in self.ac:
-                lines.append(f"- [ ] {item}")
+        if self.is_done:
+            if self.shipped:
+                lines.append(f"**Shipped:** {self.shipped}")
+        else:
+            lines.append(f"**Size:** {self.size}   **$:** {self.money}   **Sprint:** {self.sprint}")
+            if self.why:
+                lines.append("")
+                lines.append("## Why")
+                lines.append(self.why)
+            if self.ac:
+                lines.append("")
+                lines.append("## Acceptance Criteria")
+                for item in self.ac:
+                    lines.append(f"- [ ] {item}")
         if self.ref:
             lines.append("")
             lines.append(f"**Ref:** {self.ref}")
@@ -101,7 +114,10 @@ class Card:
 
 def parse_md(path: str) -> list[Card]:
     text = open(path, encoding="utf-8").read()
-    header_re = re.compile(r"^##\s+\[(R1a|R1b|R1c|R2|R3)\]\s+(#\d+)\s+(.+?)\s*$", re.MULTILINE)
+    header_re = re.compile(
+        r"^##\s+\[(R1a|R1b|R1c|R2|R3|DONE)\]\s+(#[A-Za-z0-9]+)\s+(.+?)\s*$",
+        re.MULTILINE,
+    )
 
     cards: list[Card] = []
     matches = list(header_re.finditer(text))
@@ -147,6 +163,15 @@ def parse_md(path: str) -> list[Card]:
         ref_m = re.search(r"###\s+Ref\s*\n(.+?)(?=\n###|\n##|\Z)", body, re.DOTALL)
         if ref_m:
             card.ref = ref_m.group(1).strip()
+
+        # DONE-only: bullet Shipped + Ref (inline, без ### секций)
+        if card.is_done:
+            shipped_m = re.search(r"-\s+\*\*Shipped:\*\*\s*(.+?)$", body, re.MULTILINE)
+            if shipped_m:
+                card.shipped = shipped_m.group(1).strip()
+            ref_inline_m = re.search(r"-\s+\*\*Ref:\*\*\s*(.+?)$", body, re.MULTILINE)
+            if ref_inline_m and not card.ref:
+                card.ref = ref_inline_m.group(1).strip()
 
         cards.append(card)
 
