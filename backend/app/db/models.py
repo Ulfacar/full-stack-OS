@@ -118,6 +118,17 @@ class Conversation(Base):
     channel = Column(String(50))  # telegram, whatsapp
     operator_telegram_id = Column(String(100))  # TG ID of manager who took over
 
+    # Semantic category inferred by LLM (booking, hotel, service, general, ...)
+    category = Column(String(50), nullable=True, index=True)
+
+    # Admin-panel conveniences (maintained by webhook handlers, not triggers)
+    last_message_at = Column(DateTime(timezone=True), nullable=True)
+    last_message_preview = Column(String(500), nullable=True)
+    unread_count = Column(Integer, nullable=False, server_default="0", default=0)
+
+    # Manager/operator assignment (nullable — no-one assigned yet)
+    assigned_user_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -125,6 +136,7 @@ class Conversation(Base):
     hotel = relationship("Hotel", back_populates="conversations")
     client = relationship("Client", back_populates="conversations")
     messages = relationship("Message", back_populates="conversation", order_by="Message.created_at")
+    assigned_user = relationship("User", foreign_keys=[assigned_user_id])
 
 
 class Message(Base):
@@ -133,7 +145,13 @@ class Message(Base):
     id = Column(Integer, primary_key=True, index=True)
     conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False)
 
-    role = Column(String(20), nullable=False)  # user, assistant, system
+    role = Column(String(20), nullable=False)  # OpenAI-format role: user, assistant, system
+
+    # Business-level sender: client, bot, operator. Independent from `role` —
+    # an operator-written message shows role=user in LLM history but sender=operator
+    # in the admin UI.
+    sender = Column(String(20), nullable=True, index=True)
+
     content = Column(Text, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
