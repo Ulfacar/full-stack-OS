@@ -59,6 +59,12 @@ async def create_hotel(
             counter += 1
         slug = new_slug
 
+    # Normalise payment_details: drop empty dict so NULL in DB triggers the
+    # fail-loud safeguard, keep truthy subsets as-is.
+    payment_details_dict = hotel_data.payment_details.model_dump() if hotel_data.payment_details else None
+    if payment_details_dict and not any((payment_details_dict.get(k) or "") for k in ("bank_details", "phone_for_payment", "iban", "notes")):
+        payment_details_dict = None
+
     # Auto-generate system prompt if not provided
     system_prompt = hotel_data.system_prompt
     if not system_prompt:
@@ -72,6 +78,7 @@ async def create_hotel(
             "rooms": [r.model_dump() for r in hotel_data.rooms] if hotel_data.rooms else [],
             "rules": hotel_data.rules.model_dump() if hotel_data.rules else {},
             "amenities": hotel_data.amenities.model_dump() if hotel_data.amenities else {},
+            "payment_details": payment_details_dict,
             "communication_style": hotel_data.communication_style,
         }
         system_prompt = await ai_service.generate_system_prompt(hotel_dict)
@@ -100,6 +107,7 @@ async def create_hotel(
         rooms=[room.model_dump() for room in hotel_data.rooms] if hotel_data.rooms else [],
         rules=hotel_data.rules.model_dump() if hotel_data.rules else {},
         amenities=hotel_data.amenities.model_dump() if hotel_data.amenities else {},
+        payment_details=payment_details_dict,
         communication_style=hotel_data.communication_style,
         languages=hotel_data.languages,
         monthly_budget=hotel_data.monthly_budget,

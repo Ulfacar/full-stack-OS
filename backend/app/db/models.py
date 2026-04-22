@@ -59,6 +59,10 @@ class Hotel(Base):
     rooms = Column(JSON)  # [{name, capacity, price, description}]
     rules = Column(JSON)  # {checkin, checkout, cancellation, etc}
     amenities = Column(JSON)  # {wifi, parking, breakfast, etc}
+    # {bank_details, phone_for_payment, iban, notes} — optional, checked by
+    # response_processor.check_payment_placeholder before we let the bot
+    # quote requisites when the field is empty.
+    payment_details = Column(JSON, nullable=True)
 
     # Manager
     manager_telegram_id = Column(String(100))  # TG user ID for notifications

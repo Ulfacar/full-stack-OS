@@ -61,6 +61,19 @@ class HotelAmenities(BaseModel):
     other: Optional[str] = None
 
 
+class HotelPaymentDetails(BaseModel):
+    """Optional payment requisites the bot can quote to guests.
+
+    All fields are optional. When all fields are empty the field goes to
+    DB as NULL and the bot uses the fail-loud safeguard — see
+    response_processor.check_payment_placeholder.
+    """
+    bank_details: Optional[str] = None
+    phone_for_payment: Optional[str] = None
+    iban: Optional[str] = None
+    notes: Optional[str] = None
+
+
 class HotelCreate(BaseModel):
     name: str
     address: Optional[str] = None
@@ -72,6 +85,7 @@ class HotelCreate(BaseModel):
     rooms: List[RoomCategory] = []
     rules: Optional[HotelRules] = None
     amenities: Optional[HotelAmenities] = None
+    payment_details: Optional[HotelPaymentDetails] = None
 
     telegram_bot_token: Optional[str] = None
     whatsapp_phone: Optional[str] = None
@@ -96,6 +110,7 @@ class HotelUpdate(BaseModel):
     rooms: Optional[List[RoomCategory]] = None
     rules: Optional[HotelRules] = None
     amenities: Optional[HotelAmenities] = None
+    payment_details: Optional[HotelPaymentDetails] = None
 
     telegram_bot_token: Optional[str] = None
     whatsapp_phone: Optional[str] = None

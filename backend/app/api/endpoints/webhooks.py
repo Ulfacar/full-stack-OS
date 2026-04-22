@@ -13,7 +13,7 @@ from ...db.models import Hotel, Client, Conversation, Message
 from ...services.telegram_service import TelegramService
 from ...services.ai_service import ai_service
 from ...services.budget_service import budget_service
-from ...services.response_processor import process_response
+from ...services.response_processor import process_response, check_payment_placeholder
 from ...services.notification_service import NotificationService
 from ...services.followup_service import schedule_followup, cancel_followup
 from ...core.crypto import decrypt_token
@@ -227,6 +227,22 @@ async def telegram_webhook(
 
         # Post-process: clean tags, pushy questions, validate prices, detect manager transfer
         ai_response, needs_manager = process_response(raw_response, hotel=hotel)
+
+        # Fail-loud safeguard: bot tried to quote [РЕКВИЗИТЫ] but hotel has
+        # no payment_details set — skip sending to the guest and alert the
+        # owner so they can fill the field.
+        payment_block = check_payment_placeholder(ai_response, hotel)
+        if payment_block and hotel.manager_telegram_id and hotel.telegram_bot_token:
+            notifier = NotificationService(decrypt_token(hotel.telegram_bot_token))
+            client_name = client.telegram_username or client.name or telegram_id
+            await notifier.notify_payment_details_missing(
+                manager_telegram_id=hotel.manager_telegram_id,
+                hotel_name=hotel.name,
+                client_name=client_name,
+                channel="telegram",
+                conversation_id=conversation.id,
+            )
+            return {"ok": True, "skipped": "payment_details_empty"}
 
         # Handle manager transfer
         if needs_manager and hotel.manager_telegram_id and hotel.telegram_bot_token:

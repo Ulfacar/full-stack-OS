@@ -192,6 +192,25 @@ class AIService:
         if hotel_data.get('nearby_places'):
             parts.append(f"\n\n## РЯДОМ С ОТЕЛЕМ\n{hotel_data['nearby_places']}")
 
+        # Payment requisites (optional). If unset, the bot should say it
+        # will check with the manager instead of making up numbers — the
+        # fail-loud safeguard in response_processor will catch attempts to
+        # quote a [РЕКВИЗИТЫ] placeholder when this field is empty.
+        payment_details = hotel_data.get('payment_details') or {}
+        if isinstance(payment_details, dict):
+            req_lines = []
+            if payment_details.get('bank_details'):
+                req_lines.append(f"- Карта/банк: {payment_details['bank_details']}")
+            if payment_details.get('phone_for_payment'):
+                req_lines.append(f"- Телефон для перевода: {payment_details['phone_for_payment']}")
+            if payment_details.get('iban'):
+                req_lines.append(f"- IBAN: {payment_details['iban']}")
+            if payment_details.get('notes'):
+                req_lines.append(f"- Примечание: {payment_details['notes']}")
+            if req_lines:
+                parts.append("\n\n## РЕКВИЗИТЫ ОПЛАТЫ")
+                parts.append("\n" + "\n".join(req_lines))
+
         # Not available
         if hotel_data.get('not_available'):
             parts.append(f"\n\nЧего НЕТ в отеле (НЕ выдумывай): {hotel_data['not_available']}")

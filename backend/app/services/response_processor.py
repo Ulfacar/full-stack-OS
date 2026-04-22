@@ -128,6 +128,43 @@ def _strip_trailing_questions(text: str) -> str:
     return "\n".join(lines)
 
 
+# Placeholders the bot might leave in its reply when the prompt asked it to
+# quote payment requisites but no real value was inlined — indicates we
+# should never send this text to the guest.
+_PAYMENT_PLACEHOLDERS = re.compile(
+    r"\[\s*(?:РЕКВИЗИТЫ|реквизиты|Реквизиты|payment_details|PAYMENT_DETAILS)\s*\]",
+)
+
+
+def _has_filled_payment_details(payment_details: Any) -> bool:
+    """True iff payment_details contains at least one non-empty field."""
+    if not isinstance(payment_details, dict) or not payment_details:
+        return False
+    for value in payment_details.values():
+        if value is None:
+            continue
+        if isinstance(value, str) and not value.strip():
+            continue
+        return True
+    return False
+
+
+def check_payment_placeholder(text: str, hotel: Optional[Any]) -> Optional[str]:
+    """Detect a [РЕКВИЗИТЫ] placeholder the bot failed to fill.
+
+    Returns a short reason string when the bot's reply must NOT be sent:
+    caller is expected to alert the hotel owner and drop the message.
+    Returns None when the text is safe to send.
+    """
+    if not text or hotel is None:
+        return None
+    if _has_filled_payment_details(getattr(hotel, "payment_details", None)):
+        return None
+    if _PAYMENT_PLACEHOLDERS.search(text):
+        return "payment_details_empty"
+    return None
+
+
 def process_response(text: str, hotel: Optional[Any] = None) -> Tuple[str, bool]:
     """
     Full post-processing pipeline.

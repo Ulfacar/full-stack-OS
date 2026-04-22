@@ -74,6 +74,31 @@ class NotificationService:
 
         return await self.send_message(manager_telegram_id, text)
 
+    async def notify_payment_details_missing(
+        self,
+        manager_telegram_id: str,
+        hotel_name: str,
+        client_name: str,
+        channel: str,
+        conversation_id: int,
+    ) -> bool:
+        """Fail-loud alert: bot tried to quote payment requisites but the
+        hotel has no payment_details set up in the wizard/settings. The
+        guest's message was NOT sent — owner must fill the field ASAP.
+        """
+        text = (
+            f"⚠️ <b>БОТ НЕ МОЖЕТ ОТВЕТИТЬ — нет реквизитов</b>\n\n"
+            f"🏨 {hotel_name}\n"
+            f"👤 Гость: {client_name}\n"
+            f"📱 Канал: {channel}\n\n"
+            f"Гость спросил про оплату, но у вас не заполнены реквизиты "
+            f"(банковские данные / телефон / IBAN). Сообщение клиенту <b>не отправлено</b>.\n\n"
+            f"Зайдите в настройки отеля и заполните раздел «Реквизиты оплаты» "
+            f"— бот сразу сможет отвечать.\n\n"
+            f"📍 Диалог #{conversation_id}"
+        )
+        return await self.send_message(manager_telegram_id, text)
+
     async def notify_new_hotel(
         self,
         admin_telegram_id: str,

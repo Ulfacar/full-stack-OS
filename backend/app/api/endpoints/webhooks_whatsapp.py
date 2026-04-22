@@ -12,7 +12,7 @@ from ...db.database import get_db
 from ...db.models import Hotel, Client, Conversation, Message
 from ...services.ai_service import ai_service
 from ...services.budget_service import budget_service
-from ...services.response_processor import process_response
+from ...services.response_processor import process_response, check_payment_placeholder
 from ...services.meta_whatsapp_service import send_meta_whatsapp, parse_meta_webhook
 from ...core.crypto import decrypt_token
 
@@ -124,6 +124,21 @@ async def _handle_whatsapp_message(
     )
 
     ai_response, needs_manager = process_response(raw_response, hotel=hotel)
+
+    # Fail-loud safeguard: bot tried to quote [РЕКВИЗИТЫ] but hotel has no
+    # payment_details filled — alert owner, drop the outgoing message.
+    payment_block = check_payment_placeholder(ai_response, hotel)
+    if payment_block and hotel.manager_telegram_id and hotel.telegram_bot_token:
+        from ...services.notification_service import NotificationService
+        notifier = NotificationService(decrypt_token(hotel.telegram_bot_token))
+        await notifier.notify_payment_details_missing(
+            manager_telegram_id=hotel.manager_telegram_id,
+            hotel_name=hotel.name,
+            client_name=name or sender,
+            channel="whatsapp",
+            conversation_id=conversation.id,
+        )
+        return
 
     # Record usage
     if usage:
