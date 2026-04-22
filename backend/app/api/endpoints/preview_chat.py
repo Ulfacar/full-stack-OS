@@ -90,7 +90,7 @@ async def simulate_chat(
     )
 
     # Post-processing (same as real webhook)
-    reply, needs_manager = process_response(reply)
+    reply, needs_manager = process_response(reply, hotel=hotel)
 
     tokens = (usage.get("prompt_tokens", 0) + usage.get("completion_tokens", 0)) if usage else 0
     cost = usage.get("cost_usd", 0.0) if usage else 0.0

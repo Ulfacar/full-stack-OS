@@ -123,7 +123,7 @@ async def _handle_whatsapp_message(
         messages=ai_messages, model=hotel.ai_model or None, temperature=0.3,
     )
 
-    ai_response, needs_manager = process_response(raw_response)
+    ai_response, needs_manager = process_response(raw_response, hotel=hotel)
 
     # Record usage
     if usage:

@@ -3,7 +3,9 @@ Response Processor — post-processing pipeline for AI responses.
 Based on lessons from Ton Azure: AI violates prompt rules 10-20% of the time.
 """
 import re
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
+
+from .price_validator import validate_prices_in_response
 
 
 # Навязчивые вопросы которые бот добавляет без просьбы
@@ -126,7 +128,7 @@ def _strip_trailing_questions(text: str) -> str:
     return "\n".join(lines)
 
 
-def process_response(text: str) -> Tuple[str, bool]:
+def process_response(text: str, hotel: Optional[Any] = None) -> Tuple[str, bool]:
     """
     Full post-processing pipeline.
     Returns (processed_text, needs_manager).
@@ -135,6 +137,8 @@ def process_response(text: str) -> Tuple[str, bool]:
     1. is_garbled check (caller should retry if True)
     2. extract_manager_tag (before cleaning)
     3. clean_response (tags, internal phrases, pushy questions)
+    4. validate_prices_in_response (when hotel is provided) — catches cross-type
+       price swaps using the hotel's own rooms list.
     """
     if is_garbled(text):
         return text, False  # Caller should retry
@@ -144,5 +148,9 @@ def process_response(text: str) -> Tuple[str, bool]:
 
     # Clean response
     text = clean_response(text)
+
+    # Validate prices against hotel's rooms (no-op if hotel is None or lacks rooms)
+    if hotel is not None:
+        text = validate_prices_in_response(text, hotel)
 
     return text, needs_manager

@@ -225,8 +225,8 @@ async def telegram_webhook(
             model=hotel.ai_model or None
         )
 
-        # Post-process: clean tags, pushy questions, detect manager transfer
-        ai_response, needs_manager = process_response(raw_response)
+        # Post-process: clean tags, pushy questions, validate prices, detect manager transfer
+        ai_response, needs_manager = process_response(raw_response, hotel=hotel)
 
         # Handle manager transfer
         if needs_manager and hotel.manager_telegram_id and hotel.telegram_bot_token:
