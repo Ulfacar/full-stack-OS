@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.models import Conversation, Message, Hotel, Client
 from ..db.database import AsyncSessionLocal
+from .ai_service import AIService
+from .dialog_classifier import classify_dialog
 from .telegram_service import TelegramService
 from ..core.crypto import decrypt_token
 
@@ -116,3 +118,31 @@ async def _followup_worker(
             await db.commit()
 
             logger.info(f"Followup #{i+1} sent for conversation {conversation_id}")
+
+            # After the second (and final) followup the dialog is effectively
+            # abandoned — classify its topic so the admin list/ROI report can
+            # use it. We only do this once per conversation.
+            if i == len(delays) - 1 and conv.category is None:
+                history_rows = await db.execute(
+                    select(Message)
+                    .where(Message.conversation_id == conversation_id)
+                    .order_by(Message.created_at)
+                )
+                history = [
+                    {"role": m.role, "content": m.content}
+                    for m in history_rows.scalars().all()
+                ]
+                try:
+                    category = await classify_dialog(history, AIService())
+                except Exception as exc:
+                    logger.warning(
+                        "classify_dialog failed for conversation %s: %s",
+                        conversation_id, exc,
+                    )
+                    category = None
+                if category:
+                    conv.category = category
+                    await db.commit()
+                    logger.info(
+                        "Dialog %s classified as %r", conversation_id, category
+                    )
