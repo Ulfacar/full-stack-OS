@@ -198,6 +198,53 @@ export interface BillingRecord {
   created_at: string
 }
 
+// Conversations admin (#27)
+export type ConversationStatus = 'active' | 'needs_operator' | 'operator_active' | 'completed'
+export type ConversationCategory = 'booking' | 'hotel' | 'service' | 'general'
+export type MessageSender = 'client' | 'bot' | 'operator'
+
+export interface ClientPreview {
+  id: number
+  name: string | null
+  telegram_username: string | null
+  whatsapp_phone: string | null
+  language: string | null
+}
+
+export interface ConversationListItem {
+  id: number
+  status: ConversationStatus
+  channel: 'telegram' | 'whatsapp' | null
+  category: ConversationCategory | null
+  last_message_at: string | null
+  last_message_preview: string | null
+  unread_count: number
+  assigned_user_id: number | null
+  created_at: string
+  updated_at: string | null
+  client: ClientPreview
+}
+
+export interface ConversationDetail extends ConversationListItem {
+  operator_telegram_id: string | null
+  total_messages: number
+}
+
+export interface Message {
+  id: number
+  sender: MessageSender | null
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  created_at: string
+}
+
+export interface ConversationStats {
+  total: number
+  unread_total: number
+  by_category: Partial<Record<ConversationCategory | 'uncategorized', number>>
+  by_status: Partial<Record<ConversationStatus, number>>
+}
+
 // Hotel with extended stats for admin dashboard
 export interface HotelWithStats extends Hotel {
   budget_used: number
