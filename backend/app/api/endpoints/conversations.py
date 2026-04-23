@@ -220,9 +220,12 @@ async def get_conversation(
         )
     ).scalar() or 0
 
-    payload = ConversationDetail.model_validate(conv, from_attributes=True)
-    payload.total_messages = total_messages
-    return payload
+    base = ConversationListItem.model_validate(conv, from_attributes=True).model_dump()
+    return ConversationDetail(
+        **base,
+        operator_telegram_id=conv.operator_telegram_id,
+        total_messages=int(total_messages),
+    )
 
 
 @router.get("/{conversation_id}/messages", response_model=List[MessageOut])

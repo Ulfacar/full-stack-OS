@@ -182,6 +182,22 @@ async def test_admin_sees_any_hotel_list(db, seeded):
     assert items[0].id == seeded["conv_b"].id
 
 
+async def test_detail_happy_path_returns_total_messages(db, seeded):
+    """Owner reads own conversation — ConversationDetail builds fully.
+
+    Regression test for a bug where ``model_validate(conv, from_attributes=True)``
+    failed because ``total_messages`` is a derived field not present on the ORM
+    model. Caught in E2E but not here until we added this test.
+    """
+    detail = await get_conversation(
+        conversation_id=seeded["conv_a"].id,
+        db=db, user=seeded["owner_a"],
+    )
+    assert detail.id == seeded["conv_a"].id
+    assert detail.total_messages == 1  # seed-фикстура вставила 1 сообщение
+    assert detail.client.name == "Alice"
+
+
 async def test_stats_counts_only_scoped_hotel(db, seeded):
     """Owner A asks for hotel A stats — must not include B's conversation."""
     stats = await conversation_stats(
