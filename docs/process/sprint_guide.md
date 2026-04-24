@@ -77,6 +77,7 @@
 - [ ] **Why** написан (почему делаем — 1-2 предложения, со ссылкой на USM story / Lean Canvas)
 - [ ] **Acceptance Criteria** (список чекбоксов, verifiable — не «работает хорошо», а «вернул 200 OK при X»)
 - [ ] Блокеры из `blocker-графа` разрешены (см. USM blocker-graph)
+- [ ] **Для L-story:** Party-mode проведён до старта кода (Winston + John + Sally + Murat или релевантный состав), архитектурные решения зафиксированы в комментариях карточки или в отдельном md. *Добавлено после Sprint 1 retro 2026-04-25 — в #27 этот ритуал убрал переделки до 0.*
 
 Если карточка не проходит DoR — **не берём в спринт**, отправляем в Backlog доработать.
 
@@ -87,10 +88,12 @@
 Story считается Done когда:
 
 - [ ] Код закоммичен в main (модульные коммиты, формат `feat(area): verb` / `fix(area): verb`)
+- [ ] **Push в `origin/main` сделан** — не накапливаем коммиты от story к story. *Добавлено после Sprint 1 retro 2026-04-25 — 8 коммитов держал 2.5 дня = psychological tech debt + риск конфликтов с фронт-партнёром.*
 - [ ] Все AC из карточки отмечены ✅
 - [ ] Если миграция — протестирована на локальной БД (upgrade + downgrade)
 - [ ] Если UI — открыт в браузере, golden path работает
 - [ ] Если API — есть curl-пример в описании карточки Trello или в коммите
+- [ ] **Если endpoint с derived fields** (count, avg, merged related-data, model_validate с from_attributes) — минимум 1 happy-path тест валидирующий финальную response schema, не только 404/403/auth. *Добавлено после Sprint 1 retro 2026-04-25 — Pydantic v2 derived field bug ушёл в E2E под видом CORS ошибки (FastAPI на ValidationError не отдаёт CORS headers). См. memory `feedback_happy_path_testing.md`.*
 - [ ] Railway deploy успешен (для Ex-Machina production) или явно отложен с Why
 - [ ] Если new tech debt обнаружен — создана новая карточка в Backlog, не остаётся в голове
 
@@ -205,6 +208,8 @@ Story считается Done когда:
 - ❌ **Velocity как KPI.** Считаем количество done-story, но не стремимся «гнать больше». Цель: стабильный выход 3-5 stories/нед.
 - ❌ **Планирование 3 спринтов вперёд.** Только текущий + тема следующего. Всё остальное — в USM / Lean Canvas / Roadmap.
 - ❌ **"Потом протестирую".** Если не протестировано в Sprint Review — не Done.
+- ❌ **Накапливать unpushed коммиты.** Push после **каждой закрытой story**, не «в конце спринта одной волной». *Sprint 1 retro 2026-04-25.*
+- ❌ **Тестировать endpoint только rejection-path** (404/403/auth). Для каждого endpoint с derived fields — минимум 1 happy-path тест. *Sprint 1 retro 2026-04-25.*
 
 ---
 
