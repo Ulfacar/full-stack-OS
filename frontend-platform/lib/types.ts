@@ -120,6 +120,7 @@ export interface Hotel {
   is_active: boolean
   monthly_budget: number
   status: 'demo' | 'active' | 'suspended'
+  activated_at?: string | null
   created_at: string
   updated_at: string
 }

@@ -125,7 +125,17 @@ export default function ActiveHotelsPage() {
                           </div>
                         </td>
                         <td className="py-3.5">
-                          <HotelStatusBadge status={hotel.status} />
+                          <div className="flex flex-col items-start gap-1">
+                            <HotelStatusBadge status={hotel.status} />
+                            {hotel.activated_at && (
+                              <span
+                                className="text-[10px] px-1.5 py-0.5 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                                title={`Активирован ${new Date(hotel.activated_at).toLocaleString('ru-RU')}`}
+                              >
+                                ✓ Активирован
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-3.5">
                           <div className="w-24">

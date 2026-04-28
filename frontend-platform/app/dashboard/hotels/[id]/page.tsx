@@ -194,8 +194,16 @@ export default function AdminHotelPage() {
           <h1 className="text-2xl font-semibold tracking-tight text-[#FAFAFA]">{hotel.name}</h1>
           <p className="text-[#737373] text-sm">/{hotel.slug}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
           <StatusBadge status={budget.status} />
+          {hotel.activated_at && (
+            <span
+              className="text-xs px-2 py-1 rounded border border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+              title={`Первое сообщение клиента: ${new Date(hotel.activated_at).toLocaleString('ru-RU')}`}
+            >
+              ✓ Активирован {new Date(hotel.activated_at).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}
+            </span>
+          )}
           <Button variant="outline" size="sm" onClick={() => router.push(`/hotels/${hotel.id}/demo`)}>
             Демо
           </Button>

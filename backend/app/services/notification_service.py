@@ -131,6 +131,23 @@ class NotificationService:
         )
         return await self.send_message(manager_telegram_id, text)
 
+    async def notify_first_message(
+        self,
+        manager_telegram_id: str,
+        hotel_name: str,
+        client_label: str,
+        channel: str,
+    ) -> bool:
+        """Celebrate the very first real client message — fires once per hotel (#23)."""
+        text = (
+            f"🎉 <b>Бот активирован!</b>\n\n"
+            f"🏨 {hotel_name}\n"
+            f"Первое сообщение от клиента {client_label} ({channel}) "
+            f"только что прошло через AI.\n\n"
+            f"Ваш бот в строю. Дальше — мониторьте диалоги и подтверждайте брони."
+        )
+        return await self.send_message(manager_telegram_id, text)
+
     async def notify_new_hotel(
         self,
         admin_telegram_id: str,

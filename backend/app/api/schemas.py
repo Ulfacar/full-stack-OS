@@ -152,6 +152,7 @@ class Hotel(BaseModel):
     monthly_budget: float = 5.0
     status: str = "demo"
     pms_kind: str = "none"
+    activated_at: Optional[datetime] = None
 
     created_at: datetime
     updated_at: Optional[datetime]

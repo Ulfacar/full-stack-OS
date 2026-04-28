@@ -96,6 +96,24 @@ async def _handle_whatsapp_message(
     db.add(Message(conversation_id=conversation.id, role="user", content=text))
     await db.flush()
 
+    # First-message activation (#23) — fires exactly once per hotel.
+    if hotel.activated_at is None:
+        from datetime import datetime as _dt
+        from ...services.notification_service import NotificationService
+        hotel.activated_at = _dt.utcnow()
+        await db.flush()
+        if hotel.manager_telegram_id and hotel.telegram_bot_token:
+            try:
+                notifier = NotificationService(decrypt_token(hotel.telegram_bot_token))
+                await notifier.notify_first_message(
+                    manager_telegram_id=hotel.manager_telegram_id,
+                    hotel_name=hotel.name,
+                    client_label=name or sender,
+                    channel="whatsapp",
+                )
+            except Exception as e:
+                logger.error(f"first-message notification failed: {e}")
+
     # History
     history_result = await db.execute(
         select(Message).where(Message.conversation_id == conversation.id)

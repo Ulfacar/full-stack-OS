@@ -173,6 +173,23 @@ async def telegram_webhook(
         db.add(user_msg)
         await db.flush()
 
+        # First-message activation (#23) — fires exactly once per hotel.
+        if hotel.activated_at is None:
+            hotel.activated_at = datetime.utcnow()
+            await db.flush()
+            if hotel.manager_telegram_id and hotel.telegram_bot_token:
+                try:
+                    notifier = NotificationService(decrypt_token(hotel.telegram_bot_token))
+                    client_label = client.telegram_username or client.name or telegram_id
+                    await notifier.notify_first_message(
+                        manager_telegram_id=hotel.manager_telegram_id,
+                        hotel_name=hotel.name,
+                        client_label=client_label,
+                        channel="telegram",
+                    )
+                except Exception as e:
+                    print(f"first-message notification failed: {e}")
+
         # Get conversation history (last 10 messages)
         history_result = await db.execute(
             select(Message)

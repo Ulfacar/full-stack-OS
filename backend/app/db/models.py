@@ -68,6 +68,10 @@ class Hotel(Base):
     # 'none' = manager hand-confirms in WA + records to Google Sheets (60-75% segment).
     pms_kind = Column(String(20), nullable=False, server_default="none", default="none")
 
+    # Activation timestamp (#23) — set on first client message via webhook hot path.
+    # Used for the "Активирован ✓" admin badge and the celebratory manager TG ping.
+    activated_at = Column(DateTime(timezone=True), nullable=True)
+
     # Manager
     manager_telegram_id = Column(String(100))  # TG user ID for notifications
     manager_name = Column(String(255))
