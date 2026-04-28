@@ -38,22 +38,97 @@ HOTEL_NAME = "Demo Hotel — Issyk-Kul"
 CLIENT_TG_ID = "987654321"
 
 
+# (day, category, status, unread, list[(sender, content)])
+# sender ∈ {"client", "bot", "operator"}. role is derived in seeder
+# (client/operator → "user", bot → "assistant").
 CONVERSATION_FIXTURES = [
-    # (day, category, last_message_preview, status, unread)
-    (3, "booking", "Здравствуйте, есть номера на 5-7 апреля?", "completed", 0),
-    (5, "booking", "Полулюкс на 8-10 — 3 гостя", "completed", 0),
-    (8, "hotel", "У вас есть бассейн?", "completed", 0),
-    (10, "booking", "Стандарт на 12-14 апреля", "completed", 0),
-    (11, "service", "Когда открывается ресторан?", "completed", 0),
-    (13, "booking", "Семья из 4х человек, 15-18 апреля", "completed", 0),
-    (15, "general", "Спасибо за быстрый ответ!", "completed", 0),
-    (17, "booking", "Полулюкс на 19-21 апреля", "completed", 0),
-    (20, "service", "Можно ли с собакой?", "completed", 0),
-    (22, "booking", "Двусторонний номер на 23-26", "completed", 0),
-    (24, "hotel", "До пляжа сколько идти?", "completed", 0),
-    (26, "booking", "Большая семья, 27-30 апреля", "completed", 0),
-    (27, "booking", "Бронь на 1-3 мая", "active", 1),
-    (28, "general", "Здравствуйте", "active", 2),
+    (3, "booking", "completed", 0, [
+        ("client", "Здравствуйте, есть номера на 5-7 апреля?"),
+        ("bot", "Здравствуйте! На 5-7 апреля свободны:\n• Стандарт — 4 500 ₽/ночь (двусп.)\n• Полулюкс — 7 200 ₽/ночь (с балконом)\n\nНа сколько гостей оформляем?"),
+        ("client", "Двое, нужен Стандарт"),
+        ("bot", "Отлично! На 5-7 апреля Стандарт двусп. — 9 000 ₽ за 2 ночи. На кого оформить бронь?"),
+        ("client", "Иван Петров, +996 700 11 22 33"),
+        ("bot", "Записал. Передаю менеджеру для подтверждения!"),
+        ("operator", "Подтверждаю бронь, Иван! Жду вас 5 апреля с 14:00."),
+    ]),
+    (5, "booking", "completed", 0, [
+        ("client", "Полулюкс на 8-10, мы трое — есть?"),
+        ("bot", "На 8-10 апреля Полулюкс свободен. 7 200 ₽/ночь (3 гостя проходят). Имя и телефон для брони?"),
+        ("client", "Айгуль, +996 555 88 99 00"),
+        ("bot", "Готово! Бронь Полулюкса 8-10 апреля на имя Айгуль. Передаю менеджеру для подтверждения!"),
+        ("operator", "Подтверждаю. До встречи в Чолпон-Ате 🌊"),
+    ]),
+    (8, "hotel", "completed", 0, [
+        ("client", "У вас есть бассейн?"),
+        ("bot", "Да, открытый бассейн с подогревом, работает 9:00-22:00. Включён в стоимость номера. Полотенца у бассейна выдаём бесплатно."),
+        ("client", "Супер, спасибо"),
+    ]),
+    (10, "booking", "completed", 0, [
+        ("client", "Стандарт на 12-14 апреля свободен?"),
+        ("bot", "Да, Стандарт 12-14 апреля — 9 000 ₽ за 2 ночи. На кого оформить?"),
+        ("client", "Семён Козлов, +996 700 33 44 55"),
+        ("bot", "Принято! Передаю менеджеру для подтверждения!"),
+        ("operator", "Подтверждаю, Семён."),
+    ]),
+    (11, "service", "completed", 0, [
+        ("client", "Когда открывается ресторан?"),
+        ("bot", "Ресторан работает 7:00-23:00. Завтрак с 7:00 до 10:30 включён в номер."),
+    ]),
+    (13, "booking", "completed", 0, [
+        ("client", "Семья 4 человека, 15-18 апреля. Что подходит?"),
+        ("bot", "Для 4х на 15-18 предлагаю 2 номера: Стандарт + Стандарт = 27 000 ₽ за 3 ночи. Или 1 семейный (если освободится — уточняю)."),
+        ("client", "Давайте 2 Стандарта, оформляйте"),
+        ("bot", "Имя и телефон бронирующего?"),
+        ("client", "Татьяна Иванова, +996 700 12 34 56"),
+        ("bot", "Записал! Передаю менеджеру для подтверждения!"),
+        ("operator", "Подтверждаю 2 номера, Татьяна. Заезд с 14:00."),
+    ]),
+    (15, "general", "completed", 0, [
+        ("client", "Спасибо за быстрый ответ!"),
+        ("bot", "Всегда рады. Если возникнут вопросы перед заездом — напишите 🙂"),
+    ]),
+    (17, "booking", "completed", 0, [
+        ("client", "Полулюкс на 19-21 апреля?"),
+        ("bot", "Свободен. 7 200 ₽/ночь × 2 = 14 400 ₽. Имя и телефон?"),
+        ("client", "Бектур, +996 555 22 33 44"),
+        ("bot", "Готово! Передаю менеджеру для подтверждения!"),
+        ("operator", "Подтверждаю, Бектур."),
+    ]),
+    (20, "service", "completed", 0, [
+        ("client", "Можно ли с собакой?"),
+        ("bot", "С маленькими животными до 8 кг — можно, доплата 500 ₽/сутки. С большими, к сожалению, нет."),
+        ("client", "У меня той-терьер, ок"),
+    ]),
+    (22, "booking", "completed", 0, [
+        ("client", "Двусп. номер на 23-26 апреля свободен?"),
+        ("bot", "Да, Twin (двусп. кровать) 23-26 апреля — 4 500 ₽/ночь × 3 = 13 500 ₽. Имя и телефон?"),
+        ("client", "Алина, +996 700 77 88 99"),
+        ("bot", "Записал! Передаю менеджеру для подтверждения!"),
+        ("operator", "Подтверждаю Twin, Алина."),
+    ]),
+    (24, "hotel", "completed", 0, [
+        ("client", "До пляжа сколько идти?"),
+        ("bot", "От нас до пляжа 7 минут пешком — 400 метров. Полотенца, лежаки даём в аренду на ресепшен (200 ₽/день)."),
+    ]),
+    (26, "booking", "completed", 0, [
+        ("client", "Большая семья, 6 человек, 27-30 апреля"),
+        ("bot", "На 6 гостей предлагаю 3 номера: 2 Стандарта + 1 Полулюкс. Итого 7 200 + 4 500 + 4 500 = 16 200 ₽/ночь × 3 = 48 600 ₽."),
+        ("client", "Дороговато. Только Стандарты можно?"),
+        ("bot", "3 Стандарта — 13 500 ₽/ночь × 3 = 40 500 ₽. На кого оформить?"),
+        ("client", "Марат Османов, +996 555 44 55 66"),
+        ("bot", "Готово! Передаю менеджеру для подтверждения!"),
+        ("operator", "Подтверждаю, Марат. Жду 27 числа."),
+    ]),
+    (27, "booking", "active", 1, [
+        ("client", "Бронь на 1-3 мая, Полулюкс?"),
+        ("bot", "На 1-3 мая Полулюкс свободен. 7 200 ₽/ночь × 2 = 14 400 ₽. Имя и телефон?"),
+        ("client", "Чингиз, +996 700 11 88 22"),
+    ]),
+    (28, "general", "active", 2, [
+        ("client", "Здравствуйте"),
+        ("bot", "Здравствуйте! Чем могу помочь? 😊"),
+        ("client", "Я насчёт номера хотел спросить"),
+    ]),
 ]
 
 
@@ -138,28 +213,39 @@ async def main() -> None:
         db.add(client)
         await db.flush()
 
-        # Conversations across the month
-        for day, category, preview, status, unread in CONVERSATION_FIXTURES:
-            ts = datetime(2026, 4, day, 14, 30, tzinfo=timezone.utc)
+        # Conversations across the month with realistic dialog content
+        from datetime import timedelta as _td
+        for day, category, status, unread, dialog in CONVERSATION_FIXTURES:
+            base_ts = datetime(2026, 4, day, 14, 30, tzinfo=timezone.utc)
+            last_msg_ts = base_ts + _td(minutes=len(dialog) * 2)
+            last_preview = dialog[-1][1][:500]
             conv = Conversation(
                 hotel_id=hotel.id,
                 client_id=client.id,
                 status=status,
                 channel="telegram",
                 category=category,
-                last_message_at=ts,
-                last_message_preview=preview,
+                last_message_at=last_msg_ts,
+                last_message_preview=last_preview,
                 unread_count=unread,
             )
             db.add(conv)
             await db.flush()
-            # One message per conversation just so the inbox UI is not empty
-            db.add(Message(
-                conversation_id=conv.id,
-                role="user",
-                sender="client",
-                content=preview,
-            ))
+
+            # Each turn 2 minutes apart so timestamps look organic in the UI
+            for idx, (sender, content) in enumerate(dialog):
+                role = "assistant" if sender == "bot" else "user"
+                msg_ts = base_ts + _td(minutes=idx * 2)
+                msg = Message(
+                    conversation_id=conv.id,
+                    role=role,
+                    sender=sender,
+                    content=content,
+                )
+                # SQLAlchemy maps Message.created_at to server_default — we
+                # override via direct attribute to keep the historical timestamp.
+                msg.created_at = msg_ts
+                db.add(msg)
 
         # Confirmed bookings — pinned to the first conversation for FK simplicity;
         # the report aggregates by hotel_id, conversation linkage is informational.
