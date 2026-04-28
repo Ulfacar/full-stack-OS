@@ -23,6 +23,7 @@ from sqlalchemy.orm import selectinload
 
 from ...db.database import get_db
 from ...db.models import Conversation, Message, Client, Hotel, User
+from ...services.operator_service import deliver_operator_message_to_client
 from ..dependencies import get_current_user
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
@@ -74,6 +75,10 @@ class MessageOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class OperatorReplyIn(BaseModel):
+    text: str
 
 
 class ConversationStats(BaseModel):
@@ -226,6 +231,54 @@ async def get_conversation(
         operator_telegram_id=conv.operator_telegram_id,
         total_messages=int(total_messages),
     )
+
+
+@router.post("/{conversation_id}/operator-reply", response_model=MessageOut)
+async def send_operator_reply(
+    conversation_id: int,
+    payload: OperatorReplyIn,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Send an operator-typed message to the client from the admin panel (#26 M2).
+
+    Differs from the TG inline-reply flow (operator_service.handle_operator_message):
+    here the operator is the authenticated dashboard user, not a Telegram chat
+    binding — so we set ``assigned_user_id = current_user.id`` rather than the
+    hotel owner's id, and we skip the in-memory state map entirely.
+    """
+    text = (payload.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Empty message")
+
+    conv = await _load_conversation_scoped(db, user, conversation_id)
+    hotel = await _assert_hotel_access(db, user, conv.hotel_id)
+
+    if conv.client is None:
+        raise HTTPException(status_code=409, detail="Conversation has no client")
+
+    msg = Message(
+        conversation_id=conv.id,
+        role="user",
+        sender="operator",
+        content=text,
+    )
+    db.add(msg)
+    conv.assigned_user_id = user.id
+    conv.status = "operator_active"
+    conv.last_message_preview = text[:500]
+    await db.commit()
+    await db.refresh(msg)
+
+    delivered = await deliver_operator_message_to_client(hotel, conv, conv.client, text)
+    if not delivered:
+        # Saved for audit, but client never got it — surface that to caller
+        raise HTTPException(
+            status_code=502,
+            detail="Message saved but delivery to client failed (channel misconfigured)",
+        )
+
+    return msg
 
 
 @router.get("/{conversation_id}/messages", response_model=List[MessageOut])

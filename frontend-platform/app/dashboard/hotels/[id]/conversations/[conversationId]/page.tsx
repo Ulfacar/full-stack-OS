@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation'
 import {
   getConversation,
   getConversationMessages,
+  sendOperatorReply,
 } from '@/lib/conversationsApi'
 import type {
   ConversationCategory,
@@ -87,6 +88,10 @@ export default function ConversationDetailPage() {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
+  const [replyText, setReplyText] = useState('')
+  const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
+
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const stickToBottomRef = useRef(true)
   const scrollWrapRef = useRef<HTMLDivElement | null>(null)
@@ -138,6 +143,41 @@ export default function ConversationDetailPage() {
     if (!el) return
     const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
     stickToBottomRef.current = distFromBottom < 80
+  }
+
+  const handleSend = async () => {
+    const text = replyText.trim()
+    if (!text || sending) return
+    setSending(true)
+    setSendError(null)
+    stickToBottomRef.current = true
+    try {
+      const saved = await sendOperatorReply(conversationId, text)
+      setMessages((prev) => [...prev, saved])
+      setReplyText('')
+      setConv((prev) =>
+        prev
+          ? { ...prev, status: 'operator_active', total_messages: prev.total_messages + 1 }
+          : prev,
+      )
+    } catch (err: any) {
+      const code = err?.response?.status
+      if (code === 400) setSendError('Пустое сообщение.')
+      else if (code === 404) setSendError('Диалог не найден или нет доступа.')
+      else if (code === 401) setSendError('Сессия истекла — войдите заново.')
+      else if (code === 502)
+        setSendError('Сообщение сохранено, но не доставлено клиенту — проверьте каналы отеля.')
+      else setSendError('Не удалось отправить. Попробуйте ещё раз.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault()
+      void handleSend()
+    }
   }
 
   const cat = (conv?.category ?? 'uncategorized') as ConversationCategory | 'uncategorized'
@@ -252,10 +292,36 @@ export default function ConversationDetailPage() {
           )}
         </div>
 
-        {/* Footer hint — two-way reply will land in Sprint 2 */}
-        <p className="text-xs text-zinc-600 mt-3 text-center">
-          Только просмотр. Ответ менеджера через бота — в следующем спринте.
-        </p>
+        {/* Operator reply input (#26 M2) */}
+        <div className="mt-3 rounded-lg border border-[#262626] bg-[#0F0F0F] p-3">
+          {sendError && (
+            <div className="mb-2 text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded px-2 py-1.5">
+              {sendError}
+            </div>
+          )}
+          <textarea
+            value={replyText}
+            onChange={(e) => setReplyText(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ответ клиенту… Ctrl+Enter — отправить"
+            disabled={sending}
+            rows={2}
+            className="w-full bg-[#161616] border border-[#262626] rounded-md px-3 py-2 text-sm text-[#FAFAFA] placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]/60 resize-y min-h-[44px] max-h-[200px] disabled:opacity-50"
+          />
+          <div className="mt-2 flex items-center justify-between">
+            <span className="text-[11px] text-zinc-500">
+              Сообщение уйдёт клиенту через канал диалога ({conv?.channel ?? '…'}). Бот замолчит — диалог переходит в режим менеджера.
+            </span>
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={sending || replyText.trim().length === 0}
+              className="text-sm bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-zinc-700 disabled:text-zinc-500 text-white px-4 py-1.5 rounded-md transition-colors shrink-0 ml-3"
+            >
+              {sending ? 'Отправка…' : 'Отправить'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

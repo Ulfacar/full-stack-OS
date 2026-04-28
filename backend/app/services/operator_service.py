@@ -111,15 +111,20 @@ async def handle_operator_message(
     conversation.last_message_preview = text[:500]
     await db.commit()
 
-    return await _deliver_to_client(hotel, conversation, client, text)
+    return await deliver_operator_message_to_client(hotel, conversation, client, text)
 
 
-async def _deliver_to_client(
+async def deliver_operator_message_to_client(
     hotel: Hotel,
     conversation: Conversation,
     client: Client,
     text: str,
 ) -> bool:
+    """Send operator-typed text to the client via the conversation's channel.
+
+    Public so admin-panel POST /operator-reply (#26 M2) can reuse it without
+    duplicating the TG/WA dispatch logic.
+    """
     if conversation.channel == "telegram":
         if not client.telegram_id or not hotel.telegram_bot_token:
             logger.error(

@@ -38,3 +38,14 @@ export async function getConversationMessages(
   const { data } = await api.get<Message[]>(`/api/conversations/${id}/messages`, { params })
   return data
 }
+
+export async function sendOperatorReply(
+  conversationId: number,
+  text: string,
+): Promise<Message> {
+  const { data } = await api.post<Message>(
+    `/api/conversations/${conversationId}/operator-reply`,
+    { text },
+  )
+  return data
+}

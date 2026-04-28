@@ -20,6 +20,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import StaticPool
 
+from app.api.endpoints.conversations import (
+    OperatorReplyIn,
+    send_operator_reply,
+)
 from app.db.database import Base
 from app.db.models import Client, Conversation, Hotel, Message, User
 from app.services import operator_service
@@ -31,6 +35,7 @@ from app.services.operator_service import (
     handle_operator_message,
     set_operator_reply_state,
 )
+from fastapi import HTTPException
 
 
 # === Fixtures ===
@@ -247,3 +252,90 @@ async def test_handle_client_missing_telegram_id_returns_false(db, seeded):
         select(Message).where(Message.conversation_id == seeded["conv_a"].id)
     )).scalars().all()
     assert len(msgs) == 1
+
+
+# === POST /conversations/{id}/operator-reply (M2 admin-panel input) ===
+
+@pytest.mark.asyncio
+async def test_operator_reply_happy_path_returns_message(db, seeded):
+    """Authenticated owner sends a reply → DB row + status flip + delivery + valid MessageOut."""
+    fake_send = AsyncMock(return_value={"ok": True})
+    with patch(
+        "app.services.operator_service.TelegramService"
+    ) as MockTG, patch(
+        "app.services.operator_service.decrypt_token", return_value="plain"
+    ):
+        MockTG.return_value.send_message = fake_send
+        result = await send_operator_reply(
+            conversation_id=seeded["conv_a"].id,
+            payload=OperatorReplyIn(text="ответ из админки"),
+            db=db,
+            user=seeded["owner_a"],
+        )
+
+    assert result.sender == "operator"
+    assert result.role == "user"
+    assert result.content == "ответ из админки"
+    assert result.id is not None
+    assert result.created_at is not None
+
+    fake_send.assert_awaited_once()
+
+    await db.refresh(seeded["conv_a"])
+    assert seeded["conv_a"].status == "operator_active"
+    assert seeded["conv_a"].assigned_user_id == seeded["owner_a"].id
+    assert seeded["conv_a"].last_message_preview == "ответ из админки"
+
+
+@pytest.mark.asyncio
+async def test_operator_reply_empty_text_rejected(db, seeded):
+    with pytest.raises(HTTPException) as exc:
+        await send_operator_reply(
+            conversation_id=seeded["conv_a"].id,
+            payload=OperatorReplyIn(text="   "),
+            db=db,
+            user=seeded["owner_a"],
+        )
+    assert exc.value.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_operator_reply_cross_hotel_blocked(db, seeded):
+    """Owner A must not be able to reply in Owner B's conversation."""
+    with pytest.raises(HTTPException) as exc:
+        await send_operator_reply(
+            conversation_id=seeded["conv_b"].id,
+            payload=OperatorReplyIn(text="leak"),
+            db=db,
+            user=seeded["owner_a"],
+        )
+    assert exc.value.status_code == 404
+    # No new message created on conv_b
+    msgs = (await db.execute(
+        select(Message).where(Message.conversation_id == seeded["conv_b"].id)
+    )).scalars().all()
+    assert msgs == []
+
+
+@pytest.mark.asyncio
+async def test_operator_reply_delivery_failure_returns_502_but_persists(db, seeded):
+    """Delivery layer failure → message saved (audit) but caller sees 502."""
+    seeded["client_a"].telegram_id = None
+    await db.commit()
+
+    with patch(
+        "app.services.operator_service.decrypt_token", return_value="plain"
+    ):
+        with pytest.raises(HTTPException) as exc:
+            await send_operator_reply(
+                conversation_id=seeded["conv_a"].id,
+                payload=OperatorReplyIn(text="will not deliver"),
+                db=db,
+                user=seeded["owner_a"],
+            )
+    assert exc.value.status_code == 502
+    msgs = (await db.execute(
+        select(Message).where(Message.conversation_id == seeded["conv_a"].id)
+    )).scalars().all()
+    assert len(msgs) == 1
+    assert msgs[0].content == "will not deliver"
