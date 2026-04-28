@@ -426,6 +426,54 @@ async def update_staging_prompt(
     return {"status": "ok", "staging_prompt": hotel.staging_prompt}
 
 
+@router.post("/{hotel_id}/register-telegram-webhook")
+async def register_telegram_webhook(
+    hotel_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Register the Telegram webhook for this hotel against the configured
+    WEBHOOK_BASE_URL. Decrypts the bot token and reuses the per-hotel
+    webhook_secret stored in DB so X-Telegram-Bot-Api-Secret-Token verification
+    works automatically. Returns Telegram's setWebhook response.
+    """
+    result = await db.execute(select(Hotel).where(Hotel.id == hotel_id))
+    hotel = result.scalar_one_or_none()
+    if hotel is None:
+        raise HTTPException(status_code=404, detail="Hotel not found")
+    if hotel.owner_id != current_user.id and current_user.role != "admin":
+        raise HTTPException(status_code=404, detail="Hotel not found")
+    if not hotel.telegram_bot_token:
+        raise HTTPException(status_code=400, detail="Telegram bot token not configured")
+    if not hotel.webhook_secret:
+        # Fallback: generate one if missing (legacy hotels created before
+        # the secret-token migration).
+        hotel.webhook_secret = secrets.token_hex(32)
+        await db.flush()
+    if not settings.WEBHOOK_BASE_URL:
+        raise HTTPException(
+            status_code=500,
+            detail="WEBHOOK_BASE_URL is not configured on the server",
+        )
+
+    raw_token = decrypt_token(hotel.telegram_bot_token)
+    webhook_url = f"{settings.WEBHOOK_BASE_URL.rstrip('/')}/webhooks/telegram/{hotel.slug}"
+    tg = TelegramService(raw_token)
+    response = await tg.set_webhook(webhook_url, secret_token=hotel.webhook_secret)
+    if not response.get("ok"):
+        raise HTTPException(
+            status_code=502,
+            detail=f"Telegram setWebhook failed: {response.get('description', response)}",
+        )
+
+    await db.commit()
+    return {
+        "ok": True,
+        "webhook_url": webhook_url,
+        "telegram_response": response,
+    }
+
+
 @router.post("/{hotel_id}/promote")
 async def promote_staging(
     hotel_id: int,

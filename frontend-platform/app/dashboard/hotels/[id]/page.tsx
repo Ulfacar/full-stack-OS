@@ -41,6 +41,9 @@ export default function AdminHotelPage() {
   const [shareGenerating, setShareGenerating] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [shareError, setShareError] = useState<string | null>(null)
+
+  const [webhookRegistering, setWebhookRegistering] = useState(false)
+  const [webhookMsg, setWebhookMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   const [whatsappPhone, setWhatsappPhone] = useState('')
   const [wappiApiKey, setWappiApiKey] = useState('')
   const [wappiProfileId, setWappiProfileId] = useState('')
@@ -173,6 +176,25 @@ export default function AdminHotelPage() {
       setPromptMsg({ kind: 'err', text: err.response?.data?.detail || 'Не удалось откатить (возможно, нет истории).' })
     } finally {
       setPromptSaving(false)
+    }
+  }
+
+  const handleRegisterWebhook = async () => {
+    setWebhookRegistering(true)
+    setWebhookMsg(null)
+    try {
+      const res = await api.post(`/hotels/${params.id}/register-telegram-webhook`)
+      setWebhookMsg({
+        kind: 'ok',
+        text: `Webhook зарегистрирован. URL: ${res.data.webhook_url}`,
+      })
+    } catch (err: any) {
+      setWebhookMsg({
+        kind: 'err',
+        text: err.response?.data?.detail || 'Не удалось зарегистрировать webhook.',
+      })
+    } finally {
+      setWebhookRegistering(false)
     }
   }
 
@@ -415,6 +437,39 @@ export default function AdminHotelPage() {
             <Button onClick={handleConfigureChannels} disabled={saving}>
               {saving ? 'Сохранение...' : 'Подключить каналы'}
             </Button>
+
+            {/* Telegram webhook registration (#9) */}
+            <div className="mt-4 pt-4 border-t border-[#1A1A1A]">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex-1 min-w-[200px]">
+                  <div className="text-sm font-medium text-[#FAFAFA]">
+                    Telegram webhook
+                  </div>
+                  <div className="text-xs text-[#737373] mt-0.5">
+                    Привязывает бота к нашему серверу. Делать после ввода токена и сохранения каналов.
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleRegisterWebhook}
+                  disabled={webhookRegistering || !hotel.has_telegram_bot}
+                >
+                  {webhookRegistering ? 'Регистрация…' : 'Зарегистрировать webhook'}
+                </Button>
+              </div>
+              {webhookMsg && (
+                <div
+                  className={`mt-3 px-3 py-2 rounded-md text-xs border ${
+                    webhookMsg.kind === 'ok'
+                      ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                      : 'bg-red-500/10 border-red-500/30 text-red-300'
+                  }`}
+                >
+                  {webhookMsg.text}
+                </div>
+              )}
+            </div>
           </div>
         </Card>
 
