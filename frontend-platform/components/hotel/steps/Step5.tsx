@@ -74,13 +74,22 @@ export function Step5({ formData, updateFormData }: Step5Props) {
         <div className="space-y-3 p-4 bg-[#141414] rounded-lg border border-[#262626]">
           <div className="text-sm text-[#A3A3A3]">
             <p>
-              Подключение WhatsApp Business API требует верификации и займёт
-              1-2 дня.
+              Для WhatsApp нужен <span className="text-[#FAFAFA]">отдельный прогретый номер</span>{' '}
+              (7-14 дней). Без прогрева риск бана.
             </p>
             <p className="mt-2">
               Оставьте номер телефона — мы свяжемся с вами для настройки.
             </p>
           </div>
+
+          <a
+            href="/guides/wa-onboarding"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-[#3B82F6] hover:underline inline-block"
+          >
+            📖 Гайд: подключение WhatsApp за 4 шага (отдельный SIM, прогрев, анти-бан)
+          </a>
         </div>
 
         <div className="space-y-2">
