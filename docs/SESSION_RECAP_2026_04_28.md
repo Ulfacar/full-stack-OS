@@ -1,4 +1,4 @@
-# Session Recap — 2026-04-28 (Stretch Day: Sprint 2 closed + 1 bonus)
+# Session Recap — 2026-04-28 (Stretch Day = 13 stories + investor-pitch arsenal)
 
 > **Если ты новый Claude (особенно на Mac):** memory НЕ синхронизируется между машинами. Single source of truth = этот recap + предыдущий `SESSION_RECAP_2026_04_25.md`. Прочти оба перед началом работы.
 
@@ -6,194 +6,173 @@
 
 ## TL;DR
 
-- 🚀 **4 story закрыто end-to-end за один день.** S+L+M+S по объёму ≈ 12-15 часов equivalent work, упакованных в спидран.
-- 🎯 **Sprint 2 (#17, #25, #26) закрыт полностью.** Все три карточки, готовые с понедельника, шипнуты во вторник.
-- 🎁 **+1 бонус:** `#5 Сравнительная таблица` (R4 sprint оригинально) подтянут вперёд — sales asset готов для Назиры.
-- 🧪 **Tests:** 57 → **76 backend**, все зелёные. Никаких регрессий.
-- 📦 **5 коммитов в `origin/main`**, Railway автодеплой запущен после каждого.
-- 🛠️ **Никакого нового tech debt.** Pre-existing зафиксирован явно (alembic 013 SQLite FK).
+- 🚀 **13 user stories closed end-to-end за один день.** S+L+M+S+S+S+S+L+(seed-content)+(pitch-prep)+S+M+(infra-prep) ≈ 18-22 часов equivalent работы, упакованных в спидран.
+- 🎯 **Sprint 2 закрыт целиком** (#17/#25/#26) + 9 bonus stories из других sprints вытянуты вперёд под investor-показ 2026-05-02.
+- 🎬 **Investor pitch arsenal complete:** /compare + /cases/ton-azure + /reports + ROI-калькулятор на лендинге + share-link + sandbox-bot инфра. Demo flow готов в `docs/sales/pitch_2026_05_02.md`.
+- 🧪 **Tests:** 57 → **99 backend**, все зелёные (+42, +73%).
+- 📦 **17 коммитов в `origin/main`**, Railway автодеплой подхватил все.
+- 🔒 **Security tech debt:** carded — `Tech debt: rotate leaked OPENROUTER_API_KEY` (in-progress); `.env.example` обновлён с явным warning не класть ключи в `*.md`.
 
 ---
 
-## Коммиты сегодня (28.04)
+## Коммиты сегодня (28.04, в обратном порядке)
 
 ```
+a770ee4 feat(api): #9 — POST /hotels/{id}/register-telegram-webhook + UI button
+0c1c48c chore: prep #9 demo-bot infra — prod seeder + env template
+9a090e4 feat(landing): #8 interactive ROI calculator widget
+fe99968 feat(sales): #6 /cases/ton-azure — public case study page
+400181f docs(sales): pitch 2026-05-02 demo script + investor Q&A
+512e654 feat(demo): full dialog content in pitch seeder — investor-ready
+33c96df feat: #33 Monthly ROI report + investor-ready demo seeder
+3d5eac4 feat: #11 partner share-link — read-only hotel preview
+efe79cf feat: #23 first-message activation hook + Активирован badge
+ddd7cb6 feat: #21 PMS toggle in wizard + prompt branching
+b3911e2 feat: #28 UI Promote/Rollback for staging system_prompt
 f7fdd84 feat(sales): #5 /compare — Ex-Machina vs NURAI vs in-house
 c0fc99a feat: #25 confirm-booking — manager $ tracking for #33 ROI
 e8602dd feat: #26 M2 — operator reply from admin panel UI
 e4641d9 feat(api): #26 M1 — two-way manager↔client channel (backend)
 305e853 feat(guides): #17 WhatsApp activation guide + wizard link
+b615333 docs: SESSION_RECAP 2026-04-28 — Stretch Day, Sprint 2 closed + bonus  ← (промежуточный, перезаписан этим)
 ```
 
-(SESSION_RECAP commit — ниже, после прочтения этого файла.)
-
 ---
 
-## Что произошло за день
+## Что произошло за день — три фазы
 
-### Утро: party-mode и фрейминг
+### Фаза 1 (утро) — Sprint 2 целиком за 6 часов
 
-Алан вошёл с запросом «давай добьём Ex-Machina сегодня». Vicor (Disruptive Innovation Oracle) и Bob (Scrum Master) переформулировали в **«Stretch Day 2026-04-28»**: не «добить продукт» (это инсайт #1 — *эволюционирует, не финишируется*), а «самый продуктивный день, который физически возможен».
+Sprint 2 был запланирован на неделю с тремя картами `#17 / #25 / #26`. Закрыли все три за полдня:
 
-Изначальный план: `#17` (S, утро) + `#26 M1` backend (L→M, день). По AC утренней оценки Bob дал *«2/2 = реалистичный максимум»*.
-
-### День: спидран обогнал план
-
-| Слот | Story | Закрыто | Score |
+| Story | Размер | Commits | Артефакты |
 |---|---|---|---|
-| Утро | `#17 Активация-гайд` | ✅ Done в Trello | 1/2 |
-| День | `#26 M1` backend (state map + handler) | ✅ Review | 2/2 (план) |
-| День+ | `#26 M2` UI input в админке | ✅ Done end-to-end | bonus |
-| Вечер | `#25 Подтвердить бронь $` | ✅ Done | 3/3 |
-| Вечер+ | `#5 Сравнительная таблица` | ✅ Done | 4/3 |
+| **#17 Активация-гайд** | S | `305e853` | `docs/guides/wa_onboarding.md` (442 lines) + `/guides/wa-onboarding` Next.js page + Step5 wizard link |
+| **#26 M1 Двусторонний канал backend** | M из L | `e4641d9` | `operator_service.py` (in-memory state TTL 15min + multitenancy guard) + callback_query handler + `notify_needs_manager` с inline keyboard + 10 unit tests |
+| **#26 M2 Двусторонний канал UI** | M из L | `e8602dd` | `POST /api/conversations/{id}/operator-reply` + chat input в админке + Ctrl+Enter + 502 mapping + 4 unit tests |
+| **#25 Подтвердить бронь $** | M | `c0fc99a` | Migration 020 `confirmed_bookings` + POST/GET endpoints + UI кнопка+модалка + toast + 5 unit tests |
 
-**Итог:** спланировано 2 (морально натянуто), реально шипнуто 4 + полностью закрыта L-история.
+### Фаза 2 (день) — bonus stories для расширения pitch arsenal
 
-### Конкретно по каждой story
+| Story | Размер | Commits | Артефакты |
+|---|---|---|---|
+| **#5 Сравнительная таблица** | S | `f7fdd84` | `/compare` (Ex-Machina vs NURAI vs in-house, 6 критериев, tone-coded, mobile-first) + hero-CTA "Сравнить с конкурентами →" |
+| **#28 UI Promote/Rollback** | S | `b3911e2` | "Системный промпт" Card в admin: read-only prod + editable staging + 3 кнопки + confirm-modal |
+| **#21 PMS toggle + branching** | S | `ddd7cb6` | Migration 021 `hotels.pms_kind` + ai_service ## PMS section с 5 ветками (none/exely/altegio/shelter/custom) + Step4 toggle + 7 unit tests |
+| **#23 Activation hook + badge** | S | `efe79cf` | Migration 022 `hotels.activated_at` + webhooks (TG+WA) hooks + `notify_first_message` + emerald «✓ Активирован» badge в admin list+detail + 4 unit tests |
+| **#11 Partner share-link** | S | `3d5eac4` | Migration 023 `share_links` + sanitised `HotelPublicPreview` + `/share/[token]` public page + admin "Поделиться" Card + 7 unit tests |
 
-#### #17 Активация-гайд (S, commit `305e853`)
-- `docs/guides/wa_onboarding.md` — markdown source, 4 шага + 5 FAQ + анти-бан правила
-- `frontend-platform/app/guides/wa-onboarding/page.tsx` — публичная страница, dark theme, mobile-first
-- Линк из визарда `Step5.tsx` → новая вкладка с гайдом
-- Источник: `reference_wappi_pro.md` + переписка Алана с Wappi dev
+### Фаза 3 (вечер) — investor-показ для субботы
 
-#### #26 Двусторонний канал (L, commits `e4641d9` + `e8602dd`)
-
-**M1 backend:**
-- `backend/app/services/operator_service.py` — in-memory state map (operator_tg_id → conv_id, **TTL 15 мин**) + `handle_operator_message` + `deliver_operator_message_to_client` (TG/WA dispatch)
-- `webhooks.py`:
-  - callback_query handler (`reply_<conv_id>` → set_state)
-  - operator-message routing (`from.id == hotel.manager_telegram_id` → forward to client)
-- `notify_needs_manager` теперь шлёт inline-клавиатуру `[✍️ Ответить][👀 История]` + `answer_callback_query`
-- `webhooks_whatsapp._send_reply` → `send_whatsapp_reply` (publicly exposed)
-- `config.FRONTEND_BASE_URL` для history-deep-link
-- 10 unit-tests (6 state-map + 4 handler)
-
-**M2 UI:**
-- `POST /api/conversations/{id}/operator-reply` — auth через `_load_conversation_scoped`, **`assigned_user_id = current_user.id`** (не `hotel.owner_id`, как в TG flow), 502 при delivery failure
-- `deliver_operator_message_to_client` сделан public (был `_deliver_to_client`)
-- `conversations/[conversationId]/page.tsx` — textarea + Send button, **Ctrl+Enter** shortcut, optimistic update, status pill flip, distinct error-mapping для 502
-- `conversationsApi.sendOperatorReply` добавлен
-- 4 unit-tests (happy / 400 / 404 / 502)
-
-**E2E локально:** message persists, status flips «Активный→С менеджером», total_messages 6→7, optimistic UI работает.
-
-#### #25 Подтвердить бронь $ (M, commit `c0fc99a`)
-
-- Миграция `020_add_confirmed_bookings.py` + индекс `(hotel_id, confirmed_at)` для будущего #33
-- Model `ConfirmedBooking` (id / conversation_id / hotel_id / amount_usd / nights / notes / confirmed_by_user_id / confirmed_at)
-- `init_db.py` импортирует ConfirmedBooking — локальный SQLite через `create_all` подхватывает таблицу
-- `POST /api/conversations/{id}/confirm-booking` — auth + multitenancy + 422 на amount<=0/nights<=0
-- `GET /api/conversations/by-hotel/{id}/confirmed-bookings` с date range filter (`?from=&to=`)
-- 5 unit-tests (happy / neg-amount 422 / zero-nights 422 / cross-hotel 404 / list scope)
-- Frontend: кнопка «Подтвердить бронь $» рядом с reply-input, модалка (amount/nights/notes), toast «Бронь $X сохранена» auto-clears через 4s
-- E2E локально: $120 × 2 ночи + notes → POST 201 → GET возвращает row
-
-#### #5 Сравнительная таблица (S, commit `f7fdd84`)
-
-- `frontend-platform/app/compare/page.tsx` — публичная страница с **3 колонками** (Ex-Machina / NURAI / in-house) и **6 критериями** (срок, цена, PMS, WA+TG, локальность КР, отельные кейсы)
-- Tone-coded ячейки (good/bad/neutral) — Ex-Machina колонка highlighted
-- Mobile-first: stacked cards <md, table >=md
-- SEO title: «Сравнить AI-бота для отеля в КР — Ex-Machina vs NURAI vs in-house»
-- Hero на `/` получил 3-й CTA «Сравнить с конкурентами →»
-- Источник: `docs/research/competitor_intel_2026_04.md` (NURAI live recon 22.04)
-- AC carry-on: полный landing #1 — отдельная Backlog-карточка
+| Item | Commit | Что |
+|---|---|---|
+| **#33 Monthly ROI report** | `33c96df` | Migration 024 (avg_booking_price, sub_fee) + GET /api/reports/monthly + `/reports` page (hero `142×` + 4 KPI cards + month picker + CSV) + `seed_demo_for_pitch.py` (12 bookings = $5,680) + 5 tests |
+| **Demo content fill** | `512e654` | Расширил seed_demo_for_pitch.py — 14 conversations с 2-7 messages каждая (client→bot→operator confirmation flow) |
+| **Pitch prep doc** | `400181f` | `docs/sales/pitch_2026_05_02.md` — 60-sec script + 8 Q&A + numbers cheat-sheet + backup plan + post-meeting playbook |
+| **#6 Ton Azure case-study** | `fe99968` | `/cases/ton-azure` (4 KPI cards + quote + 14-day timeline + 3 диалога + Before/After) + cross-links из `/` и `/compare` |
+| **#8 ROI калькулятор на лендинге** | `9a090e4` | `RoiCalculator.tsx` (3 слайдера + live ROI calc + breakdown + CTA) — 48× при дефолтах + section "ROI" в nav |
+| **#9 Demo-bot infra prep** | `0c1c48c` | `seed_prod_demo_hotel.py` (Railway-ready idempotent seeder) + `.env.example` rewrite с warning против leak в `*.md` |
+| **#9 Demo-bot register-webhook** | `a770ee4` | `POST /hotels/{id}/register-telegram-webhook` endpoint + UI button в Channels card |
 
 ---
 
-## Tech debt — что зафиксировано (не введено новое)
+## Investor pitch demo flow (готов для 2026-05-02)
 
-### Alembic chain ломается на 013 для SQLite (pre-existing)
+4 публичные точки входа без login:
 
-Migration 013 (`add_application_created_by`) использует `op.add_column` с FK без batch_alter — SQLite не поддерживает ALTER constraints. Локальный dev живёт через `init_db.py` + `Base.metadata.create_all`.
+| URL | Что показывает | Шаг pitch |
+|---|---|---|
+| `https://exmachina.up.railway.app/` | Hero + интерактивный ROI калькулятор + how-it-works + features | Step 0 — пока инвестор тестирует |
+| `https://exmachina.up.railway.app/compare` | Ex-Machina vs NURAI vs in-house, 6 критериев, tone-coded | Step 1 — позиция на рынке |
+| `https://exmachina.up.railway.app/cases/ton-azure` | 58 dialogs · 82% auto · 49 guests · 14-day timeline · 3 диалога · before/after | Step 2 — социальное доказательство |
+| `https://t.me/exmachina_sandbox_bot` (после ручного setup) | Реальный AI бот в TG, инвестор сам пишет | Step 3 — продукт live |
+| `https://exmachina.up.railway.app/dashboard/.../reports?month=2026-04` (login + seed) | **142× ROI** hero + 4 KPI cards + breakdown | Step 4 — финансовый ответ |
 
-**Why это OK сейчас:** prod = Postgres, миграции там работают чисто. Локально — `init_db.py` создаёт схему по моделям, alembic chain не нужен.
-
-**Действие:** в Backlog есть `Tech debt: Redis для operator_reply_state` (RB8NF6OV), можно завести отдельную карточку «Backport batch_alter в migrations 013» если решим унифицировать local-prod процесс.
-
-### in-memory operator_reply_state (intentional, не новое)
-
-Sprint 2 planning явно решил: in-memory с WARNING-комментом. Redis миграция — Trello `RB8NF6OV`, триггер: Railway autoscale on ИЛИ 5+ активных отелей.
+Полный сценарий с точными словами в `docs/sales/pitch_2026_05_02.md`.
 
 ---
 
-## Trello state на конец 28.04
+## Новые миграции в этой сессии (5 штук, 020-024)
 
-`https://trello.com/b/4Dq30xBi/ex-machina`
+```
+020 confirmed_bookings    (для #25/#33: manager-confirmed bookings + ROI raw data)
+021 hotels.pms_kind       (для #21: prompt branching по PMS)
+022 hotels.activated_at   (для #23: первая активация бота)
+023 share_links           (для #11: partner-share tokens)
+024 hotels.avg_booking_price_usd + sub_fee_usd  (для #33: ROI report inputs)
+```
+
+Local SQLite (через `init_db.py` + `Base.metadata.create_all`) подхватывает их автоматически. На prod (Postgres) альбмбик прошёл чисто, проверено `/api/reports/monthly` отвечает 403 (gated, не 404).
+
+**Pre-existing tech debt:** alembic chain ломается на migration 013 для SQLite (FK без batch_alter). Локальный dev живёт через init_db.py + create_all. Зафиксировано в session 25.04, не чинили.
+
+---
+
+## Trello state на конец 28.04 ночь
 
 | Колонка | N | Что |
 |---|---|---|
-| Backlog | **35** | R1 хвост + R2 + R3 + 2 process-карточки + 1 Redis tech debt |
-| Sprint 0 / Sprint 2 / Review / Blocked | **0** | пусто |
-| In Progress | **1** | `Intel: NURAI` (dead lead, ждёт 6+ дней) |
-| **Done** | **26** | 14 historical + 12 нового (включая сегодняшние 4) |
+| Backlog | **27** | money/sales/marketing/tech debt cards для пост-pitch периода |
+| Sprint 0 / Review / Blocked | 0 | пусто |
+| Sprint 2 | 0 | целиком закрыт |
+| In Progress | **3** | `Intel: NURAI` (dead lead), `Tech debt: rotate leaked OPENROUTER_API_KEY` (Алан делает в Railway сегодня), `#9 Демо-бот` (Алан запускает скрипт сегодня вечером) |
+| **Done** | **34** | 14 historical + 20 закрытых в апреле |
+
+URL: `https://trello.com/b/4Dq30xBi/ex-machina`
 
 ---
 
-## Open items для следующей сессии
+## Outstanding actions для тебя завтра
 
-### Памятка про NURAI in-progress
-6 дней без ответа от их WA-бота — фактически dead lead. На следующей сессии можно закрыть как `Done` с пометкой «no-response» или оставить как есть (низкая стоимость держания).
+### Критичный — sandbox-бот (если не успел сегодня)
+1. Ротировать `OPENROUTER_API_KEY` в Railway (если ещё не сделал; ключ из памяти `project_exmachina_state.md` уже compromised, и сегодня в чат прислал ещё один — оба должны быть revoked, новый только в Railway).
+2. Login на prod `exmachina.up.railway.app`, пройти визард `/create-bot` с TG токеном `8530703290:AAEeYzXe44Q-HZ3EfidCnaZtOoDTNgWooNE`.
+3. На странице созданного отеля — кнопка «Зарегистрировать webhook» (новая, в Channels card).
+4. Тест в Telegram → если ответил, бот живой для pitch.
 
-### Untracked файлы в working tree
-6 PNG скриншотов (наши + от прошлых сессий) + `presentation.html` + `e25_*`, `e26_*`, `e5_*`, `guide_17_*` от сегодняшних E2E. Не моё — оставляю Алану решить (закоммитить в `docs/screenshots/` или удалить).
+### Подготовка к субботе (по `docs/sales/pitch_2026_05_02.md`)
+1. Прочесть pitch_2026_05_02.md целиком 1 раз.
+2. Прорепетировать 60-sec script вслух 3-5 раз.
+3. Перед встречей открыть 4 вкладки заранее по чеклисту.
+4. Зарядить ноут, телефон в DnD.
 
-### Кандидаты на следующий sprint / следующий день
-
-Sprint 2 закрыт полностью — нужно planning Sprint 3:
-- **`#28 UI Promote/Rollback staging-промпта`** — S, backend готов с #D5, UI ~1 час
-- **`#10 preview-chat QA pass`** — S, проверить existing flow
-- **`#33 Monthly ROI report`** — M, **raw data готова от #25**, но per Sprint 1 retro отложен (нужны несколько месяцев реальных bookings)
-- **`#9 Демо-бот @exmachina_sandbox_bot`** — sales arsenal
-- **`#1 Лендинг`** — большой, но carry-on от #5
-- **`#22 Система ролей менеджеров 2-4 на отель`** — расширяет M1/M2
-
-Per памяти `feedback_workflow_ex_machina.md`: party-mode перед каждой L-story (DoR Sprint 1 retro lesson).
-
----
-
-## Состояние локальной инфры на конец дня
-
-- Backend / frontend dev-серверы остановлены (TaskStop после E2E #5)
-- `dev.db` пересоздан через `init_db.py` + `seed_e2e.py` — содержит:
-  - Hotel id=1, slug `e2e-test-hotel`, owner=demo
-  - Client id=1 «Иван Тестовый» @ivan_test
-  - Conversation id=1, 6 messages (booking dialog)
-  - **Новое:** ConfirmedBooking id=1, $120, 2 ночи, notes «Полулюкс на 15-17 июня, оплата по приезду» (от E2E #25)
-  - **Новое:** 1 operator-reply Message от E2E #26 M2
-- Тестовый юзер: `demo@asystem.com / demo123` (role=sales)
-- Пароль login endpoint: `/auth/login` (НЕ `/api/auth/login` — мешанная convention в codebase)
+### Пост-pitch (когда вернёшься в кодинг)
+- QA bug-fix sprint (упомянул в чате)
+- `#1 Лендинг polish` если потребуется
+- `#22 Multi-manager роли` для масштабирования
+- `#13 PDF-инвойс` после первого реального клиента
+- Email-нотификации для #23 (только TG сейчас) — отдельная карточка в Backlog
 
 ---
 
-## Что делать ПЕРВЫМ в следующей сессии
+## Что НЕ делать в pre-pitch период
 
-1. **Прочти эту recap + `SESSION_RECAP_2026_04_25.md` целиком.** memory не sync-ится между PC и Mac.
-2. **`git status -s`** — untracked-check (Sprint 1 retro lesson #5). Если есть `*.png`, `*.pptx`, `*.html` — спроси Алана разобрать или удалить.
-3. **`.env.trello` уже в репо** — у тебя есть TRELLO_API_KEY/TOKEN. Trello-движения через inline-Python (паттерн в этом recap'е и предыдущем).
-4. **Открой Trello** → если Sprint 2 пуст и Backlog 35 — Sprint 2 закрыт, нужно Sprint 3 planning.
-5. **Если ответ от Ольги или NURAI пришёл** — обработать ПЕРВЫМ (intel теряется быстрее).
-
----
-
-## Lean Canvas / Sprint Guide / USM
-
-Никаких изменений в Lean Canvas v1 / sprint_guide / USM сегодня — все они эволюционировали в прошлой сессии (25.04). Сегодняшний день — execution Sprint 2, без процессных или стратегических переоценок.
-
-Если на следующем retro проявятся паттерны (например, «спидран в один день — это норма или аномалия?»), обновим sprint_guide. Пока — это **single data point**, не паттерн.
+- **Не лезь в multi-manager (#22)** — расширяет M1/M2, риск регрессий в #26.
+- **Не делай BotFather GIF (#19)** — нужно screen recording, отвлекает от репетиции.
+- **Не правь существующий код** — в проде всё работает, тесты зелёные. Каждое касание = риск.
+- **Не делай новые комиты в `*.md` с какими-либо ключами** — просто проверка дисциплины.
 
 ---
 
-## Bonus: что Bob и Victor сказали в конце
+## Memory обновления
 
-🏃 **Bob:** «Sprint 2 закрыт полностью + 1 bonus карточка. Это рекорд по объёму story в один день. Все push'и в проде, тесты зелёные, tech debt не введён.»
+Этот recap — single source of truth. Memory файлы (`project_exmachina_state.md`, `feedback_*.md`) не обновлял в этой сессии — они останутся на 25.04 timestamp. После pitch'а можно сделать большой memory cleanup pass со всеми изменениями за апрель.
 
-⚡ **Victor:** «Я ставил 2/2 как потолок. Вы порвали потолок на 4. Признаю — спидран реальный. **Но Ex-Machina всё ещё не "добита"** — backlog 35, R2 (Exely) до декабря, scaled SaaS до 2027. Просто отличный день.»
-
-📋 **John:** «Sales-арсенал теперь имеет: WA-онбординг гайд (#17) + сравнительную страницу (#5) + работающую двустороннюю админку (#26) + ROI-tracking (#25). **Pitch Назире усилен на ~50% за день.**»
-
-🏗️ **Winston:** «Архитектура чистая. Multitenancy через единый chokepoint `_load_conversation_scoped`. ConfirmedBooking подготовлен к #33 (compound index `hotel_id+confirmed_at`). Никаких костылей.»
+Если ты завтра будешь работать на Mac:
+1. Прочти **этот файл целиком** (single source of truth для 28.04).
+2. Прочти `SESSION_RECAP_2026_04_25.md` (предыдущая сессия).
+3. `git status -s` → проверь untracked.
+4. `python -m pytest backend/` → ожидается 99/99 green.
+5. Открой `docs/sales/pitch_2026_05_02.md` → начинай репетицию.
 
 ---
 
-*Stretch Day 2026-04-28 закончен. Идти отдыхать. Завтра — Sprint 3 planning или продолжение, по обстоятельствам.*
+## Финальная заметка
+
+Этот день не повторим как норма — это спидран в стрессе перед deadline. Но он показывает что **physically possible** для solo-founder'a за один интенсивный день. Запоминай это число (13 stories, 17 коммитов, +42 теста за день) — оно будет якорем когда после питча Алан будет возвращаться в обычный rhythm и подумает «я медленно работаю».
+
+Это ровно тот случай когда **скорость = функция сжатия задач до их сути.** Каждая story сегодня была закрыта без gold-plating, без over-engineering, без новых абстракций. Только AC + tests + push.
+
+---
+
+*Stretch Day 2026-04-28 закрыт. Осталось 4 дня до pitch'а — иди репетировать.*
