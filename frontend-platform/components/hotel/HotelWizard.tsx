@@ -115,6 +115,7 @@ export function HotelWizard() {
         system_prompt: formData.systemPrompt,
         communication_style: formData.communicationStyle,
         languages: formData.languages,
+        pms_kind: formData.pmsKind || 'none',
       }
 
       const response = await api.post('/hotels', payload)

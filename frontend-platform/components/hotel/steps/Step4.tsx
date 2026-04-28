@@ -44,6 +44,8 @@ export function Step4({ formData, updateFormData }: Step4Props) {
   const selectedLanguages = formData.languages || ['ru', 'en']
   const aiModel = formData.aiModel || 'deepseek/deepseek-chat'
   const systemPrompt = formData.systemPrompt || ''
+  const pmsKind = formData.pmsKind || 'none'
+  const hasPms = pmsKind !== 'none'
 
   // Автоматически генерировать промпт при изменении данных
   useEffect(() => {
@@ -148,6 +150,59 @@ export function Step4({ formData, updateFormData }: Step4Props) {
             </div>
           </label>
         </div>
+      </div>
+
+      {/* PMS (#21) — drives prompt branching */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium text-[#FAFAFA]">Система учёта броней (PMS)</h3>
+        <p className="text-xs text-[#A3A3A3]">
+          Бот в зависимости от ответа объяснит гостю как обрабатывается бронь после
+          подтверждения менеджером.
+        </p>
+
+        <label className="flex items-start gap-3 p-4 rounded-lg border-2 border-[#262626] cursor-pointer transition-colors hover:bg-[#1A1A1A]">
+          <input
+            type="checkbox"
+            checked={hasPms}
+            onChange={(e) => updateFormData({ pmsKind: e.target.checked ? 'exely' : 'none' })}
+            className="mt-1"
+          />
+          <div>
+            <div className="font-medium text-[#FAFAFA]">У отеля есть PMS</div>
+            <div className="text-sm text-[#A3A3A3]">
+              Если выключено — менеджер ведёт брони вручную (Google Sheets / блокнот).
+            </div>
+          </div>
+        </label>
+
+        {hasPms && (
+          <div className="space-y-2 ml-7">
+            {([
+              { id: 'exely', name: 'Exely', hint: 'Booking + WhatsApp + сайт. Самый частый в КР.' },
+              { id: 'altegio', name: 'Altegio', hint: 'CRM + резервации. Для отелей с салоном/spa.' },
+              { id: 'shelter', name: 'Shelter', hint: 'Российский PMS, КР через VPN.' },
+              { id: 'custom', name: 'Своя система', hint: 'Внутренняя CRM или 1C.' },
+            ] as const).map((opt) => (
+              <label
+                key={opt.id}
+                className="flex items-start gap-3 p-3 rounded-lg border border-[#262626] cursor-pointer transition-colors hover:bg-[#1A1A1A] has-[:checked]:border-[#3B82F6] has-[:checked]:bg-[#1A1A1A]"
+              >
+                <input
+                  type="radio"
+                  name="pmsKind"
+                  value={opt.id}
+                  checked={pmsKind === opt.id}
+                  onChange={() => updateFormData({ pmsKind: opt.id })}
+                  className="mt-1"
+                />
+                <div>
+                  <div className="text-sm font-medium text-[#FAFAFA]">{opt.name}</div>
+                  <div className="text-xs text-[#A3A3A3]">{opt.hint}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Языки */}

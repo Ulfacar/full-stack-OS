@@ -216,7 +216,8 @@ async def telegram_webhook(
                 "rooms": hotel.rooms,
                 "rules": hotel.rules,
                 "amenities": hotel.amenities,
-                "communication_style": hotel.communication_style
+                "communication_style": hotel.communication_style,
+                "pms_kind": hotel.pms_kind,
             }
             system_prompt = await ai_service.generate_system_prompt(hotel_data)
             hotel.system_prompt = system_prompt

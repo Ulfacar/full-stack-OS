@@ -64,6 +64,10 @@ class Hotel(Base):
     # quote requisites when the field is empty.
     payment_details = Column(JSON, nullable=True)
 
+    # PMS — drives prompt branching (#21). One of: none, exely, altegio, shelter, custom.
+    # 'none' = manager hand-confirms in WA + records to Google Sheets (60-75% segment).
+    pms_kind = Column(String(20), nullable=False, server_default="none", default="none")
+
     # Manager
     manager_telegram_id = Column(String(100))  # TG user ID for notifications
     manager_name = Column(String(255))

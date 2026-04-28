@@ -80,6 +80,7 @@ async def create_hotel(
             "amenities": hotel_data.amenities.model_dump() if hotel_data.amenities else {},
             "payment_details": payment_details_dict,
             "communication_style": hotel_data.communication_style,
+            "pms_kind": hotel_data.pms_kind,
         }
         system_prompt = await ai_service.generate_system_prompt(hotel_dict)
 
@@ -113,6 +114,7 @@ async def create_hotel(
         monthly_budget=hotel_data.monthly_budget,
         status=initial_status,
         webhook_secret=webhook_secret,
+        pms_kind=hotel_data.pms_kind or "none",
     )
 
     db.add(new_hotel)

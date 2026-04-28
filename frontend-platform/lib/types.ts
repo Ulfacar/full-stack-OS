@@ -84,6 +84,8 @@ export interface HotelFormData {
   notAvailable: string
   restaurantMenu: string  // меню/цены ресторана
   nearbyPlaces: string  // что рядом с отелем
+  // PMS (#21) — drives prompt branching
+  pmsKind: 'none' | 'exely' | 'altegio' | 'shelter' | 'custom'
   // Технические (не для клиента)
   aiModel: string
   systemPrompt: string
@@ -112,6 +114,7 @@ export interface Hotel {
   ai_model: string
   system_prompt?: string
   staging_prompt?: string | null
+  pms_kind?: 'none' | 'exely' | 'altegio' | 'shelter' | 'custom'
   communication_style: string
   languages: string[]
   is_active: boolean

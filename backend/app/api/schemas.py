@@ -97,6 +97,7 @@ class HotelCreate(BaseModel):
     communication_style: str = "friendly"
     languages: List[str] = ["ru", "en"]
     monthly_budget: float = 5.0
+    pms_kind: str = "none"
 
 
 class HotelUpdate(BaseModel):
@@ -119,6 +120,7 @@ class HotelUpdate(BaseModel):
     system_prompt: Optional[str] = None
     communication_style: Optional[str] = None
     languages: Optional[List[str]] = None
+    pms_kind: Optional[str] = None
     # is_active, monthly_budget, status — admin-only, managed via /admin/hotels/{id}/budget
     wappi_api_key: Optional[str] = None
     wappi_profile_id: Optional[str] = None
@@ -149,6 +151,7 @@ class Hotel(BaseModel):
     is_active: bool
     monthly_budget: float = 5.0
     status: str = "demo"
+    pms_kind: str = "none"
 
     created_at: datetime
     updated_at: Optional[datetime]
