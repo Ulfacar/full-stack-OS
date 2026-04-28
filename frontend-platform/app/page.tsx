@@ -49,6 +49,13 @@ const navCards = [
     bgColor: '#0a2a1a',
     textColor: '#fff',
   },
+  {
+    label: 'FAQ',
+    href: '/faq',
+    description: 'Частые вопросы: WhatsApp, PMS, безопасность, цены',
+    bgColor: '#1a1a2e',
+    textColor: '#fff',
+  },
 ]
 
 export default function LandingPage() {
