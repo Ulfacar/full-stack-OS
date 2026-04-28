@@ -245,6 +245,17 @@ export interface ConversationStats {
   by_status: Partial<Record<ConversationStatus, number>>
 }
 
+export interface ConfirmedBooking {
+  id: number
+  conversation_id: number
+  hotel_id: number
+  amount_usd: number
+  nights: number
+  notes: string | null
+  confirmed_by_user_id: number
+  confirmed_at: string
+}
+
 // Hotel with extended stats for admin dashboard
 export interface HotelWithStats extends Hotel {
   budget_used: number

@@ -6,7 +6,7 @@ import asyncio
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.db.database import engine, Base, AsyncSessionLocal
-from app.db.models import User, Hotel, Client, Conversation, Message
+from app.db.models import User, Hotel, Client, Conversation, Message, ConfirmedBooking
 from app.core.security import get_password_hash
 
 

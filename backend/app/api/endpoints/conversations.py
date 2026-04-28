@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ...db.database import get_db
-from ...db.models import Conversation, Message, Client, Hotel, User
+from ...db.models import ConfirmedBooking, Conversation, Message, Client, Hotel, User
 from ...services.operator_service import deliver_operator_message_to_client
 from ..dependencies import get_current_user
 
@@ -79,6 +79,26 @@ class MessageOut(BaseModel):
 
 class OperatorReplyIn(BaseModel):
     text: str
+
+
+class ConfirmBookingIn(BaseModel):
+    amount_usd: float
+    nights: int
+    notes: Optional[str] = None
+
+
+class ConfirmedBookingOut(BaseModel):
+    id: int
+    conversation_id: int
+    hotel_id: int
+    amount_usd: float
+    nights: int
+    notes: Optional[str]
+    confirmed_by_user_id: int
+    confirmed_at: datetime
+
+    class Config:
+        from_attributes = True
 
 
 class ConversationStats(BaseModel):
@@ -231,6 +251,74 @@ async def get_conversation(
         operator_telegram_id=conv.operator_telegram_id,
         total_messages=int(total_messages),
     )
+
+
+@router.post(
+    "/{conversation_id}/confirm-booking",
+    response_model=ConfirmedBookingOut,
+    status_code=201,
+)
+async def confirm_booking(
+    conversation_id: int,
+    payload: ConfirmBookingIn,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Record a manager-confirmed booking for ROI tracking (#25, raw data for #33).
+
+    Each confirmed booking is one row — no upsert. If the manager makes a
+    typo and re-submits, that's two rows; the monthly aggregator (#33) sums
+    by hotel + month so the correction shows up as an extra row that the
+    manager can audit later. Edit/delete is out of scope for Sprint 2.
+    """
+    if payload.amount_usd <= 0:
+        raise HTTPException(status_code=422, detail="amount_usd must be positive")
+    if payload.nights <= 0:
+        raise HTTPException(status_code=422, detail="nights must be positive")
+
+    conv = await _load_conversation_scoped(db, user, conversation_id)
+
+    booking = ConfirmedBooking(
+        conversation_id=conv.id,
+        hotel_id=conv.hotel_id,
+        amount_usd=payload.amount_usd,
+        nights=payload.nights,
+        notes=(payload.notes or None),
+        confirmed_by_user_id=user.id,
+    )
+    db.add(booking)
+    await db.commit()
+    await db.refresh(booking)
+    return booking
+
+
+@router.get(
+    "/by-hotel/{hotel_id}/confirmed-bookings",
+    response_model=List[ConfirmedBookingOut],
+)
+async def list_confirmed_bookings(
+    hotel_id: int,
+    date_from: Optional[datetime] = Query(None, alias="from"),
+    date_to: Optional[datetime] = Query(None, alias="to"),
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """All confirmed bookings for a hotel within an optional date range.
+
+    Will be consumed by #33 monthly ROI report (Sprint 3+). For now exposed
+    so managers can audit what the bot/themselves confirmed.
+    """
+    await _assert_hotel_access(db, user, hotel_id)
+
+    query = select(ConfirmedBooking).where(ConfirmedBooking.hotel_id == hotel_id)
+    if date_from is not None:
+        query = query.where(ConfirmedBooking.confirmed_at >= date_from)
+    if date_to is not None:
+        query = query.where(ConfirmedBooking.confirmed_at <= date_to)
+    query = query.order_by(ConfirmedBooking.confirmed_at.desc())
+
+    result = await db.execute(query)
+    return result.scalars().all()
 
 
 @router.post("/{conversation_id}/operator-reply", response_model=MessageOut)

@@ -217,6 +217,28 @@ class PromptHistory(Base):
     user = relationship("User")
 
 
+class ConfirmedBooking(Base):
+    """Manager-confirmed booking — raw data for #33 monthly ROI report.
+
+    Replaced by Exely auto-confirm in R2 (#37). Each row is one booking; the
+    monthly ROI aggregator sums amount_usd by hotel and month.
+    """
+    __tablename__ = "confirmed_bookings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    conversation_id = Column(Integer, ForeignKey("conversations.id"), nullable=False, index=True)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False, index=True)
+    amount_usd = Column(Float, nullable=False)
+    nights = Column(Integer, nullable=False)
+    notes = Column(Text, nullable=True)
+    confirmed_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    confirmed_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    conversation = relationship("Conversation")
+    hotel = relationship("Hotel")
+    confirmed_by = relationship("User", foreign_keys=[confirmed_by_user_id])
+
+
 class Application(Base):
     """Заявка на создание бота от клиента."""
     __tablename__ = "applications"

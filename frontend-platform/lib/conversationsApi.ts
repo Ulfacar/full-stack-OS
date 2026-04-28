@@ -1,5 +1,6 @@
 import api from './api'
 import type {
+  ConfirmedBooking,
   ConversationListItem,
   ConversationDetail,
   ConversationStats,
@@ -46,6 +47,23 @@ export async function sendOperatorReply(
   const { data } = await api.post<Message>(
     `/api/conversations/${conversationId}/operator-reply`,
     { text },
+  )
+  return data
+}
+
+export interface ConfirmBookingPayload {
+  amount_usd: number
+  nights: number
+  notes?: string
+}
+
+export async function confirmBooking(
+  conversationId: number,
+  payload: ConfirmBookingPayload,
+): Promise<ConfirmedBooking> {
+  const { data } = await api.post<ConfirmedBooking>(
+    `/api/conversations/${conversationId}/confirm-booking`,
+    payload,
   )
   return data
 }

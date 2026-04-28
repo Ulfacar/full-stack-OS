@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import {
+  confirmBooking,
   getConversation,
   getConversationMessages,
   sendOperatorReply,
@@ -92,6 +93,14 @@ export default function ConversationDetailPage() {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState<string | null>(null)
 
+  const [showBookingModal, setShowBookingModal] = useState(false)
+  const [bookingAmount, setBookingAmount] = useState('')
+  const [bookingNights, setBookingNights] = useState('')
+  const [bookingNotes, setBookingNotes] = useState('')
+  const [bookingSubmitting, setBookingSubmitting] = useState(false)
+  const [bookingError, setBookingError] = useState<string | null>(null)
+  const [bookingToast, setBookingToast] = useState<string | null>(null)
+
   const bottomRef = useRef<HTMLDivElement | null>(null)
   const stickToBottomRef = useRef(true)
   const scrollWrapRef = useRef<HTMLDivElement | null>(null)
@@ -177,6 +186,57 @@ export default function ConversationDetailPage() {
     if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
       e.preventDefault()
       void handleSend()
+    }
+  }
+
+  const openBookingModal = () => {
+    setShowBookingModal(true)
+    setBookingError(null)
+  }
+
+  const closeBookingModal = () => {
+    if (bookingSubmitting) return
+    setShowBookingModal(false)
+    setBookingAmount('')
+    setBookingNights('')
+    setBookingNotes('')
+    setBookingError(null)
+  }
+
+  const handleConfirmBooking = async () => {
+    const amount = Number(bookingAmount.replace(',', '.'))
+    const nights = parseInt(bookingNights, 10)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setBookingError('Введите положительную сумму в USD.')
+      return
+    }
+    if (!Number.isInteger(nights) || nights <= 0) {
+      setBookingError('Кол-во ночей — целое положительное число.')
+      return
+    }
+    setBookingSubmitting(true)
+    setBookingError(null)
+    try {
+      const saved = await confirmBooking(conversationId, {
+        amount_usd: amount,
+        nights,
+        notes: bookingNotes.trim() || undefined,
+      })
+      setBookingToast(`Бронь $${saved.amount_usd} × ${saved.nights} ноч. сохранена`)
+      setShowBookingModal(false)
+      setBookingAmount('')
+      setBookingNights('')
+      setBookingNotes('')
+      // Auto-clear toast after 4s
+      setTimeout(() => setBookingToast(null), 4000)
+    } catch (err: any) {
+      const code = err?.response?.status
+      if (code === 422) setBookingError('Сумма и ночи должны быть положительными.')
+      else if (code === 404) setBookingError('Диалог не найден или нет доступа.')
+      else if (code === 401) setBookingError('Сессия истекла — войдите заново.')
+      else setBookingError('Не удалось сохранить. Попробуйте ещё раз.')
+    } finally {
+      setBookingSubmitting(false)
     }
   }
 
@@ -308,21 +368,125 @@ export default function ConversationDetailPage() {
             rows={2}
             className="w-full bg-[#161616] border border-[#262626] rounded-md px-3 py-2 text-sm text-[#FAFAFA] placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]/60 resize-y min-h-[44px] max-h-[200px] disabled:opacity-50"
           />
-          <div className="mt-2 flex items-center justify-between">
-            <span className="text-[11px] text-zinc-500">
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <span className="text-[11px] text-zinc-500 flex-1">
               Сообщение уйдёт клиенту через канал диалога ({conv?.channel ?? '…'}). Бот замолчит — диалог переходит в режим менеджера.
             </span>
             <button
               type="button"
+              onClick={openBookingModal}
+              className="text-sm border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 px-3 py-1.5 rounded-md transition-colors shrink-0"
+            >
+              Подтвердить бронь $
+            </button>
+            <button
+              type="button"
               onClick={handleSend}
               disabled={sending || replyText.trim().length === 0}
-              className="text-sm bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-zinc-700 disabled:text-zinc-500 text-white px-4 py-1.5 rounded-md transition-colors shrink-0 ml-3"
+              className="text-sm bg-[#3B82F6] hover:bg-[#2563EB] disabled:bg-zinc-700 disabled:text-zinc-500 text-white px-4 py-1.5 rounded-md transition-colors shrink-0"
             >
               {sending ? 'Отправка…' : 'Отправить'}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Toast — booking saved */}
+      {bookingToast && (
+        <div className="fixed bottom-6 right-6 z-50 max-w-sm rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300 shadow-lg backdrop-blur">
+          ✅ {bookingToast}
+        </div>
+      )}
+
+      {/* Confirm-booking modal (#25) */}
+      {showBookingModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
+          onClick={closeBookingModal}
+        >
+          <div
+            className="w-full max-w-md rounded-xl border border-[#262626] bg-[#141414] p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-semibold text-[#FAFAFA] mb-1">
+              Подтверждение брони
+            </h2>
+            <p className="text-xs text-zinc-500 mb-4">
+              Эти данные пойдут в месячный ROI-отчёт.
+            </p>
+
+            {bookingError && (
+              <div className="mb-3 text-xs text-red-300 bg-red-500/10 border border-red-500/30 rounded px-2 py-1.5">
+                {bookingError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1">
+                  Сумма брони, USD <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={bookingAmount}
+                  onChange={(e) => setBookingAmount(e.target.value)}
+                  placeholder="120"
+                  disabled={bookingSubmitting}
+                  className="w-full bg-[#0F0F0F] border border-[#262626] rounded-md px-3 py-2 text-sm text-[#FAFAFA] placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]/60 disabled:opacity-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1">
+                  Ночей <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={bookingNights}
+                  onChange={(e) => setBookingNights(e.target.value)}
+                  placeholder="2"
+                  disabled={bookingSubmitting}
+                  className="w-full bg-[#0F0F0F] border border-[#262626] rounded-md px-3 py-2 text-sm text-[#FAFAFA] placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]/60 disabled:opacity-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-zinc-400 mb-1">Заметка (опц.)</label>
+                <textarea
+                  value={bookingNotes}
+                  onChange={(e) => setBookingNotes(e.target.value)}
+                  placeholder="Полулюкс, 15-17 июня, оплачено картой"
+                  disabled={bookingSubmitting}
+                  rows={2}
+                  className="w-full bg-[#0F0F0F] border border-[#262626] rounded-md px-3 py-2 text-sm text-[#FAFAFA] placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]/60 resize-y disabled:opacity-50"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeBookingModal}
+                disabled={bookingSubmitting}
+                className="text-sm text-zinc-400 hover:text-zinc-200 px-3 py-1.5 rounded-md disabled:opacity-50"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmBooking}
+                disabled={bookingSubmitting}
+                className="text-sm bg-emerald-500 hover:bg-emerald-600 disabled:bg-zinc-700 disabled:text-zinc-500 text-white px-4 py-1.5 rounded-md transition-colors"
+              >
+                {bookingSubmitting ? 'Сохранение…' : 'Сохранить бронь'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
