@@ -247,6 +247,28 @@ class ConfirmedBooking(Base):
     confirmed_by = relationship("User", foreign_keys=[confirmed_by_user_id])
 
 
+class ShareLink(Base):
+    """Read-only partner-share token for a hotel preview (#11).
+
+    Owner generates one link per discussion (no upsert); a single hotel
+    can carry multiple active links if the owner shares with several
+    partners. View_count is incremented on every public GET so the owner
+    can see whether the partner actually opened it.
+    """
+    __tablename__ = "share_links"
+
+    id = Column(Integer, primary_key=True, index=True)
+    token = Column(String(64), unique=True, index=True, nullable=False)
+    hotel_id = Column(Integer, ForeignKey("hotels.id"), nullable=False, index=True)
+    created_by_user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    view_count = Column(Integer, nullable=False, server_default="0", default=0)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    hotel = relationship("Hotel")
+    created_by = relationship("User", foreign_keys=[created_by_user_id])
+
+
 class Application(Base):
     """Заявка на создание бота от клиента."""
     __tablename__ = "applications"

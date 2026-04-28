@@ -32,6 +32,15 @@ export default function AdminHotelPage() {
   const [promptSaving, setPromptSaving] = useState(false)
   const [confirmAction, setConfirmAction] = useState<null | 'promote' | 'rollback'>(null)
   const [promptMsg, setPromptMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
+
+  const [shareLink, setShareLink] = useState<{
+    url: string
+    expires_at: string
+    view_count: number
+  } | null>(null)
+  const [shareGenerating, setShareGenerating] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
+  const [shareError, setShareError] = useState<string | null>(null)
   const [whatsappPhone, setWhatsappPhone] = useState('')
   const [wappiApiKey, setWappiApiKey] = useState('')
   const [wappiProfileId, setWappiProfileId] = useState('')
@@ -164,6 +173,36 @@ export default function AdminHotelPage() {
       setPromptMsg({ kind: 'err', text: err.response?.data?.detail || 'Не удалось откатить (возможно, нет истории).' })
     } finally {
       setPromptSaving(false)
+    }
+  }
+
+  const handleGenerateShareLink = async () => {
+    setShareGenerating(true)
+    setShareError(null)
+    setShareCopied(false)
+    try {
+      const res = await api.post(`/api/hotels/${params.id}/share-link`)
+      const origin = typeof window !== 'undefined' ? window.location.origin : ''
+      setShareLink({
+        url: `${origin}${res.data.url_path}`,
+        expires_at: res.data.expires_at,
+        view_count: res.data.view_count,
+      })
+    } catch (err: any) {
+      setShareError(err.response?.data?.detail || 'Не удалось создать ссылку.')
+    } finally {
+      setShareGenerating(false)
+    }
+  }
+
+  const handleCopyShareLink = async () => {
+    if (!shareLink) return
+    try {
+      await navigator.clipboard.writeText(shareLink.url)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 3000)
+    } catch {
+      setShareError('Не удалось скопировать. Выделите ссылку вручную.')
     }
   }
 
@@ -370,6 +409,55 @@ export default function AdminHotelPage() {
               {saving ? 'Сохранение...' : 'Подключить каналы'}
             </Button>
           </div>
+        </Card>
+
+        {/* Partner share (#11) */}
+        <Card className="p-6">
+          <h2 className="text-lg font-semibold mb-1 text-[#FAFAFA]">Поделиться с партнёром</h2>
+          <p className="text-sm text-[#737373] mb-4">
+            Read-only превью отеля для бухгалтера / партнёра / супруга. Ссылка
+            живёт 7 дней. Реквизиты и токены не показываются.
+          </p>
+
+          {shareError && (
+            <div className="mb-3 px-3 py-2 rounded-md text-xs border bg-red-500/10 border-red-500/30 text-red-300">
+              {shareError}
+            </div>
+          )}
+
+          {!shareLink ? (
+            <Button onClick={handleGenerateShareLink} disabled={shareGenerating} size="sm">
+              {shareGenerating ? 'Создание…' : 'Сгенерировать ссылку'}
+            </Button>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={shareLink.url}
+                  onClick={(e) => (e.target as HTMLInputElement).select()}
+                  className="flex-1 bg-[#0F0F0F] border border-[#262626] rounded-md px-3 py-2 text-xs text-[#FAFAFA] font-mono"
+                />
+                <Button onClick={handleCopyShareLink} size="sm" variant="outline">
+                  {shareCopied ? '✓ Скопировано' : 'Копировать'}
+                </Button>
+              </div>
+              <div className="flex items-center justify-between text-xs text-[#737373]">
+                <span>
+                  Истекает: {new Date(shareLink.expires_at).toLocaleString('ru-RU')}
+                </span>
+                <button
+                  onClick={() => {
+                    setShareLink(null)
+                    setShareCopied(false)
+                  }}
+                  className="text-[#3B82F6] hover:underline"
+                >
+                  Сгенерировать новую
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
 
         {/* Promote / Rollback (#28) */}
