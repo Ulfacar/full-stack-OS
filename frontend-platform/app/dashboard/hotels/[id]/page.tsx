@@ -243,6 +243,13 @@ export default function AdminHotelPage() {
               ✓ Активирован {new Date(hotel.activated_at).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' })}
             </span>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/dashboard/hotels/${hotel.id}/reports`)}
+          >
+            ROI отчёт
+          </Button>
           <Button variant="outline" size="sm" onClick={() => router.push(`/hotels/${hotel.id}/demo`)}>
             Демо
           </Button>

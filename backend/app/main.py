@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .core.config import settings
-from .api.endpoints import auth, hotels, webhooks, applications, admin, sales, conversations, share
+from .api.endpoints import auth, hotels, webhooks, applications, admin, sales, conversations, share, reports
 from .api.endpoints.preview_chat import router as preview_router
 from .api.endpoints.webhooks_whatsapp import router as whatsapp_router
 
@@ -31,6 +31,7 @@ app.include_router(applications.router)
 app.include_router(sales.router)
 app.include_router(conversations.router)
 app.include_router(share.router)
+app.include_router(reports.router)
 
 
 @app.get("/")

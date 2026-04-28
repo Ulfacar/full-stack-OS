@@ -72,6 +72,12 @@ class Hotel(Base):
     # Used for the "Активирован ✓" admin badge and the celebratory manager TG ping.
     activated_at = Column(DateTime(timezone=True), nullable=True)
 
+    # ROI report inputs (#33). avg_booking_price_usd is the fallback when a
+    # ConfirmedBooking row has no amount_usd. sub_fee_usd is what the hotel
+    # pays Ex-Machina monthly — divides into "saved revenue" to produce ROI×.
+    avg_booking_price_usd = Column(Float, nullable=False, server_default="50.0", default=50.0)
+    sub_fee_usd = Column(Float, nullable=False, server_default="40.0", default=40.0)
+
     # Manager
     manager_telegram_id = Column(String(100))  # TG user ID for notifications
     manager_name = Column(String(255))
