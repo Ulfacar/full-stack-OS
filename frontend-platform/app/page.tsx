@@ -93,6 +93,12 @@ export default function LandingPage() {
               <Link href="/login" className="border border-[#262626] text-[#D4D4D4] hover:bg-[#1A1A1A] px-5 py-2.5 rounded-md text-sm font-medium transition-all flex items-center justify-center gap-2">
                 Смотреть демо
               </Link>
+              <Link
+                href="/compare"
+                className="text-[#A3A3A3] hover:text-[#FAFAFA] px-5 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1"
+              >
+                Сравнить с конкурентами →
+              </Link>
             </div>
           </div>
 
