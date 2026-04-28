@@ -29,8 +29,8 @@ const navCards = [
   },
   {
     label: 'Кейсы',
-    href: '#case',
-    description: 'Реальные результаты наших клиентов',
+    href: '/cases/ton-azure',
+    description: 'Ton Azure: 82% автоматизация, 58 диалогов/мес',
     bgColor: '#1a1a2e',
     textColor: '#fff',
   },

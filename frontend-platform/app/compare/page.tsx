@@ -186,6 +186,12 @@ export default function ComparePage() {
               Начать с Ex-Machina →
             </Link>
             <Link
+              href="/cases/ton-azure"
+              className="text-sm border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 px-5 py-2.5 rounded-md"
+            >
+              Кейс Ton Azure
+            </Link>
+            <Link
               href="/login"
               className="text-sm border border-[#262626] text-[#D4D4D4] hover:bg-[#1A1A1A] px-5 py-2.5 rounded-md"
             >
