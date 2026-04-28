@@ -8,6 +8,7 @@ import SpotlightCard from '@/components/effects/SpotlightCard'
 import PhoneMockup from '@/components/landing/PhoneMockup'
 import { CaseFlipCard } from '@/components/landing/CaseFlipCard'
 import { ClipboardWriteIcon, SparklesAnimIcon, ChatBotIcon } from '@/components/landing/StepIcons'
+import { RoiCalculator } from '@/components/landing/RoiCalculator'
 import CardNav from '@/components/layout/CardNav'
 
 const Antigravity = dynamic(() => import('@/components/effects/Antigravity'), { ssr: false })
@@ -39,6 +40,13 @@ const navCards = [
     href: '#pricing',
     description: 'Прозрачные условия без скрытых платежей',
     bgColor: '#0f2744',
+    textColor: '#fff',
+  },
+  {
+    label: 'ROI',
+    href: '#roi',
+    description: 'Калькулятор: сколько окупится для вашего отеля',
+    bgColor: '#0a2a1a',
     textColor: '#fff',
   },
 ]
@@ -107,6 +115,9 @@ export default function LandingPage() {
         </div>
       </section>
       </ClickSpark>
+
+      {/* ROI calculator — interactive widget */}
+      <RoiCalculator />
 
       {/* Light sections — blue sparks */}
       <ClickSpark sparkColor="#3B82F6" sparkSize={10} sparkRadius={15} sparkCount={8} duration={400}>
