@@ -15,17 +15,26 @@ class NotificationService:
         self.bot_token = bot_token
         self.base_url = f"https://api.telegram.org/bot{bot_token}"
 
-    async def send_message(self, chat_id: str, text: str, parse_mode: str = "HTML") -> bool:
-        """Send a message to a Telegram user."""
+    async def send_message(
+        self,
+        chat_id: str,
+        text: str,
+        parse_mode: str = "HTML",
+        reply_markup: Optional[dict] = None,
+    ) -> bool:
+        """Send a message to a Telegram user, optionally with inline keyboard."""
         try:
+            payload: dict = {
+                "chat_id": chat_id,
+                "text": text,
+                "parse_mode": parse_mode,
+            }
+            if reply_markup is not None:
+                payload["reply_markup"] = reply_markup
             async with httpx.AsyncClient(timeout=10) as client:
                 response = await client.post(
                     f"{self.base_url}/sendMessage",
-                    json={
-                        "chat_id": chat_id,
-                        "text": text,
-                        "parse_mode": parse_mode,
-                    },
+                    json=payload,
                 )
                 return response.status_code == 200
         except Exception as e:
@@ -39,13 +48,14 @@ class NotificationService:
         client_name: str,
         channel: str,
         conversation_id: int,
+        hotel_id: int,
         last_message: str = "",
         booking_data: Optional[dict] = None,
+        history_url: Optional[str] = None,
     ) -> bool:
-        """Notify manager that a conversation needs human attention."""
+        """Notify manager and offer Reply / History inline buttons (#26)."""
 
         if booking_data:
-            # Booking request
             text = (
                 f"📋 <b>ЗАЯВКА НА БРОНЬ</b>\n\n"
                 f"🏨 {hotel_name}\n"
@@ -61,7 +71,6 @@ class NotificationService:
             text += f"📱 Канал: {channel}\n"
             text += f"\n📍 Диалог #{conversation_id}"
         else:
-            # General escalation
             text = (
                 f"🔔 <b>Нужна помощь!</b>\n\n"
                 f"🏨 {hotel_name}\n"
@@ -72,7 +81,30 @@ class NotificationService:
                 text += f"💬 Последнее: {last_message[:200]}\n"
             text += f"\n📍 Диалог #{conversation_id}"
 
-        return await self.send_message(manager_telegram_id, text)
+        reply_button = {
+            "text": "✍️ Ответить",
+            "callback_data": f"reply_{conversation_id}",
+        }
+        history_button = {
+            "text": "👀 История",
+            "url": history_url or f"/dashboard/hotels/{hotel_id}/conversations/{conversation_id}",
+        }
+        reply_markup = {"inline_keyboard": [[reply_button, history_button]]}
+
+        return await self.send_message(manager_telegram_id, text, reply_markup=reply_markup)
+
+    async def answer_callback_query(self, callback_query_id: str, text: str = "") -> bool:
+        """Acknowledge a TG callback_query so the client stops the loading spinner."""
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                response = await client.post(
+                    f"{self.base_url}/answerCallbackQuery",
+                    json={"callback_query_id": callback_query_id, "text": text},
+                )
+                return response.status_code == 200
+        except Exception as e:
+            logger.error(f"answerCallbackQuery error: {e}")
+            return False
 
     async def notify_payment_details_missing(
         self,

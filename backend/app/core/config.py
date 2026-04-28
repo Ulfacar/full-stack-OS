@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     # Webhooks
     WEBHOOK_BASE_URL: str = ""  # Will be set to VPS URL
 
+    # Frontend (used for inline-button deep links from manager TG notifications)
+    FRONTEND_BASE_URL: str = "https://exmachina.up.railway.app"
+
     @property
     def cors_origins(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""

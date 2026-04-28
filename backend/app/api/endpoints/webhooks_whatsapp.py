@@ -8,6 +8,7 @@ from fastapi import APIRouter, HTTPException, Request, Depends, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ...core.config import settings
 from ...db.database import get_db
 from ...db.models import Hotel, Client, Conversation, Message
 from ...services.ai_service import ai_service
@@ -157,7 +158,9 @@ async def _handle_whatsapp_message(
             manager_telegram_id=hotel.manager_telegram_id,
             hotel_name=hotel.name, client_name=name or sender,
             channel="whatsapp", conversation_id=conversation.id,
+            hotel_id=hotel.id,
             last_message=text,
+            history_url=f"{settings.FRONTEND_BASE_URL}/dashboard/hotels/{hotel.id}/conversations/{conversation.id}",
         )
 
     # Save response
@@ -165,11 +168,16 @@ async def _handle_whatsapp_message(
     await db.commit()
 
     # Send reply
-    await _send_reply(hotel, sender, ai_response)
+    await send_whatsapp_reply(hotel, sender, ai_response)
 
 
-async def _send_reply(hotel: Hotel, recipient: str, text: str):
-    """Send reply via the configured WhatsApp provider."""
+async def send_whatsapp_reply(hotel: Hotel, recipient: str, text: str):
+    """Send reply via the configured WhatsApp provider (wappi.pro / Meta).
+
+    Public so other modules (e.g. operator_service for #26) can deliver
+    operator-typed responses to clients via WA without re-implementing the
+    provider routing.
+    """
     provider = hotel.whatsapp_provider or "wappi"
 
     if provider == "meta" and hotel.meta_access_token and hotel.meta_phone_number_id:

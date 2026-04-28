@@ -8,6 +8,7 @@ from sqlalchemy import select
 from fastapi import Depends
 from typing import Dict, Any
 from datetime import datetime, timedelta
+from ...core.config import settings
 from ...db.database import get_db
 from ...db.models import Hotel, Client, Conversation, Message
 from ...services.telegram_service import TelegramService
@@ -16,6 +17,10 @@ from ...services.budget_service import budget_service
 from ...services.response_processor import process_response, check_payment_placeholder
 from ...services.notification_service import NotificationService
 from ...services.followup_service import schedule_followup, cancel_followup
+from ...services.operator_service import (
+    handle_operator_message,
+    set_operator_reply_state,
+)
 from ...core.crypto import decrypt_token
 
 router = APIRouter(prefix="/webhooks/telegram", tags=["webhooks"])
@@ -54,6 +59,10 @@ async def telegram_webhook(
     # Parse Telegram update
     update: Dict[str, Any] = await request.json()
 
+    # === #26: callback_query (manager taps inline button) ===
+    if "callback_query" in update:
+        return await _handle_callback_query(update["callback_query"], hotel)
+
     # Handle only text messages for MVP
     if "message" not in update or "text" not in update["message"]:
         return {"ok": True}
@@ -63,6 +72,16 @@ async def telegram_webhook(
     user_message = message_data["text"]
     telegram_username = message_data["from"].get("username")
     telegram_id = str(message_data["from"]["id"])
+
+    # === #26: free-text from manager → forward to client ===
+    if hotel.manager_telegram_id and telegram_id == str(hotel.manager_telegram_id):
+        delivered = await handle_operator_message(
+            operator_tg_id=telegram_id,
+            text=user_message,
+            hotel=hotel,
+            db=db,
+        )
+        return {"ok": True, "operator_forwarded": delivered}
 
     # Initialize Telegram service (decrypt token from DB)
     telegram = TelegramService(decrypt_token(hotel.telegram_bot_token))
@@ -256,7 +275,9 @@ async def telegram_webhook(
                 client_name=client_name,
                 channel="telegram",
                 conversation_id=conversation.id,
+                hotel_id=hotel.id,
                 last_message=user_message,
+                history_url=f"{settings.FRONTEND_BASE_URL}/dashboard/hotels/{hotel.id}/conversations/{conversation.id}",
             )
 
         # Record AI usage with cost + debug logs
@@ -314,3 +335,33 @@ async def telegram_webhook(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+
+async def _handle_callback_query(callback_query: Dict[str, Any], hotel: Hotel) -> Dict[str, Any]:
+    """Handle inline-button taps from the manager (`reply_<conv_id>` for #26)."""
+    cb_id = callback_query.get("id")
+    operator_tg_id = str(callback_query.get("from", {}).get("id", ""))
+    data = callback_query.get("data", "")
+
+    if not hotel.manager_telegram_id or operator_tg_id != str(hotel.manager_telegram_id):
+        # Someone other than the registered manager tapped the button — ignore
+        return {"ok": True, "ignored": "not_manager"}
+
+    if not data.startswith("reply_"):
+        return {"ok": True, "ignored": "unknown_callback"}
+
+    try:
+        conv_id = int(data.split("_", 1)[1])
+    except (ValueError, IndexError):
+        return {"ok": True, "ignored": "malformed_callback"}
+
+    set_operator_reply_state(operator_tg_id, conv_id)
+
+    if hotel.telegram_bot_token:
+        notifier = NotificationService(decrypt_token(hotel.telegram_bot_token))
+        await notifier.answer_callback_query(
+            callback_query_id=cb_id,
+            text="Пишите ответ — он уйдёт клиенту. Окно 15 мин.",
+        )
+
+    return {"ok": True, "reply_state_set": conv_id}
