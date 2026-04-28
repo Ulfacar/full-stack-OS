@@ -28,6 +28,10 @@ export default function AdminHotelPage() {
   const [message, setMessage] = useState('')
 
   const [telegramToken, setTelegramToken] = useState('')
+  const [stagingPrompt, setStagingPrompt] = useState('')
+  const [promptSaving, setPromptSaving] = useState(false)
+  const [confirmAction, setConfirmAction] = useState<null | 'promote' | 'rollback'>(null)
+  const [promptMsg, setPromptMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
   const [whatsappPhone, setWhatsappPhone] = useState('')
   const [wappiApiKey, setWappiApiKey] = useState('')
   const [wappiProfileId, setWappiProfileId] = useState('')
@@ -59,6 +63,7 @@ export default function AdminHotelPage() {
         setManagerTgId(hotelRes.data.manager_telegram_id || '')
         setManagerName(hotelRes.data.manager_name || '')
         setBudgetInput(String(budgetRes.data.monthly_budget))
+        setStagingPrompt(hotelRes.data.staging_prompt || '')
       } catch {
         router.push('/dashboard/hotels')
       } finally {
@@ -106,6 +111,59 @@ export default function AdminHotelPage() {
       setMessage(err.response?.data?.detail || 'Ошибка')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleSaveStaging = async () => {
+    setPromptSaving(true)
+    setPromptMsg(null)
+    try {
+      const res = await api.put(`/hotels/${params.id}/staging`, { staging_prompt: stagingPrompt })
+      if (hotel) setHotel({ ...hotel, staging_prompt: res.data.staging_prompt })
+      setPromptMsg({ kind: 'ok', text: 'Staging-промпт сохранён.' })
+    } catch (err: any) {
+      setPromptMsg({ kind: 'err', text: err.response?.data?.detail || 'Не удалось сохранить.' })
+    } finally {
+      setPromptSaving(false)
+    }
+  }
+
+  const handlePromote = async () => {
+    setConfirmAction(null)
+    setPromptSaving(true)
+    setPromptMsg(null)
+    try {
+      // Persist current draft as staging first, then promote — covers the case
+      // where the operator typed and clicked Promote without an explicit save.
+      await api.put(`/hotels/${params.id}/staging`, { staging_prompt: stagingPrompt })
+      const res = await api.post(`/hotels/${params.id}/promote`)
+      if (hotel) {
+        setHotel({ ...hotel, system_prompt: res.data.system_prompt, staging_prompt: null })
+      }
+      setStagingPrompt('')
+      setPromptMsg({ kind: 'ok', text: 'Staging-промпт применён в production.' })
+    } catch (err: any) {
+      setPromptMsg({ kind: 'err', text: err.response?.data?.detail || 'Не удалось применить.' })
+    } finally {
+      setPromptSaving(false)
+    }
+  }
+
+  const handleRollback = async () => {
+    setConfirmAction(null)
+    setPromptSaving(true)
+    setPromptMsg(null)
+    try {
+      const res = await api.post(`/hotels/${params.id}/rollback`)
+      if (hotel) setHotel({ ...hotel, system_prompt: res.data.system_prompt })
+      setPromptMsg({
+        kind: 'ok',
+        text: `Откат выполнен. Восстановлена версия от ${new Date(res.data.rolled_back_from).toLocaleString('ru-RU')}.`,
+      })
+    } catch (err: any) {
+      setPromptMsg({ kind: 'err', text: err.response?.data?.detail || 'Не удалось откатить (возможно, нет истории).' })
+    } finally {
+      setPromptSaving(false)
     }
   }
 
@@ -305,6 +363,113 @@ export default function AdminHotelPage() {
             </Button>
           </div>
         </Card>
+
+        {/* Promote / Rollback (#28) */}
+        <Card className="p-6">
+          <div className="flex items-start justify-between mb-1">
+            <h2 className="text-lg font-semibold text-[#FAFAFA]">Системный промпт</h2>
+            <span className="text-[11px] px-2 py-0.5 rounded border border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+              Production
+            </span>
+          </div>
+          <p className="text-sm text-[#737373] mb-4">
+            Текущая prod-версия — справа в зелёной рамке. Правьте staging ниже,
+            тестируйте через preview-chat и применяйте.
+          </p>
+
+          {promptMsg && (
+            <div
+              className={`mb-3 px-3 py-2 rounded-md text-xs border ${
+                promptMsg.kind === 'ok'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : 'bg-red-500/10 border-red-500/30 text-red-300'
+              }`}
+            >
+              {promptMsg.text}
+            </div>
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <Label>Production system_prompt (read-only)</Label>
+              <textarea
+                value={hotel.system_prompt || ''}
+                readOnly
+                rows={4}
+                className="mt-1 w-full bg-[#0F0F0F] border border-emerald-500/30 rounded-md px-3 py-2 text-xs text-[#D4D4D4] resize-y opacity-90"
+              />
+            </div>
+
+            <div>
+              <Label>Staging-промпт (черновик)</Label>
+              <textarea
+                value={stagingPrompt}
+                onChange={(e) => setStagingPrompt(e.target.value)}
+                placeholder="Напишите новую версию промпта…"
+                rows={6}
+                disabled={promptSaving}
+                className="mt-1 w-full bg-[#0F0F0F] border border-[#262626] rounded-md px-3 py-2 text-sm text-[#FAFAFA] placeholder:text-zinc-500 focus:outline-none focus:ring-1 focus:ring-[#3B82F6]/60 resize-y disabled:opacity-50"
+              />
+              <p className="text-xs text-[#737373] mt-1">
+                Превью можно гонять через preview-chat (не пишет клиенту, не тратит лимит).
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={handleSaveStaging} disabled={promptSaving} variant="outline" size="sm">
+                {promptSaving ? 'Сохранение…' : 'Сохранить staging'}
+              </Button>
+              <Button
+                onClick={() => setConfirmAction('promote')}
+                disabled={promptSaving || !stagingPrompt.trim()}
+                size="sm"
+              >
+                Применить в production
+              </Button>
+              <Button
+                onClick={() => setConfirmAction('rollback')}
+                disabled={promptSaving}
+                variant="outline"
+                size="sm"
+              >
+                Откатить к предыдущему
+              </Button>
+            </div>
+          </div>
+        </Card>
+
+        {confirmAction && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4 backdrop-blur-sm"
+            onClick={() => setConfirmAction(null)}
+          >
+            <div
+              className="w-full max-w-md rounded-xl border border-[#262626] bg-[#141414] p-5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-semibold text-[#FAFAFA] mb-2">
+                {confirmAction === 'promote' ? 'Применить staging в production?' : 'Откатить промпт?'}
+              </h2>
+              <p className="text-sm text-[#A3A3A3] mb-5">
+                {confirmAction === 'promote'
+                  ? 'Это заменит production-промпт. Текущая prod-версия будет сохранена в истории — позже можно откатиться.'
+                  : 'Будет восстановлена предыдущая prod-версия из истории. Текущий staging останется без изменений.'}
+              </p>
+              <div className="flex items-center justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => setConfirmAction(null)}>
+                  Отмена
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={confirmAction === 'promote' ? handlePromote : handleRollback}
+                  disabled={promptSaving}
+                >
+                  {promptSaving ? 'Выполнение…' : 'Подтвердить'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Info */}
         <Card className="p-6">

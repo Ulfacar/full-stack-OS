@@ -111,6 +111,7 @@ export interface Hotel {
   has_telegram_bot: boolean
   ai_model: string
   system_prompt?: string
+  staging_prompt?: string | null
   communication_style: string
   languages: string[]
   is_active: boolean
