@@ -19,7 +19,7 @@ Your VPS needs:
 
 ### 3. Accounts & Keys
 - DuckDNS account (free): https://www.duckdns.org/
-- OpenRouter API key (you already have): `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`
+- OpenRouter API key — get one at https://openrouter.ai/keys (NEVER paste a real key into this file or any *.md — only into the server's `.env`)
 
 ---
 
@@ -97,8 +97,8 @@ POSTGRES_PASSWORD=your-super-strong-password-here
 # Secret key for JWT (generate random 32+ chars)
 SECRET_KEY=your-super-secret-key-min-32-characters-random-string
 
-# Your OpenRouter API key (already have it)
-OPENROUTER_API_KEY=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
+# Your OpenRouter API key (paste real key only into the server's .env, never into *.md)
+OPENROUTER_API_KEY=sk-or-v1-...
 
 # Your DuckDNS domain
 WEBHOOK_BASE_URL=https://myhotel.duckdns.org

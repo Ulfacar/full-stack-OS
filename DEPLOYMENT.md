@@ -53,7 +53,9 @@ git push -u origin main
 
 ```env
 # OpenRouter API (ОБЯЗАТЕЛЬНО!)
-OPENROUTER_API_KEY=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
+# Получи ключ на https://openrouter.ai/keys и положи СЮДА только в Railway Variables.
+# НИКОГДА не коммить реальный ключ в *.md файлы — git history навсегда.
+OPENROUTER_API_KEY=sk-or-v1-...
 
 # Webhook URL (заполните после получения Railway URL)
 WEBHOOK_BASE_URL=https://your-backend.up.railway.app
