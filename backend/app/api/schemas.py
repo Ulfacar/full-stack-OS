@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from pydantic import BaseModel, EmailStr, Field, computed_field
+from typing import Optional, List, Any
 from datetime import datetime
 
 
@@ -137,7 +137,9 @@ class Hotel(BaseModel):
     website: Optional[str]
     description: Optional[str]
 
-    has_telegram_bot: bool = False
+    # Loaded from ORM but never serialized to clients (security: token stays
+    # server-side). Used only to derive has_telegram_bot below.
+    telegram_bot_token: Optional[str] = Field(default=None, exclude=True, repr=False)
     whatsapp_phone: Optional[str]
     ai_model: str
     system_prompt: Optional[str] = None
@@ -160,11 +162,10 @@ class Hotel(BaseModel):
     class Config:
         from_attributes = True
 
-    @classmethod
-    def model_validate(cls, obj, **kwargs):
-        if hasattr(obj, 'telegram_bot_token'):
-            obj.__dict__['has_telegram_bot'] = bool(obj.telegram_bot_token)
-        return super().model_validate(obj, **kwargs)
+    @computed_field
+    @property
+    def has_telegram_bot(self) -> bool:
+        return bool(self.telegram_bot_token)
 
 
 class HotelList(BaseModel):
@@ -175,17 +176,16 @@ class HotelList(BaseModel):
     is_active: bool
     status: str = "demo"
     monthly_budget: float = 5.0
-    has_telegram_bot: bool = False
+    telegram_bot_token: Optional[str] = Field(default=None, exclude=True, repr=False)
     created_at: datetime
 
     class Config:
         from_attributes = True
 
-    @classmethod
-    def model_validate(cls, obj, **kwargs):
-        if hasattr(obj, 'telegram_bot_token'):
-            obj.__dict__['has_telegram_bot'] = bool(obj.telegram_bot_token)
-        return super().model_validate(obj, **kwargs)
+    @computed_field
+    @property
+    def has_telegram_bot(self) -> bool:
+        return bool(self.telegram_bot_token)
 
 
 # Admin schemas
