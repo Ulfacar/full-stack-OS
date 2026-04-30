@@ -39,6 +39,12 @@ class Settings(BaseSettings):
     # Frontend (used for inline-button deep links from manager TG notifications)
     FRONTEND_BASE_URL: str = "https://exmachina.up.railway.app"
 
+    # Feature flag — followup messages ("are you still there?" 10/15 min after
+    # bot reply). In-memory task tracking on multi-replica Railway can race and
+    # spam the user with duplicate followups; this flag lets us kill it from
+    # env without a redeploy when needed (set FOLLOWUP_ENABLED=false on Railway).
+    FOLLOWUP_ENABLED: bool = True
+
     @property
     def cors_origins(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""

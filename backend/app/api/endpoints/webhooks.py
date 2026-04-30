@@ -325,8 +325,11 @@ async def telegram_webhook(
         # Send response to Telegram
         await telegram.send_message(chat_id=chat_id, text=ai_response)
 
-        # Schedule followup if bot responded (not manager transfer)
-        if not needs_manager:
+        # Schedule followup if bot responded (not manager transfer).
+        # Gated by settings.FOLLOWUP_ENABLED — in-memory task tracking races on
+        # multi-replica Railway and can spam duplicate "are you still there?"
+        # messages, so this is a kill-switch from env.
+        if not needs_manager and settings.FOLLOWUP_ENABLED:
             await schedule_followup(
                 conversation_id=conversation.id,
                 hotel_id=hotel.id,
