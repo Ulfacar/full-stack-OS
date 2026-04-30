@@ -45,6 +45,8 @@ yarn-error.log*
 .env.development.local
 .env.test.local
 .env.production.local
+.env.railway
+.env.trello
 .env.production
 .env.trello
 
