@@ -386,7 +386,12 @@ async def update_hotel_budget(
 
 def format_time_ago(dt: datetime) -> str:
     """Format datetime as human-readable 'time ago' string."""
-    now = datetime.utcnow()
+    # Postgres timestamps come back tz-aware; utcnow() is naive — normalize.
+    if dt.tzinfo is not None:
+        from datetime import timezone as _tz
+        now = datetime.now(_tz.utc)
+    else:
+        now = datetime.utcnow()
     diff = now - dt
 
     if diff.total_seconds() < 60:
