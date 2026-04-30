@@ -126,7 +126,12 @@ async def view_share_link(
     ).scalar_one_or_none()
     if link is None:
         raise HTTPException(status_code=404, detail="Link not found")
-    if datetime.utcnow() > link.expires_at:
+    # expires_at is tz-aware (Postgres TIMESTAMPTZ); compare apples-to-apples.
+    from datetime import timezone as _tz
+    expires_at = link.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=_tz.utc)
+    if datetime.now(_tz.utc) > expires_at:
         raise HTTPException(status_code=410, detail="Link expired")
 
     hotel = (await db.execute(select(Hotel).where(Hotel.id == link.hotel_id))).scalar_one_or_none()
